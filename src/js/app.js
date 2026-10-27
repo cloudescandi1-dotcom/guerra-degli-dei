@@ -566,9 +566,6 @@
       case 'play':
         if (B && B.cfg.role === 'host' && B.cfg.friendId === id && Number.isInteger(msg.slot) && isFinite(msg.x) && isFinite(msg.y)) B.remote.push(msg);
         break;
-      case 'surrender':
-        if (B && B.cfg.role === 'host' && B.cfg.friendId === id && !B.state.over) { B.state.over = true; B.state.winner = 0; }
-        break;
       case 'emote':
         if (B && B.cfg.friendId === id && EMOTES.includes(msg.e)) bubble('#emote-foe', msg.e);
         break;
@@ -791,18 +788,6 @@
   });
   window.addEventListener('pointercancel', () => { if (B) { B.drag = null; } });
 
-  $('#btn-surrender').onclick = () => {
-    if (!B || B.ended) return;
-    const body = modal(`<h3>🏳️ Arrendersi?</h3><p>La battaglia finirà con una sconfitta.</p>
-      <div class="row"><button class="btn grey" id="no" type="button">Continua</button><button class="btn red" id="yes" type="button">Mi arrendo</button></div>`);
-    body.querySelector('#no').onclick = closeModal;
-    body.querySelector('#yes').onclick = () => {
-      closeModal();
-      if (!B) return;
-      if (B.cfg.role === 'guest') Social.send(B.cfg.friendId, { t: 'surrender' });
-      else { B.state.over = true; B.state.winner = 1 - B.me; }
-    };
-  };
   $('#btn-emote').onclick = () => {
     const bar = $('#emote-bar');
     bar.innerHTML = EMOTES.map((x) => `<button type="button">${x}</button>`).join('');
