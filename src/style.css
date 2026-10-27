@@ -66,7 +66,7 @@ h2 small { color: var(--muted); text-transform: none; font-weight: normal; lette
 .tab.active { display: block; }
 .tab > * { max-width: 640px; margin-left: auto; margin-right: auto; }
 .tabbar {
-  display: grid; grid-template-columns: repeat(4, 1fr);
+  display: grid; grid-template-columns: repeat(5, 1fr);
   background: linear-gradient(#182042, #0f1530);
   border-top: 2px solid var(--gold2);
   padding-bottom: var(--safe-b);
@@ -162,6 +162,16 @@ h2 small { color: var(--muted); text-transform: none; font-weight: normal; lette
 .arena-row h3 { margin: 0; font-size: 1rem; text-shadow: 0 1px 0 #000a; }
 .arena-row p { margin: 2px 0 0; font-size: .8rem; text-shadow: 0 1px 0 #000a; }
 .arena-row .unl { font-size: 1.2rem; letter-spacing: 2px; }
+button.arena-row { width: 100%; text-align: left; color: inherit; font: inherit; }
+.arena-row > div { flex: 1; }
+.arena-row .more { font-size: 2rem; opacity: .8; text-shadow: 0 1px 0 #000a; }
+.arena-detail { text-align: center; border-radius: 14px; padding: 14px 10px 10px; margin: 0 0 4px; box-shadow: inset 0 0 30px #0008; }
+.arena-detail .icon { font-size: 3.4rem; }
+.arena-detail h3 { color: #fff !important; margin: 4px 0 !important; text-shadow: 0 2px 0 #0008; }
+.arena-detail p { margin: 0; text-shadow: 0 1px 0 #0008; }
+.chest-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #ffffff12; }
+.chest-row .ci { font-size: 1.9rem; }
+.chest-row small { display: block; color: var(--muted); }
 
 /* ---------- Clan e amici ---------- */
 .box { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin-top: 10px; }
@@ -275,3 +285,17 @@ h2 small { color: var(--muted); text-transform: none; font-weight: normal; lette
 @media (min-width: 900px) {
   .tab { padding-top: 16px; }
 }
+
+/* ---------- Negozio ---------- */
+.gems { border-color: #7dd3fc; }
+.offers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.offer { display: flex; flex-direction: column; gap: 6px; align-items: stretch; text-align: center; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 8px 8px; }
+.offer .card .n { display: block; font-weight: bold; color: var(--gold); }
+.offer small { color: var(--muted); font-size: .72rem; }
+.offer.sold .card { filter: grayscale(.8) brightness(.6); }
+.gem-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #ffffff12; }
+.gem-item:last-child { border-bottom: 0; }
+.gem-item .ci { font-size: 1.9rem; }
+.gem-item div { flex: 1; }
+.gem-item small { display: block; color: var(--muted); }
+@media (max-width: 380px) { .top-right { gap: 6px; } .gold { padding: 4px 8px; } }

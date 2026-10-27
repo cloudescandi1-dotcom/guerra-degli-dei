@@ -7,8 +7,8 @@ con personaggi, nomi e grafica tutti nostri.
 **Gioca online:** https://cloudescandi1-dotcom.github.io/guerra-degli-dei/
 
 ## Stato (27/10/2026)
-- ✅ Versione 1.0: battaglie, 24 carte, 7 arene, bauli, potenziamenti, amici e clan
-- ✅ 15 test automatici superati (motore di gioco, computer, progressione, clan)
+- ✅ Versione 1.1: aggiunti **Negozio** (offerte del giorno e gemme), baule del giorno e schede delle arene
+- ✅ 22 test automatici superati (motore di gioco, computer, progressione, negozio, clan)
 - ⏳ Da fare: **rifare la grafica** (ora i personaggi sono emoji su dischi colorati)
 
 ## Cosa sa fare
@@ -17,8 +17,12 @@ con personaggi, nomi e grafica tutti nostri.
 - **24 carte**: truppe, costruzioni e incantesimi, di rarità comune, rara, epica e leggendaria
 - **7 arene**: Sparta, Labirinto di Creta, Mura di Troia, Isola dei Ciclopi, Colosseo, Inferi di Ade, Monte Olimpo
 - **Contro il computer** (classificata con coppe, oppure Allenamento facile/medio/difficile)
-- **Progressione**: coppe, bauli che si aprono col tempo, Dono degli dèi ogni 2 ore, monete,
-  potenziamento delle carte fino al livello 9, mazzo da 8 carte
+- **Progressione**: coppe, bauli che si aprono col tempo, **baule del giorno** (si ricarica a mezzanotte, ora di Roma),
+  monete, potenziamento delle carte fino al livello 9, mazzo da 8 carte
+- **Negozio**: 6 carte in offerta da comprare con le monete, che cambiano ogni giorno a mezzanotte (ora di Roma);
+  con le **gemme** 💎 si comprano bauli e monete o si apre subito un baule. Le gemme non si comprano:
+  si trovano (non sempre) nei bauli
+- **Arene**: toccandone una vedi le tue vittorie e sconfitte lì, i bauli e le carte che sblocca
 - **Amici**: codice amico, online/offline, chat, sfide amichevoli in tempo reale
 - **Clan**: nome e stemma, chat, richiesta e donazione di carte
 - Funziona offline (tranne amici e clan) e si installa sulla schermata Home

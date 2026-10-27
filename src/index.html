@@ -25,12 +25,14 @@
       </button>
       <div class="top-right">
         <span class="gold">🪙 <b id="top-gold">0</b></span>
+        <span class="gold gems">💎 <b id="top-gems">0</b></span>
         <span id="net-dot" class="net-dot" title="Collegamento amici"></span>
         <button id="btn-settings" class="icon-btn" type="button" title="Impostazioni">⚙️</button>
       </div>
     </header>
 
     <main class="tabs">
+      <div id="tab-negozio" class="tab"></div>
       <div id="tab-carte" class="tab"></div>
       <div id="tab-battaglia" class="tab active"></div>
       <div id="tab-clan" class="tab"></div>
@@ -38,6 +40,7 @@
     </main>
 
     <nav class="tabbar">
+      <button data-tab="negozio" type="button"><span>🛒</span>Negozio</button>
       <button data-tab="carte" type="button"><span>🃏</span>Carte</button>
       <button data-tab="battaglia" type="button" class="active"><span>⚔️</span>Battaglia</button>
       <button data-tab="clan" type="button"><span>🛡️</span>Clan<i id="clan-badge" class="badge" hidden></i></button>

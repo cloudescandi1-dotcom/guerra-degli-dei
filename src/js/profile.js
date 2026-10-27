@@ -7,7 +7,6 @@
 
   const KEY = 'guerra-dei-profilo-v1';
   const WIN_TROPHIES = 30, LOSS_TROPHIES = 20;
-  const GIFT_EVERY = 2 * 3600 * 1000;   // un Dono degli dèi ogni 2 ore
 
   const randomId = (n) => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -21,10 +20,11 @@
     for (const c of D.CARDS) if (c.arena === 0) cards[c.key] = { level: 1, count: 0 };
     return {
       id: randomId(6), name: 'Eroe' + Math.floor(100 + Math.random() * 900),
-      trophies: 0, best: 0, gold: 100, wins: 0, losses: 0, draws: 0,
+      trophies: 0, best: 0, gold: 100, gems: 50, wins: 0, losses: 0, draws: 0,
+      giftDay: '', shopDay: '', shopBought: [],
       cards, deck: D.START_DECK.slice(),
       chests: [{ type: 'legno', arena: 0, unlockAt: null }, null, null, null],
-      chestIndex: 0, giftAt: 0,
+      chestIndex: 0, arenaStats: {},
       friends: [], chats: {}, clan: null, lastRequest: 0, credited: [],
       sound: true, seen: {},
     };
@@ -99,6 +99,9 @@
   function applyResult(p, winner, crowns) {
     const before = arena(p);
     const out = { trophies: 0, chest: null, gold: 0, newArena: null, newCards: [] };
+    // Vittorie, sconfitte e bauli contati arena per arena
+    const st = p.arenaStats[before] || (p.arenaStats[before] = { w: 0, l: 0, d: 0, chests: 0 });
+    if (winner === 0) st.w++; else if (winner === 1) st.l++; else st.d++;
     if (winner === 0) {
       p.wins++;
       out.trophies = WIN_TROPHIES;
@@ -110,6 +113,7 @@
         p.chestIndex++;
         p.chests[slot] = { type, arena: arena(p), unlockAt: null };
         out.chest = type;
+        st.chests++;
       } else out.chestsFull = true;
     } else if (winner === 1) {
       p.losses++;
@@ -186,17 +190,111 @@
     rnd = rnd || Math.random;
     const info = D.CHESTS[type];
     const gold = Math.round((info.gold[0] + rnd() * (info.gold[1] - info.gold[0])) * (1 + arenaIdx * 0.3));
+    // Le gemme non ci sono sempre: dipende dal tipo di baule
+    const gems = info.gems && rnd() < info.gemChance ? info.gems[0] + Math.floor(rnd() * (info.gems[1] - info.gems[0] + 1)) : 0;
     const cards = rollCards(p, type, arenaIdx, rnd);
     p.gold += gold;
+    p.gems = (p.gems || 0) + gems;
     addCards(p, cards);
-    return { type, gold, cards };
+    return { type, gold, gems, cards };
   }
 
-  const giftReady = (p, now) => now >= p.giftAt;
+  // ---- Il "giorno" del gioco: cambia a mezzanotte, ora di Roma ----
+  function romeParts(now) {
+    const parts = {};
+    const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Rome', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
+    for (const x of fmt.formatToParts(new Date(now))) parts[x.type] = x.value;
+    return parts;
+  }
+  function romeDay(now) {
+    const r = romeParts(now);
+    return `${r.year}-${r.month}-${r.day}`;
+  }
+  // Millisecondi che mancano alla prossima mezzanotte di Roma
+  function msToRomeMidnight(now) {
+    const r = romeParts(now);
+    const passed = ((+r.hour * 60 + +r.minute) * 60 + +r.second) * 1000 + (now % 1000);
+    return 24 * 3600 * 1000 - passed;
+  }
+
+  // Baule del giorno: uno al giorno
+  const giftReady = (p, now) => p.giftDay !== romeDay(now);
   function openGift(p, now, rnd) {
     if (!giftReady(p, now)) return null;
-    p.giftAt = now + GIFT_EVERY;
+    p.giftDay = romeDay(now);
     return openContents(p, 'dono', arena(p), rnd);
+  }
+
+  // ---- Negozio ----
+  // Numero "casuale" fisso per un certo testo: così le offerte sono le stesse per tutto il giorno
+  function seedOf(text) {
+    let h = 2166136261;
+    for (let i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+  }
+  function seeded(seed) {
+    let a = seed;
+    return () => {
+      a = (a + 0x6D2B79F5) >>> 0;
+      let t = Math.imul(a ^ (a >>> 15), a | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  // Le 6 carte in vendita oggi (solo carte già trovate)
+  function shopOffers(p, now) {
+    const day = romeDay(now);
+    if (p.shopDay !== day) { p.shopDay = day; p.shopBought = []; }
+    const rnd = seeded(seedOf(day + p.id));
+    const owned = D.CARDS.filter((c) => p.cards[c.key]);
+    const wanted = ['comune', 'comune', 'rara', 'rara', 'epica', 'leggendaria'];
+    const used = new Set();
+    const offers = [];
+    for (const want of wanted) {
+      const order = ['leggendaria', 'epica', 'rara', 'comune'];
+      let list = [];
+      for (let i = order.indexOf(want); i < order.length && !list.length; i++) {
+        list = owned.filter((c) => c.rarity === order[i] && !used.has(c.key));
+      }
+      if (!list.length) list = owned.filter((c) => !used.has(c.key));
+      if (!list.length) break;
+      const card = list[Math.floor(rnd() * list.length)];
+      used.add(card.key);
+      const s = D.SHOP_CARD[card.rarity];
+      offers.push({ key: card.key, n: s.n, price: s.price, cur: s.cur, bought: p.shopBought.includes(card.key) });
+    }
+    return offers;
+  }
+  function buyOffer(p, key, now) {
+    const o = shopOffers(p, now).find((x) => x.key === key);
+    if (!o || o.bought) return false;
+    if (o.cur === 'gold' ? p.gold < o.price : p.gems < o.price) return false;
+    if (o.cur === 'gold') p.gold -= o.price; else p.gems -= o.price;
+    addCards(p, { [key]: o.n });
+    p.shopBought.push(key);
+    return true;
+  }
+  function buyGemItem(p, id, rnd) {
+    const it = D.GEM_SHOP.find((x) => x.id === id);
+    if (!it || (p.gems || 0) < it.price) return null;
+    p.gems -= it.price;
+    if (it.kind === 'gold') { p.gold += it.amount; return { gold: it.amount }; }
+    return openContents(p, it.chest, arena(p), rnd);
+  }
+  // Aprire subito un baule chiuso o in apertura: 1 gemma per ogni minuto che manca
+  function skipCost(chest, now) {
+    if (!chest) return 0;
+    const left = chest.unlockAt == null ? D.CHESTS[chest.type].time * 1000 : chest.unlockAt - now;
+    return Math.max(1, Math.ceil(left / 60000));
+  }
+  function skipChest(p, slot, now, rnd) {
+    const c = p.chests[slot];
+    if (!c || chestState(c, now) === 'pronto') return null;
+    const cost = skipCost(c, now);
+    if ((p.gems || 0) < cost) return null;
+    p.gems -= cost;
+    p.chests[slot] = null;
+    return openContents(p, c.type, c.arena, rnd);
   }
 
   // ---- Amici e clan (i dati: la parte "online" è in social.js) ----
@@ -282,6 +380,7 @@
   const api = {
     KEY, fresh, load, save, arena, avgLevel, deckLevels, upgradeInfo, canUpgrade, upgrade, setDeckCard,
     applyResult, chestState, startUnlock, openChest, rollCards, addCards, giftReady, openGift, unlockArenaCards,
+    romeDay, msToRomeMidnight, shopOffers, buyOffer, buyGemItem, skipCost, skipChest,
     addFriend, removeFriend, addChat, createClan, mergeClan, canRequest, requestMax, creditDonations, randomId,
     WIN_TROPHIES, LOSS_TROPHIES, REQUEST_EVERY,
   };

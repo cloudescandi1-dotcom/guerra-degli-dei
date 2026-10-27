@@ -71,6 +71,7 @@
     $('#top-name').textContent = profile.name;
     $('#top-trophies').textContent = profile.trophies;
     $('#top-gold').textContent = profile.gold;
+    $('#top-gems').textContent = profile.gems || 0;
     $('#top-arena').textContent = D.ARENAS[P.arena(profile)].icon;
   }
   function render() {
@@ -78,7 +79,59 @@
     if (tab === 'battaglia') renderBattleTab();
     else if (tab === 'carte') renderCards();
     else if (tab === 'clan') renderClan();
+    else if (tab === 'negozio') renderShop();
     else renderArenas();
+  }
+
+  // ---------------------------------------------------------------- scheda Negozio
+  function renderShop() {
+    const now = Date.now();
+    const offers = P.shopOffers(profile, now);
+    save();
+    const offerHtml = offers.map((o) => {
+      const d = D.BY_KEY[o.key];
+      const afford = o.cur === 'gold' ? profile.gold >= o.price : profile.gems >= o.price;
+      return `<div class="offer ${o.bought ? 'sold' : ''}">${cardHtml(o.key, { level: false, count: o.n })}
+        <button class="btn small ${o.bought ? 'grey' : afford ? 'gold' : 'grey'}" data-buy="${o.key}" type="button" ${o.bought ? 'disabled' : ''}>
+          ${o.bought ? 'Comprata' : (o.cur === 'gold' ? '🪙 ' : '💎 ') + o.price}</button>
+        <small>${esc(D.RARITY[d.rarity].name)}</small></div>`;
+    }).join('');
+    const gemHtml = D.GEM_SHOP.map((it) => {
+      const icon = it.kind === 'chest' ? D.CHESTS[it.chest].icon : it.icon;
+      const name = it.kind === 'chest' ? D.CHESTS[it.chest].name : it.name;
+      const what = it.kind === 'chest' ? 'Si apre subito' : `🪙 ${it.amount} monete`;
+      return `<div class="gem-item"><span class="ci">${icon}</span><div><b>${name}</b><small>${what}</small></div>
+        <button class="btn small ${profile.gems >= it.price ? 'gold' : 'grey'}" data-gem="${it.id}" type="button">💎 ${it.price}</button></div>`;
+    }).join('');
+    $('#tab-negozio').innerHTML = `
+      <h2>Offerte del giorno</h2>
+      <p class="muted">Cambiano ogni giorno a mezzanotte (ora di Roma): nuove offerte tra <b>${fmtWait(P.msToRomeMidnight(now))}</b>.</p>
+      <div class="offers">${offerHtml}</div>
+      <h2>Con le gemme 💎 <small>— hai ${profile.gems || 0} gemme</small></h2>
+      <div class="box">${gemHtml}</div>
+      <p class="muted">Le gemme non si comprano: le trovi nei bauli e nel baule del giorno.</p>`;
+    for (const b of document.querySelectorAll('[data-buy]')) b.onclick = () => {
+      const o = offers.find((x) => x.key === b.dataset.buy);
+      if (P.buyOffer(profile, b.dataset.buy, Date.now())) {
+        save(); Sound.play('chest');
+        toast(`Hai comprato ${o.n} × ${D.BY_KEY[o.key].name}!`);
+        render();
+      } else toast(o.cur === 'gold' ? 'Non hai abbastanza monete' : 'Non hai abbastanza gemme');
+    };
+    for (const b of document.querySelectorAll('[data-gem]')) b.onclick = () => {
+      const it = D.GEM_SHOP.find((x) => x.id === b.dataset.gem);
+      if (profile.gems < it.price) { toast('Non hai abbastanza gemme: le trovi nei bauli'); return; }
+      const body = modal(`<div class="center"><h3>Comprare?</h3><p>Spendi <b>💎 ${it.price}</b> gemme.</p>
+        <div class="row"><button class="btn grey" id="no" type="button">No</button><button class="btn gold" id="yes" type="button">Sì</button></div></div>`);
+      body.querySelector('#no').onclick = closeModal;
+      body.querySelector('#yes').onclick = () => {
+        const r = P.buyGemItem(profile, it.id);
+        save();
+        if (r && r.cards) showReward(r);
+        else { closeModal(); Sound.play('chest'); toast(`🪙 +${it.amount} monete`); }
+        render();
+      };
+    };
   }
   for (const b of document.querySelectorAll('.tabbar button')) {
     b.addEventListener('click', () => {
@@ -121,7 +174,7 @@
       <div class="chests">${chests}</div>
       <button type="button" class="gift" id="gift">
         <span class="gi">🎁</span>
-        <div><b>Dono degli dèi</b><small>${giftOk ? 'Pronto: toccalo per aprirlo!' : 'Prossimo dono tra ' + fmtWait(profile.giftAt - now)}</small></div>
+        <div><b>Baule del giorno</b><small>${giftOk ? 'Pronto: toccalo per aprirlo!' : 'Il prossimo a mezzanotte (ora di Roma), tra ' + fmtWait(P.msToRomeMidnight(now))}</small></div>
         <span class="btn small ${giftOk ? 'gold' : 'grey'}">${giftOk ? 'Apri' : '⏳'}</span>
       </button>`;
     $('#go-battle').onclick = () => startLadder();
@@ -129,7 +182,7 @@
     $('#go-friend').onclick = () => { tab = 'clan'; document.querySelector('[data-tab=clan]').click(); };
     $('#gift').onclick = () => {
       const r = P.openGift(profile, Date.now());
-      if (!r) { toast('Il dono non è ancora pronto'); return; }
+      if (!r) { toast('Il baule del giorno torna a mezzanotte'); return; }
       save(); showReward(r); render();
     };
     for (const el of document.querySelectorAll('.chest.full')) el.onclick = () => chestDialog(+el.dataset.slot);
@@ -150,20 +203,25 @@
       <p>Arena: ${esc(D.ARENAS[c.arena].name)}<br>Contiene circa ${Math.round(info.cards * (1 + c.arena * 0.25))} carte e delle monete.</p>
       ${st === 'in apertura' ? `<p>Si apre tra <b>${fmtWait(c.unlockAt - now)}</b></p>`
         : busy ? '<p class="muted">Stai già aprendo un altro baule: uno alla volta!</p>'
-          : `<p>Tempo di apertura: <b>${fmtWait(info.time * 1000)}</b></p><button id="unlock" class="btn gold full" type="button">Inizia ad aprire</button>`}</div>`);
+          : `<p>Tempo di apertura: <b>${fmtWait(info.time * 1000)}</b></p><button id="unlock" class="btn gold full" type="button">Inizia ad aprire</button>`}
+      <button id="skip" class="btn full" type="button">Apri subito per 💎 ${P.skipCost(c, now)}</button></div>`);
     const u = body.querySelector('#unlock');
     if (u) u.onclick = () => { P.startUnlock(profile, slot, Date.now()); save(); closeModal(); render(); };
+    body.querySelector('#skip').onclick = () => {
+      const r = P.skipChest(profile, slot, Date.now());
+      if (!r) { toast('Non hai abbastanza gemme: le trovi nei bauli'); return; }
+      save(); showReward(r); render();
+    };
   }
 
   function showReward(r) {
     Sound.play('chest');
-    const before = r.before || {};
     const cards = Object.entries(r.cards).map(([k, n]) => cardHtml(k, { count: n, level: false, cls: '' })).join('');
-    modal(`<div class="center"><div style="font-size:3.5rem">${D.CHESTS[r.type].icon}</div><h3>${D.CHESTS[r.type].name}</h3>
-      <p>🪙 <b>+${r.gold}</b> monete</p></div><div class="reward">${cards}</div>
-      <button class="btn gold full" type="button" onclick="document.querySelector('#modal .close').click()">Fantastico!</button>`);
+    const body = modal(`<div class="center"><div style="font-size:3.5rem">${D.CHESTS[r.type].icon}</div><h3>${D.CHESTS[r.type].name}</h3>
+      <p>🪙 <b>+${r.gold}</b> monete${r.gems ? ` &nbsp; 💎 <b>+${r.gems}</b> gemme` : ''}</p></div><div class="reward">${cards}</div>
+      <button class="btn gold full" type="button" id="reward-ok" style="width:100%">Fantastico!</button>`);
+    body.querySelector('#reward-ok').onclick = closeModal;
     renderTop();
-    void before;
   }
 
   function trainDialog() {
@@ -283,10 +341,39 @@
     $('#tab-arene').innerHTML = '<h2>Il cammino verso l\'Olimpo</h2>' + D.ARENAS.map((a, i) => i).reverse().map((i) => {
       const a = D.ARENAS[i];
       const cards = D.CARDS.filter((c) => c.arena === i).map((c) => c.emoji).join('');
-      return `<div class="arena-row ${i === cur ? 'current' : ''} ${i > cur ? 'locked' : ''}" style="background:linear-gradient(90deg, ${a.sky}, ${a.ground[0]})">
+      return `<button type="button" data-arena="${i}" class="arena-row ${i === cur ? 'current' : ''} ${i > cur ? 'locked' : ''}" style="background:linear-gradient(90deg, ${a.sky}, ${a.ground[0]})">
         <span class="ai">${i > cur ? '🔒' : a.icon}</span>
-        <div><h3>Arena ${i + 1}: ${esc(a.name)}</h3><p>🏆 da ${a.trophies} coppe${i === cur ? ' — <b>sei qui!</b>' : ''}</p><div class="unl">${cards}</div></div></div>`;
-    }).join('') + `<p class="muted">Vinci per guadagnare ${P.WIN_TROPHIES} coppe, perdi e ne lasci ${P.LOSS_TROPHIES}. Una volta raggiunta un'arena non si torna indietro.</p>`;
+        <div><h3>Arena ${i + 1}: ${esc(a.name)}</h3><p>🏆 da ${a.trophies} coppe${i === cur ? ' — <b>sei qui!</b>' : ''}</p><div class="unl">${cards}</div></div>
+        <span class="more">›</span></button>`;
+    }).join('') + `<p class="muted">Tocca un'arena per vedere le tue vittorie, i bauli e le carte che sblocca. Vinci per guadagnare ${P.WIN_TROPHIES} coppe, perdi e ne lasci ${P.LOSS_TROPHIES}. Una volta raggiunta un'arena non si torna indietro.</p>`;
+    for (const el of document.querySelectorAll('[data-arena]')) el.onclick = () => { Sound.play('tap'); arenaDialog(+el.dataset.arena); };
+  }
+
+  // Scheda di un'arena: le tue battaglie lì, i bauli che si trovano e le carte che sblocca
+  function arenaDialog(i) {
+    const a = D.ARENAS[i], cur = P.arena(profile);
+    const st = (profile.arenaStats || {})[i] || { w: 0, l: 0, d: 0, chests: 0 };
+    const played = st.w + st.l + st.d;
+    const status = i < cur ? '✅ Superata' : i === cur ? '📍 Sei qui' : `🔒 Mancano ${a.trophies - profile.trophies} coppe`;
+    const cards = D.CARDS.filter((c) => c.arena === i);
+    const chests = ['legno', 'argento', 'oro', 'magico'].map((t) => {
+      const info = D.CHESTS[t];
+      const n = Math.round(info.cards * (1 + i * 0.25));
+      const g = info.gold.map((x) => Math.round(x * (1 + i * 0.3)));
+      return `<div class="chest-row"><span class="ci">${info.icon}</span><div><b>${info.name}</b>
+        <small>${n} carte · 🪙 ${g[0]}–${g[1]} · si apre in ${fmtWait(info.time * 1000)}${info.minRarity ? ' · almeno una ' + D.RARITY[info.minRarity].name.toLowerCase() : ''}</small></div></div>`;
+    }).join('');
+    const body = modal(`<div class="arena-detail" style="background:linear-gradient(${a.sky}, ${a.ground[0]})">
+        <div class="icon">${a.icon}</div><h3>Arena ${i + 1}: ${esc(a.name)}</h3><p>🏆 da ${a.trophies} coppe · ${status}</p></div>
+      <h2>Le tue battaglie qui</h2>
+      ${played ? `<div class="stats"><div>Vittorie<b>✅ ${st.w}</b></div><div>Sconfitte<b>❌ ${st.l}</b></div>
+        <div>Pareggi<b>🤝 ${st.d}</b></div><div>Bauli vinti<b>📦 ${st.chests}</b></div></div>`
+        : `<p class="muted">${i > cur ? 'Non sei ancora arrivato in quest\'arena.' : 'Nessuna battaglia con le coppe giocata qui.'}</p>`}
+      <h2>Carte che sblocca</h2>
+      <div class="card-grid">${cards.map((c) => cardHtml(c.key, { level: !!profile.cards[c.key], lockable: true })).join('')}</div>
+      <h2>Bauli di quest'arena</h2>${chests}
+      <p class="muted">Nei bauli escono le carte di quest'arena e di tutte quelle prima.</p>`);
+    for (const el of body.querySelectorAll('.card')) el.onclick = () => cardDialog(el.dataset.key);
   }
 
   // ---------------------------------------------------------------- scheda Clan e amici
@@ -908,7 +995,7 @@
       if (tab !== 'clan') { unread++; updateBadge(); }
     },
     onClan: (got) => {
-      if (got > 0) { toast(`🎁 Hai ricevuto ${got} carte dal clan!`, 3500); Sound.play('chest'); }
+      if (got > 0) { toast(`🎁 Hai ricevuto ${got === 1 ? 'una carta' : got + ' carte'} dal clan!`, 3500); Sound.play('chest'); }
       if (tab !== 'clan') { unread++; updateBadge(); }
       softClan();
     },
@@ -934,7 +1021,9 @@
 
   // Aggiorna ogni secondo i conti alla rovescia dei bauli
   setInterval(() => {
-    if (!B && tab === 'battaglia' && $('#modal').hidden) renderBattleTab();
+    if (B || !$('#modal').hidden) return;
+    if (tab === 'battaglia') renderBattleTab();
+    else if (tab === 'negozio') renderShop();
   }, 1000);
 
   render();

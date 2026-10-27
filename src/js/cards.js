@@ -142,18 +142,34 @@
     return a;
   }
 
-  // Bauli: tempo di apertura (secondi), monete e carte (moltiplicati per l'arena)
+  // Bauli: tempo di apertura (secondi), monete e carte (moltiplicati per l'arena);
+  // gemChance: probabilità che dentro ci siano anche delle gemme
   const CHESTS = {
-    legno: { name: 'Baule di legno', icon: '📦', time: 30, gold: [18, 30], cards: 4 },
-    argento: { name: 'Baule d\'argento', icon: '🪙', time: 120, gold: [40, 60], cards: 10 },
-    oro: { name: 'Baule d\'oro', icon: '💰', time: 300, gold: [120, 180], cards: 24, minRarity: 'rara' },
-    magico: { name: 'Baule magico', icon: '🔮', time: 600, gold: [300, 420], cards: 50, minRarity: 'epica' },
-    dono: { name: 'Dono degli dèi', icon: '🎁', time: 0, gold: [20, 40], cards: 3 },
+    legno: { name: 'Baule di legno', icon: '📦', time: 30, gold: [18, 30], gems: [1, 2], gemChance: 0.15, cards: 4 },
+    argento: { name: 'Baule d\'argento', icon: '🪙', time: 120, gold: [40, 60], gems: [2, 4], gemChance: 0.3, cards: 10 },
+    oro: { name: 'Baule d\'oro', icon: '💰', time: 300, gold: [120, 180], gems: [5, 10], gemChance: 0.6, cards: 24, minRarity: 'rara' },
+    magico: { name: 'Baule magico', icon: '🔮', time: 600, gold: [300, 420], gems: [12, 20], gemChance: 1, cards: 50, minRarity: 'epica' },
+    dono: { name: 'Baule del giorno', icon: '🎁', time: 0, gold: [40, 80], gems: [5, 10], gemChance: 0.5, cards: 8 },
   };
+
+  // Negozio: carte del giorno (con le monete) e articoli con le gemme
+  const SHOP_CARD = {
+    comune: { n: 10, price: 100, cur: 'gold' },
+    rara: { n: 3, price: 300, cur: 'gold' },
+    epica: { n: 1, price: 1000, cur: 'gold' },
+    leggendaria: { n: 1, price: 5000, cur: 'gold' },
+  };
+  const GEM_SHOP = [
+    { id: 'argento', kind: 'chest', chest: 'argento', price: 30 },
+    { id: 'oro', kind: 'chest', chest: 'oro', price: 120 },
+    { id: 'magico', kind: 'chest', chest: 'magico', price: 300 },
+    { id: 'monete1', kind: 'gold', amount: 500, price: 50, icon: '🪙', name: 'Borsa di monete' },
+    { id: 'monete2', kind: 'gold', amount: 2500, price: 200, icon: '💰', name: 'Forziere di monete' },
+  ];
   // Ordine fisso dei bauli vinti, come un giro che ricomincia
   const CHEST_CYCLE = ['legno', 'legno', 'argento', 'legno', 'argento', 'oro', 'legno', 'argento', 'legno', 'magico'];
 
-  const api = { RARITY, UPGRADE_GOLD, MAX_LEVEL, levelMul, ARENAS, CARDS, EXTRA, TOWERS, BY_KEY, START_DECK, arenaFor, CHESTS, CHEST_CYCLE };
+  const api = { RARITY, UPGRADE_GOLD, MAX_LEVEL, levelMul, ARENAS, CARDS, EXTRA, TOWERS, BY_KEY, START_DECK, arenaFor, CHESTS, CHEST_CYCLE, SHOP_CARD, GEM_SHOP };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.GameData = api;
 })(typeof self !== 'undefined' ? self : this);
