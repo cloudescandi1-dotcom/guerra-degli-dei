@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>Guerra degli Dèi</title>
+  <meta name="description" content="Battaglie di carte in tempo reale con eroi e mostri della mitologia greca e romana.">
+  <meta name="theme-color" content="#141b33">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Guerra Dèi">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Menu principale -->
+  <section id="home" class="screen">
+    <header class="top">
+      <button id="btn-profile" class="profile" type="button">
+        <span class="lvl" id="top-arena">🏛️</span>
+        <span><b id="top-name">Eroe</b><small><span id="top-trophies">0</span> 🏆</small></span>
+      </button>
+      <div class="top-right">
+        <span class="gold">🪙 <b id="top-gold">0</b></span>
+        <span id="net-dot" class="net-dot" title="Collegamento amici"></span>
+        <button id="btn-settings" class="icon-btn" type="button" title="Impostazioni">⚙️</button>
+      </div>
+    </header>
+
+    <main class="tabs">
+      <div id="tab-carte" class="tab"></div>
+      <div id="tab-battaglia" class="tab active"></div>
+      <div id="tab-clan" class="tab"></div>
+      <div id="tab-arene" class="tab"></div>
+    </main>
+
+    <nav class="tabbar">
+      <button data-tab="carte" type="button"><span>🃏</span>Carte</button>
+      <button data-tab="battaglia" type="button" class="active"><span>⚔️</span>Battaglia</button>
+      <button data-tab="clan" type="button"><span>🛡️</span>Clan<i id="clan-badge" class="badge" hidden></i></button>
+      <button data-tab="arene" type="button"><span>🏛️</span>Arene</button>
+    </nav>
+  </section>
+
+  <!-- Battaglia -->
+  <section id="battle" class="screen" hidden>
+    <div class="hud-top">
+      <button id="btn-surrender" class="icon-btn small" type="button" title="Arrenditi">🏳️</button>
+      <div class="foe"><b id="foe-name">Avversario</b><span id="foe-crowns" class="crowns red">👑 0</span></div>
+      <div class="clock"><small id="clock-label">Tempo</small><b id="clock">3:00</b></div>
+      <div class="mine"><span id="my-crowns" class="crowns blue">👑 0</span></div>
+      <button id="btn-emote" class="icon-btn small" type="button" title="Emoticon">😀</button>
+    </div>
+    <div class="field" id="field">
+      <canvas id="canvas"></canvas>
+      <div id="banner" class="banner" hidden></div>
+      <div id="emote-bar" class="emote-bar" hidden></div>
+      <div id="emote-foe" class="emote-bubble foe-bubble" hidden></div>
+      <div id="emote-me" class="emote-bubble me-bubble" hidden></div>
+    </div>
+    <div class="hud-bottom">
+      <div class="hand">
+        <div class="next"><small>Prossima</small><div id="next-card" class="mini-card"></div></div>
+        <div id="hand" class="hand-cards"></div>
+      </div>
+      <div class="amb">
+        <span class="drop" id="amb-num">5</span>
+        <div class="amb-bar"><div id="amb-fill"></div><div class="ticks"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Finestra generica (contenuto creato dal codice) -->
+  <div id="modal" class="modal" hidden>
+    <div class="sheet" role="dialog" aria-modal="true">
+      <button class="close" type="button" aria-label="Chiudi">✕</button>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="js/cards.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/bot.js"></script>
+  <script src="js/profile.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/sound.js"></script>
+  <script src="js/peerjs.min.js"></script>
+  <script src="js/social.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

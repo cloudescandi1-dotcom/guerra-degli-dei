@@ -1,0 +1,12 @@
+{
+  "name": "guerra-degli-dei",
+  "version": "1.0.0",
+  "description": "Battaglie di carte in tempo reale con la mitologia greca e romana (web app installabile)",
+  "private": true,
+  "scripts": {
+    "start": "node tools/server.js",
+    "test": "node --test tests/engine.test.js tests/profile.test.js",
+    "icons": "node tools/make-icons.js"
+  },
+  "license": "UNLICENSED"
+}
