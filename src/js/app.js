@@ -51,6 +51,8 @@
   // Disegno del personaggio (immagine); se manca, l'emoji
   const art = (key, cls) => (Sprites.has(key) ? `<img class="${cls || 'art'}" src="${Sprites.url(key, 0)}" alt="" draggable="false">` : D.BY_KEY[key].emoji);
 
+  const chestArt = (type, cls) => art('ch_' + type, cls || 'chest-art');
+
   // Disegno di una carta (HTML)
   function cardHtml(key, o) {
     o = o || {};
@@ -83,7 +85,6 @@
     else if (tab === 'carte') renderCards();
     else if (tab === 'clan') renderClan();
     else if (tab === 'negozio') renderShop();
-    else renderArenas();
   }
 
   // ---------------------------------------------------------------- scheda Negozio
@@ -100,7 +101,7 @@
         <small>${esc(D.RARITY[d.rarity].name)}</small></div>`;
     }).join('');
     const gemHtml = D.GEM_SHOP.map((it) => {
-      const icon = it.kind === 'chest' ? D.CHESTS[it.chest].icon : it.icon;
+      const icon = it.kind === 'chest' ? chestArt(it.chest) : it.icon;
       const name = it.kind === 'chest' ? D.CHESTS[it.chest].name : it.name;
       const what = it.kind === 'chest' ? 'Si apre subito' : `🪙 ${it.amount} monete`;
       return `<div class="gem-item"><span class="ci">${icon}</span><div><b>${name}</b><small>${what}</small></div>
@@ -158,16 +159,18 @@
       if (st === 'vuoto') return `<div class="chest">Spazio<br>baule</div>`;
       const info = D.CHESTS[c.type];
       const label = st === 'pronto' ? '<b>APRI!</b>' : st === 'in apertura' ? `<b>${fmtWait(c.unlockAt - now)}</b>` : `<b>${fmtWait(info.time * 1000)}</b>`;
-      return `<button type="button" class="chest full ${st === 'pronto' ? 'ready' : ''}" data-slot="${i}"><span class="ci">${info.icon}</span>${label}<small>${D.ARENAS[c.arena].name.split(' ')[0]}</small></button>`;
+      return `<button type="button" class="chest full ${st === 'pronto' ? 'ready' : ''}" data-slot="${i}"><span class="ci">${chestArt(c.type)}</span>${label}<small>${D.ARENAS[c.arena].name.split(' ')[0]}</small></button>`;
     }).join('');
     const giftOk = P.giftReady(profile, now);
     $('#tab-battaglia').innerHTML = `
-      <div class="arena-banner" style="background:linear-gradient(${ar.sky}, ${ar.ground[0]})">
+      <button type="button" id="arena-open" class="arena-banner" style="background:linear-gradient(${ar.sky}, ${ar.ground[0]})">
+        ${P.roadPending(profile) ? `<span class="road-badge">🎁 ${P.roadPending(profile)}</span>` : ''}
         <div class="icon">${ar.icon}</div>
         <h3>Arena ${a + 1}: ${esc(ar.name)}</h3>
         <p>🏆 ${profile.trophies}${next ? ' / ' + next.trophies + ' per ' + esc(next.name) : ' — arena finale!'}</p>
         <div class="trophy-bar"><div style="width:${Math.max(0, Math.min(100, pct))}%"></div></div>
-      </div>
+        <span class="tap-hint">Tocca per arene e ricompense ›</span>
+      </button>
       <button id="go-battle" class="btn gold battle-btn" type="button">⚔️ BATTAGLIA</button>
       <div class="row">
         <button id="go-train" class="btn" type="button">🎯 Allenamento</button>
@@ -176,10 +179,11 @@
       <h2>Bauli <small>— vinci le battaglie per ottenerne</small></h2>
       <div class="chests">${chests}</div>
       <button type="button" class="gift" id="gift">
-        <span class="gi">🎁</span>
+        <span class="gi">${chestArt('dono')}</span>
         <div><b>Baule del giorno</b><small>${giftOk ? 'Pronto: toccalo per aprirlo!' : 'Il prossimo a mezzanotte (ora di Roma), tra ' + fmtWait(P.msToRomeMidnight(now))}</small></div>
         <span class="btn small ${giftOk ? 'gold' : 'grey'}">${giftOk ? 'Apri' : '⏳'}</span>
       </button>`;
+    $('#arena-open').onclick = () => { Sound.play('tap'); arenaDialog(a); };
     $('#go-battle').onclick = () => startLadder();
     $('#go-train').onclick = () => trainDialog();
     $('#go-friend').onclick = () => { tab = 'clan'; document.querySelector('[data-tab=clan]').click(); };
@@ -202,7 +206,7 @@
       return;
     }
     const busy = profile.chests.some((x) => P.chestState(x, now) === 'in apertura');
-    const body = modal(`<div class="center"><div style="font-size:4rem">${info.icon}</div><h3>${info.name}</h3>
+    const body = modal(`<div class="center"><div>${chestArt(c.type, 'chest-big')}</div><h3>${info.name}</h3>
       <p>Arena: ${esc(D.ARENAS[c.arena].name)}<br>Contiene circa ${Math.round(info.cards * (1 + c.arena * 0.25))} carte e delle monete.</p>
       ${st === 'in apertura' ? `<p>Si apre tra <b>${fmtWait(c.unlockAt - now)}</b></p>`
         : busy ? '<p class="muted">Stai già aprendo un altro baule: uno alla volta!</p>'
@@ -220,7 +224,7 @@
   function showReward(r) {
     Sound.play('chest');
     const cards = Object.entries(r.cards).map(([k, n]) => cardHtml(k, { count: n, level: false, cls: '' })).join('');
-    const body = modal(`<div class="center"><div style="font-size:3.5rem">${D.CHESTS[r.type].icon}</div><h3>${D.CHESTS[r.type].name}</h3>
+    const body = modal(`<div class="center"><div class="chest-pop">${chestArt(r.type, 'chest-big')}</div><h3>${D.CHESTS[r.type].name}</h3>
       <p>🪙 <b>+${r.gold}</b> monete${r.gems ? ` &nbsp; 💎 <b>+${r.gems}</b> gemme` : ''}</p></div><div class="reward">${cards}</div>
       <button class="btn gold full" type="button" id="reward-ok" style="width:100%">Fantastico!</button>`);
     body.querySelector('#reward-ok').onclick = closeModal;
@@ -338,45 +342,55 @@
     if (use) use.onclick = () => { pickKey = key; closeModal(); renderCards(); window.scrollTo(0, 0); $('#tab-carte').scrollTop = 0; };
   }
 
-  // ---------------------------------------------------------------- scheda Arene
-  function renderArenas() {
-    const cur = P.arena(profile);
-    $('#tab-arene').innerHTML = '<h2>Il cammino verso l\'Olimpo</h2>' + D.ARENAS.map((a, i) => i).reverse().map((i) => {
-      const a = D.ARENAS[i];
-      const cards = D.CARDS.filter((c) => c.arena === i).map((c) => art(c.key, 'mini')).join('');
-      return `<button type="button" data-arena="${i}" class="arena-row ${i === cur ? 'current' : ''} ${i > cur ? 'locked' : ''}" style="background:linear-gradient(90deg, ${a.sky}, ${a.ground[0]})">
-        <span class="ai">${i > cur ? '🔒' : a.icon}</span>
-        <div><h3>Arena ${i + 1}: ${esc(a.name)}</h3><p>🏆 da ${a.trophies} coppe${i === cur ? ' — <b>sei qui!</b>' : ''}</p><div class="unl">${cards}</div></div>
-        <span class="more">›</span></button>`;
-    }).join('') + `<p class="muted">Tocca un'arena per vedere le tue vittorie, i bauli e le carte che sblocca. Vinci per guadagnare ${P.WIN_TROPHIES} coppe, perdi e ne lasci ${P.LOSS_TROPHIES}. Una volta raggiunta un'arena non si torna indietro.</p>`;
-    for (const el of document.querySelectorAll('[data-arena]')) el.onclick = () => { Sound.play('tap'); arenaDialog(+el.dataset.arena); };
-  }
-
-  // Scheda di un'arena: le tue battaglie lì, i bauli che si trovano e le carte che sblocca
+  // Scheda di un'arena: ricompense del cammino dei trofei, carte che sblocca, bauli e le tue battaglie
   function arenaDialog(i) {
     const a = D.ARENAS[i], cur = P.arena(profile);
     const st = (profile.arenaStats || {})[i] || { w: 0, l: 0, d: 0, chests: 0 };
     const played = st.w + st.l + st.d;
     const status = i < cur ? '✅ Superata' : i === cur ? '📍 Sei qui' : `🔒 Mancano ${a.trophies - profile.trophies} coppe`;
     const cards = D.CARDS.filter((c) => c.arena === i);
+    const road = P.road(i).map((r) => {
+      const got = profile.roadClaimed.includes(r.t), ready = P.roadReady(profile, r);
+      const pic = r.kind === 'chest' ? chestArt(r.chest) : r.kind === 'gold' ? '<span class="big-ico">🪙</span>' : '<span class="big-ico">💎</span>';
+      const what = r.kind === 'chest' ? D.CHESTS[r.chest].name : r.kind === 'gold' ? `${r.amount} monete` : `${r.amount} gemme`;
+      return `<div class="road-step ${got ? 'got' : ready ? 'ready' : ''}"><div class="road-t">🏆 ${r.t}</div>${pic}<small>${what}</small>
+        ${got ? '<span class="road-ok">✔ Ritirato</span>' : ready ? `<button class="btn small gold" data-road="${r.t}" type="button">Ritira</button>` : '<span class="road-lock">🔒</span>'}</div>`;
+    }).join('');
     const chests = ['legno', 'argento', 'oro', 'magico'].map((t) => {
       const info = D.CHESTS[t];
       const n = Math.round(info.cards * (1 + i * 0.25));
       const g = info.gold.map((x) => Math.round(x * (1 + i * 0.3)));
-      return `<div class="chest-row"><span class="ci">${info.icon}</span><div><b>${info.name}</b>
-        <small>${n} carte · 🪙 ${g[0]}–${g[1]} · si apre in ${fmtWait(info.time * 1000)}${info.minRarity ? ' · almeno una ' + D.RARITY[info.minRarity].name.toLowerCase() : ''}</small></div></div>`;
+      return `<div class="chest-row"><span class="ci">${chestArt(t)}</span><div><b>${info.name}</b>
+        <small>${n} carte · 🪙 ${g[0]}–${g[1]}${info.gems ? ' · a volte 💎' : ''} · si apre in ${fmtWait(info.time * 1000)}${info.minRarity ? ' · almeno una ' + D.RARITY[info.minRarity].name.toLowerCase() : ''}</small></div></div>`;
     }).join('');
+    const pending = P.road(i).filter((r) => P.roadReady(profile, r)).length;
     const body = modal(`<div class="arena-detail" style="background:linear-gradient(${a.sky}, ${a.ground[0]})">
+        <button class="nav prev" type="button" ${i === 0 ? 'disabled' : ''}>‹</button>
+        <button class="nav next" type="button" ${i === D.ARENAS.length - 1 ? 'disabled' : ''}>›</button>
         <div class="icon">${a.icon}</div><h3>Arena ${i + 1}: ${esc(a.name)}</h3><p>🏆 da ${a.trophies} coppe · ${status}</p></div>
+      <h2>Ricompense delle coppe ${pending ? `<small>— ${pending} da ritirare!</small>` : ''}</h2>
+      <div class="road">${road}</div>
+      <h2>Carte che sblocca</h2>
+      <div class="card-grid unlocks">${cards.map((c) => cardHtml(c.key, { level: !!profile.cards[c.key], cls: profile.cards[c.key] ? '' : 'to-unlock' })).join('')}</div>
       <h2>Le tue battaglie qui</h2>
       ${played ? `<div class="stats"><div>Vittorie<b>✅ ${st.w}</b></div><div>Sconfitte<b>❌ ${st.l}</b></div>
         <div>Pareggi<b>🤝 ${st.d}</b></div><div>Bauli vinti<b>📦 ${st.chests}</b></div></div>`
         : `<p class="muted">${i > cur ? 'Non sei ancora arrivato in quest\'arena.' : 'Nessuna battaglia con le coppe giocata qui.'}</p>`}
-      <h2>Carte che sblocca</h2>
-      <div class="card-grid">${cards.map((c) => cardHtml(c.key, { level: !!profile.cards[c.key], lockable: true })).join('')}</div>
       <h2>Bauli di quest'arena</h2>${chests}
       <p class="muted">Nei bauli escono le carte di quest'arena e di tutte quelle prima.</p>`);
     for (const el of body.querySelectorAll('.card')) el.onclick = () => cardDialog(el.dataset.key);
+    body.querySelector('.prev').onclick = () => arenaDialog(i - 1);
+    body.querySelector('.next').onclick = () => arenaDialog(i + 1);
+    for (const b of body.querySelectorAll('[data-road]')) b.onclick = () => {
+      const r = P.claimRoad(profile, i, +b.dataset.road);
+      if (!r) return;
+      save(); render();
+      if (r.cards) showReward(r);
+      else { Sound.play('chest'); toast(r.gold ? `🪙 +${r.gold} monete` : `💎 +${r.gems} gemme`); arenaDialog(i); }
+    };
+    // la prima ricompensa da ritirare (o l'ultima ritirata) in vista
+    const target = body.querySelector('.road-step.ready') || [...body.querySelectorAll('.road-step.got')].pop();
+    if (target) target.scrollIntoView({ inline: 'center', block: 'nearest' });
   }
 
   // ---------------------------------------------------------------- scheda Clan e amici
@@ -678,6 +692,7 @@
     canvas.style.width = Math.floor(f.width) + 'px';
     canvas.style.height = Math.floor(f.height) + 'px';
     R.resize();
+    $('#river-hud').style.top = R.riverY() + 'px';
   }
   window.addEventListener('resize', () => { if (B) fitCanvas(); });
 
@@ -788,12 +803,39 @@
       const fresh = v.ruins.slice(B.ruins);
       B.ruins = v.ruins.length;
       Sound.play('tower');
-      if (navigator.vibrate) navigator.vibrate(80);
+      if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
       banner(fresh.some((r) => r.owner === B.me) ? '💥 Hai perso un tempio!' : '👑 Tempio abbattuto!');
+      // il campo trema e la corona vola verso il contatore di chi ha abbattuto il tempio
+      const field = $('#field');
+      field.classList.remove('shake'); void field.offsetWidth; field.classList.add('shake');
+      for (const r of fresh) crownFly(r, r.owner === B.me ? '#foe-crowns' : '#my-crowns');
     }
     if (!B.doubleShown && !v.inOvertime && v.t >= v.duration - 60) { B.doubleShown = true; banner('💧 Ambrosia doppia!'); }
     if (!B.otShown && v.inOvertime) { B.otShown = true; banner('⏱️ Supplementari: chi abbatte un tempio vince!'); }
     if (B.state) B.state.events.length = 0;
+  }
+
+  function crownFly(ruin, target) {
+    const field = $('#field'), fr = field.getBoundingClientRect();
+    const cv = canvas.getBoundingClientRect();
+    const from = R.toScreen(ruin.x, ruin.y);
+    const x0 = cv.left - fr.left + from.x - 28, y0 = cv.top - fr.top + from.y - 70;
+    const el = document.createElement('div');
+    el.className = 'crown-fly';
+    el.innerHTML = '👑<b>+1</b>';
+    el.style.left = x0 + 'px';
+    el.style.top = y0 + 'px';
+    field.appendChild(el);
+    setTimeout(() => {
+      const t = $(target).getBoundingClientRect();
+      el.style.transform = `translate(${t.left + t.width / 2 - (fr.left + x0 + 28)}px, ${t.top + t.height / 2 - (fr.top + y0 + 28)}px) scale(.45)`;
+      el.style.opacity = '0.2';
+    }, 700);
+    setTimeout(() => {
+      el.remove();
+      const c = $(target);
+      c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump');
+    }, 1650);
   }
 
   function hud(v) {
@@ -803,6 +845,19 @@
     $('#clock-label').textContent = v.inOvertime ? 'Supplementari' : v.t >= v.duration - 60 ? 'Ambrosia ×2' : 'Tempo';
     $('.clock').classList.toggle('double', v.t >= v.duration - 60);
     $('.clock').classList.toggle('over', v.inOvertime);
+    // Conto alla rovescia grande negli ultimi 10 secondi
+    const cd = $('#countdown');
+    const n = Math.ceil(left);
+    if (!v.over && left > 0 && n <= 10) {
+      if (cd.dataset.n !== String(n)) {
+        cd.dataset.n = n;
+        cd.textContent = n;
+        cd.hidden = false;
+        cd.classList.toggle('red', v.inOvertime || n <= 3);
+        cd.style.animation = 'none'; void cd.offsetWidth; cd.style.animation = '';
+        Sound.play('tick');
+      }
+    } else if (!cd.hidden) { cd.hidden = true; cd.dataset.n = ''; }
     $('#foe-crowns').textContent = '👑 ' + v.crowns[1 - me];
     $('#my-crowns').textContent = '👑 ' + v.crowns[me];
     $('#amb-num').dataset.n = Math.floor(pl.amb);
@@ -898,7 +953,7 @@
     if (cfg.mode === 'ladder') {
       const out = P.applyResult(profile, res === 'win' ? 0 : res === 'lose' ? 1 : -1, mine);
       extra += `<p class="center" style="font-size:1.3rem">🏆 <b>${out.trophies >= 0 ? '+' : ''}${out.trophies}</b>${out.gold ? ` &nbsp; 🪙 <b>+${out.gold}</b>` : ''}</p>`;
-      if (out.chest) extra += `<p class="center">Hai vinto un <b>${D.CHESTS[out.chest].icon} ${D.CHESTS[out.chest].name}</b>!</p>`;
+      if (out.chest) extra += `<p class="center">Hai vinto un <b>${D.CHESTS[out.chest].name}</b>!</p><div class="center">${chestArt(out.chest, 'chest-big')}</div>`;
       if (out.chestsFull) extra += '<p class="center muted">Spazi per i bauli pieni: aprine qualcuno!</p>';
       if (out.newArena != null) {
         const a = D.ARENAS[out.newArena];
@@ -941,20 +996,10 @@
       <button id="snd" class="btn full ${profile.sound ? 'green' : 'grey'}" type="button" style="width:100%">${profile.sound ? '🔊 Suoni attivi' : '🔇 Suoni spenti'}</button>
       <button id="howto" class="btn full" type="button" style="width:100%">📖 Come si gioca</button>
       <button id="legal" class="btn full grey" type="button" style="width:100%">🔒 Privacy e diritti</button>
-      <button id="reset" class="btn full red" type="button" style="width:100%">Ricomincia da zero</button>
       <p class="muted">© 2026 ${COPYRIGHT}. Tutti i diritti riservati.</p>`);
     body.querySelector('#snd').onclick = () => { profile.sound = !profile.sound; Sound.setOn(profile.sound); save(); $('#btn-settings').click(); };
     body.querySelector('#howto').onclick = howTo;
     body.querySelector('#legal').onclick = legal;
-    body.querySelector('#reset').onclick = () => {
-      const b2 = modal(`<h3>Ricominciare?</h3><p>Perdi coppe, carte, monete, amici e clan. <b>Non si può annullare.</b></p>
-        <div class="row"><button class="btn grey" id="no" type="button">No</button><button class="btn red" id="yes" type="button">Sì, cancella tutto</button></div>`);
-      b2.querySelector('#no').onclick = closeModal;
-      b2.querySelector('#yes').onclick = () => {
-        const id = profile.id;   // il codice amico resta lo stesso
-        profile = P.fresh(); profile.id = id; save(); closeModal(); render(); toast('Nuova partenza!');
-      };
-    };
   };
 
   // Titolare dei diritti: cambia qui il nome se vuoi che compaia il tuo nome vero
@@ -969,7 +1014,7 @@
       Gli amici e i membri del clan con cui ti colleghi vedono il tuo nome nel gioco, le coppe, i messaggi e il tuo indirizzo IP.
       Se non vuoi, non aggiungere amici: il resto del gioco funziona lo stesso.</p>
       <p><b>Consiglio:</b> in chat non scrivere il tuo nome vero, l'indirizzo o altri dati personali.</p>
-      <p class="muted">Il sito è ospitato da GitHub Pages, che può registrare dati tecnici delle visite. "Ricomincia da zero" cancella tutti i tuoi dati dal dispositivo.</p>`);
+      <p class="muted">Il sito è ospitato da GitHub Pages, che può registrare dati tecnici delle visite. Per cancellare i tuoi dati, cancella i dati del sito dal browser.</p>`);
   }
 
   function howTo() {

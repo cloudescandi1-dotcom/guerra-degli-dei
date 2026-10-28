@@ -24,7 +24,7 @@
       giftDay: '', shopDay: '', shopBought: [],
       cards, deck: D.START_DECK.slice(),
       chests: [{ type: 'legno', arena: 0, unlockAt: null }, null, null, null],
-      chestIndex: 0, arenaStats: {},
+      chestIndex: 0, arenaStats: {}, roadClaimed: [],
       friends: [], chats: {}, clan: null, lastRequest: 0, credited: [],
       sound: true, seen: {},
     };
@@ -297,6 +297,39 @@
     return openContents(p, c.type, c.arena, rnd);
   }
 
+  // ---- Cammino dei trofei: un premio ogni 50 coppe, dentro ogni arena ----
+  // Restituisce i premi dell'arena i: [{ t: coppe, kind: 'gold'|'gems'|'chest', amount|chest }]
+  function road(i) {
+    const from = D.ARENAS[i].trophies;
+    const to = i + 1 < D.ARENAS.length ? D.ARENAS[i + 1].trophies : from + 400;
+    const list = [];
+    let n = 0;
+    for (let t = from + 50; t < to || (i + 1 === D.ARENAS.length && t <= to); t += 50, n++) {
+      const step = n % 4;
+      if (step === 0) list.push({ t, kind: 'gold', amount: 50 + i * 40 + n * 10 });
+      else if (step === 1) list.push({ t, kind: 'chest', chest: i >= 4 ? 'oro' : 'argento' });
+      else if (step === 2) list.push({ t, kind: 'gems', amount: 10 + i * 4 });
+      else list.push({ t, kind: 'chest', chest: i >= 3 ? 'magico' : 'oro' });
+    }
+    // L'ultimo premio di ogni arena è sempre un baule speciale
+    if (list.length) list[list.length - 1] = { t: list[list.length - 1].t, kind: 'chest', chest: i >= 2 ? 'magico' : 'oro' };
+    return list;
+  }
+  const roadReady = (p, r) => p.best >= r.t && !p.roadClaimed.includes(r.t);
+  function roadPending(p) {
+    let n = 0;
+    for (let i = 0; i < D.ARENAS.length; i++) for (const r of road(i)) if (roadReady(p, r)) n++;
+    return n;
+  }
+  function claimRoad(p, arenaIdx, t, rnd) {
+    const r = road(arenaIdx).find((x) => x.t === t);
+    if (!r || !roadReady(p, r)) return null;
+    p.roadClaimed.push(t);
+    if (r.kind === 'gold') { p.gold += r.amount; return { gold: r.amount }; }
+    if (r.kind === 'gems') { p.gems = (p.gems || 0) + r.amount; return { gems: r.amount }; }
+    return openContents(p, r.chest, arenaIdx, rnd);
+  }
+
   // ---- Amici e clan (i dati: la parte "online" è in social.js) ----
   function addFriend(p, info) {
     if (!info || !info.id || info.id === p.id) return null;
@@ -381,6 +414,7 @@
     KEY, fresh, load, save, arena, avgLevel, deckLevels, upgradeInfo, canUpgrade, upgrade, setDeckCard,
     applyResult, chestState, startUnlock, openChest, rollCards, addCards, giftReady, openGift, unlockArenaCards,
     romeDay, msToRomeMidnight, shopOffers, buyOffer, buyGemItem, skipCost, skipChest,
+    road, roadReady, roadPending, claimRoad,
     addFriend, removeFriend, addChat, createClan, mergeClan, canRequest, requestMax, creditDonations, randomId,
     WIN_TROPHIES, LOSS_TROPHIES, REQUEST_EVERY,
   };

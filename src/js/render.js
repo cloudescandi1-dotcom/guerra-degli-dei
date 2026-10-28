@@ -22,10 +22,12 @@
       const r = canvas.getBoundingClientRect();
       canvas.width = Math.round(r.width * dpr);
       canvas.height = Math.round(r.height * dpr);
-      S = Math.min(canvas.width / E.W, canvas.height / FIELD_H);
+      // Sopra il campo serve spazio per il tempio del Re nemico (TOP) e sotto per il bordo (BOT)
+      const TOP = 2.6, BOT = 0.6;
+      S = Math.min(canvas.width / E.W, canvas.height / (FIELD_H + TOP + BOT));
       ox = (canvas.width - S * E.W) / 2;
       // Il campo sta in basso (vicino alle carte); lo spazio che avanza in alto diventa cielo
-      oy = Math.max((canvas.height - S * FIELD_H) / 2, canvas.height - S * FIELD_H - S * 0.6);
+      oy = canvas.height - S * FIELD_H - S * BOT;
       bg = null;
     }
 
@@ -54,29 +56,276 @@
       g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.lineTo(c.x, c.y); g.lineTo(d.x, d.y); g.closePath();
     }
 
+    // ---------------------------------------------------------------- anfiteatro
+    // Materiale delle gradinate e colore del pavimento di ogni arena
+    const STONE = ['#a87a4a', '#b9a98a', '#c9a46a', '#8a8274', '#d9bf8f', '#3a2a30', '#f2ece0'];
+    const PATHS = ['rgba(222,196,140,0.78)', 'rgba(232,222,200,0.75)', 'rgba(150,110,60,0.45)', 'rgba(240,226,180,0.8)', 'rgba(190,160,110,0.45)', 'rgba(120,90,100,0.6)', 'rgba(242,200,90,0.35)'];
+    const SKINS = ['#f2c69c', '#d9a077', '#a86b46', '#f7d7b8', '#8a5a3a'];
+    // Una persona del pubblico (testa e spalle); arm: braccia alzate
+    function fan(g, x, y, u, shirt, skin, arm) {
+      g.fillStyle = shirt;
+      g.beginPath(); g.ellipse(x, y, u * 0.2, u * 0.15, 0, Math.PI, 0); g.fill();
+      if (arm) { g.strokeStyle = skin; g.lineWidth = u * 0.07; g.beginPath(); g.moveTo(x - u * 0.16, y - u * 0.05); g.lineTo(x - u * 0.24, y - u * 0.32); g.moveTo(x + u * 0.16, y - u * 0.05); g.lineTo(x + u * 0.24, y - u * 0.32); g.stroke(); }
+      g.fillStyle = skin;
+      g.beginPath(); g.arc(x, y - u * 0.22, u * 0.11, 0, Math.PI * 2); g.fill();
+    }
+    function stands(g, c, idx, rnd) {
+      const tl = proj(0, 0), tr = proj(E.W, 0), lw = Math.max(1, S * 0.04);
+      const stone = STONE[idx];
+      const shirts = ['#e0453a', '#3f7fe0', '#f2c24a', '#f6f1e7', '#4fa83a', '#a855f7', '#e8875a'];
+      // --- gradinate in fondo (dietro il campo avversario), a più file
+      const rows = 5, uTop = S * KT;
+      let base = tl.y - S * 0.25;
+      g.fillStyle = 'rgba(0,0,0,0.3)'; g.fillRect(0, base - uTop * 0.2, c.width, uTop * 0.4);
+      for (let r = 0; r < rows && base > -uTop; r++) {
+        const u = uTop * (1 - r * 0.08), h = u * 0.62;
+        // gradino
+        g.fillStyle = stone; g.fillRect(0, base - h, c.width, h);
+        g.fillStyle = 'rgba(0,0,0,0.22)'; g.fillRect(0, base - h * 0.25, c.width, h * 0.25);
+        g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = lw; g.beginPath(); g.moveTo(0, base - h); g.lineTo(c.width, base - h); g.stroke();
+        // pubblico seduto
+        for (let x = u * 0.3 + (r % 2) * u * 0.22; x < c.width; x += u * 0.44) {
+          if (rnd() < 0.12) continue;
+          fan(g, x, base - h * 0.35, u, shirts[Math.floor(rnd() * shirts.length)], SKINS[Math.floor(rnd() * SKINS.length)], rnd() < 0.18);
+        }
+        base -= h;
+      }
+      // muro con gli archi tra le gradinate e il campo
+      const wallH = S * KT * 0.55, wy = tl.y - S * 0.25;
+      g.fillStyle = stone; g.fillRect(0, wy, c.width, wallH * 0.0001);
+      // stendardi della squadra avversaria (in alto) appesi al muro
+      for (let x = c.width * 0.12; x < c.width; x += c.width * 0.19) {
+        g.fillStyle = '#e0453a'; g.strokeStyle = '#2b1d14'; g.lineWidth = lw;
+        g.beginPath(); g.moveTo(x - S * 0.25, wy - S * 0.55); g.lineTo(x + S * 0.25, wy - S * 0.55); g.lineTo(x + S * 0.25, wy + S * 0.05); g.lineTo(x, wy - S * 0.12); g.lineTo(x - S * 0.25, wy + S * 0.05); g.closePath(); g.fill(); g.stroke();
+        g.fillStyle = '#f2c24a'; g.beginPath(); g.arc(x, wy - S * 0.3, S * 0.08, 0, 7); g.fill();
+      }
+      // --- tribune ai lati, lungo tutto il campo
+      for (const sideL of [true, false]) {
+        for (let yy = 0.2; yy < E.H; yy += 0.55) {
+          const e = proj(sideL ? 0 : E.W, yy), u = S * e.k;
+          const room = sideL ? e.x : c.width - e.x;
+          if (room < u * 0.25) continue;
+          const dir = sideL ? -1 : 1;
+          for (let k = 0; k < 4; k++) {
+            const x = e.x + dir * u * (0.35 + k * 0.42);
+            if (x < -u || x > c.width + u) break;
+            g.fillStyle = stone; g.fillRect(x - u * 0.23, e.y - u * (0.15 + k * 0.18), u * 0.46, u * 0.4);
+            if (rnd() < 0.85) fan(g, x, e.y - u * (0.12 + k * 0.18), u * 0.9, shirts[Math.floor(rnd() * shirts.length)], SKINS[Math.floor(rnd() * SKINS.length)], rnd() < 0.15);
+          }
+        }
+      }
+    }
+
+    // ---------------------------------------------------------------- pavimento di ogni arena
+    function floor(g, idx, rnd) {
+      const lw = Math.max(1, S * 0.03);
+      // base a scacchi leggeri con i colori dell'arena
+      for (let y = 0; y < E.H; y++) {
+        for (let x = 0; x < E.W; x++) {
+          g.fillStyle = arena.ground[(x + y) % 2];
+          quad(g, x, y, x + 1.02, y + 1.02); g.fill();
+        }
+      }
+      const line = (x0, y0, x1, y1) => { const a = proj(x0, y0), b = proj(x1, y1); g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke(); };
+      const dot = (x, y, r, col) => { const q = proj(x, y); g.fillStyle = col; g.beginPath(); g.ellipse(q.x, q.y, r * S * q.k, r * S * q.k * 0.7, 0, 0, 7); g.fill(); };
+      switch (idx) {
+        case 1:   // Labirinto: lastre di pietra sfalsate, con un po' di muschio
+          g.strokeStyle = 'rgba(80,65,45,0.45)'; g.lineWidth = lw;
+          for (let y = 0; y <= E.H; y++) line(0, y, E.W, y);
+          for (let y = 0; y < E.H; y++) for (let x = (y % 2) * 0.75; x < E.W; x += 1.5) line(x, y, x, y + 1);
+          for (let i = 0; i < 90; i++) dot(rnd() * E.W, rnd() * E.H, 0.08 + rnd() * 0.1, 'rgba(70,120,50,0.35)');
+          break;
+        case 2:   // Troia: terra battuta, sassolini e solchi dei carri
+          for (let i = 0; i < 160; i++) dot(rnd() * E.W, rnd() * E.H, 0.04 + rnd() * 0.06, 'rgba(110,80,40,0.35)');
+          g.strokeStyle = 'rgba(110,80,40,0.35)'; g.lineWidth = lw * 2;
+          for (const x of [5.5, 6.2, 11.8, 12.5]) line(x, 0.6, x, E.H - 0.6);
+          break;
+        case 3:   // Isola: sabbia, conchiglie e qualche ciuffo
+          for (let i = 0; i < 120; i++) dot(rnd() * E.W, rnd() * E.H, 0.04, 'rgba(160,130,80,0.35)');
+          for (let i = 0; i < 26; i++) {
+            const x = rnd() * E.W, y = E.RIVER_TOP - 2 + rnd() * 6;
+            if (y > E.RIVER_TOP - 0.3 && y < E.RIVER_BOTTOM + 0.3) continue;
+            dot(x, y, 0.13, ['#fff3e6', '#f7c7b8', '#f2e2c4'][i % 3]);
+          }
+          break;
+        case 4:   // Colosseo: sabbia rastrellata ad archi
+          g.strokeStyle = 'rgba(150,115,70,0.3)'; g.lineWidth = lw;
+          for (let i = 0; i < 14; i++) {
+            const cx = rnd() * E.W, cy = rnd() * E.H, r = 0.8 + rnd() * 1.2;
+            for (let k = 0; k < 3; k++) { g.beginPath(); let first = true; for (let a = -0.9; a <= 0.9; a += 0.15) { const q = proj(cx + Math.sin(a) * (r + k * 0.25), cy - Math.cos(a) * (r + k * 0.25)); if (first) { g.moveTo(q.x, q.y); first = false; } else g.lineTo(q.x, q.y); } g.stroke(); }
+          }
+          break;
+        case 5:   // Inferi: roccia nera con crepe di lava che brillano
+          g.lineCap = 'round';
+          for (let i = 0; i < 22; i++) {
+            let x = rnd() * E.W, y = rnd() * E.H;
+            if (y > E.RIVER_TOP - 0.5 && y < E.RIVER_BOTTOM + 0.5) continue;
+            const pts = [[x, y]];
+            for (let k = 0; k < 4; k++) { x += (rnd() - 0.5) * 1.4; y += (rnd() - 0.5) * 1.4; pts.push([x, y]); }
+            for (const [col, w] of [['rgba(255,90,20,0.35)', lw * 5], ['#ff8a2a', lw * 1.8], ['#ffe08a', lw * 0.7]]) {
+              g.strokeStyle = col; g.lineWidth = w; g.beginPath();
+              pts.forEach(([px2, py2], j) => { const q = proj(px2, py2); if (j) g.lineTo(q.x, q.y); else g.moveTo(q.x, q.y); });
+              g.stroke();
+            }
+          }
+          break;
+        case 6:   // Olimpo: lastre di marmo con intarsi d'oro
+          g.strokeStyle = 'rgba(200,160,60,0.55)'; g.lineWidth = lw * 1.4;
+          for (let y = 0; y <= E.H; y += 2) line(0, y, E.W, y);
+          for (let x = 0; x <= E.W; x += 2) line(x, 0, x, E.H);
+          for (let y = 1; y < E.H; y += 2) for (let x = 1; x < E.W; x += 2) dot(x, y, 0.12, 'rgba(230,190,80,0.6)');
+          g.strokeStyle = 'rgba(160,150,140,0.25)'; g.lineWidth = lw;
+          for (let i = 0; i < 25; i++) { const x = rnd() * E.W, y = rnd() * E.H; line(x, y, x + rnd() * 1.5, y + (rnd() - 0.5)); }
+          break;
+        default:  // Sparta: prato con fiori e ciuffi
+          for (let i = 0; i < 80; i++) {
+            const x = 0.4 + rnd() * (E.W - 0.8), y = 0.8 + rnd() * (E.H - 1.6);
+            if (Math.abs(x - 3.5) < 1.6 || Math.abs(x - 14.5) < 1.6 || (y > 14.3 && y < 17.7)) continue;
+            if ((Math.abs(y - 3.2) < 3 || Math.abs(y - 28.8) < 3) && Math.abs(x - 9) < 3.5) continue;
+            const q = proj(x, y), u = S * q.k;
+            if (rnd() < 0.55) {
+              g.strokeStyle = 'rgba(30,60,10,0.3)'; g.lineWidth = Math.max(1, u * 0.06);
+              g.beginPath(); g.moveTo(q.x - u * 0.15, q.y); g.lineTo(q.x - u * 0.05, q.y - u * 0.25);
+              g.moveTo(q.x, q.y); g.lineTo(q.x, q.y - u * 0.3);
+              g.moveTo(q.x + u * 0.15, q.y); g.lineTo(q.x + u * 0.05, q.y - u * 0.25); g.stroke();
+            } else {
+              g.fillStyle = ['#fff6d6', '#ffd166', '#f4a3b5'][i % 3];
+              for (let k = 0; k < 4; k++) { g.beginPath(); g.arc(q.x + Math.cos(k * 1.57) * u * 0.08, q.y + Math.sin(k * 1.57) * u * 0.06, u * 0.07, 0, 7); g.fill(); }
+              g.fillStyle = '#e8a23a'; g.beginPath(); g.arc(q.x, q.y, u * 0.05, 0, 7); g.fill();
+            }
+          }
+      }
+    }
+
+    // ---------------------------------------------------------------- paesaggio di ogni arena
+    // Tutto quello che sta fuori dal campo: cielo e decorazioni diverse per ogni arena
+    const SKIES = ['#7fb2e0', '#d8b47a', '#e8a05e', '#63b6ea', '#e3ae6c', '#2a0c10', '#cfe6ff'];
+    function scenery(g, c) {
+      const idx = Math.max(0, D.ARENAS.indexOf(arena));
+      const sky = g.createLinearGradient(0, 0, 0, c.height);
+      sky.addColorStop(0, SKIES[idx]); sky.addColorStop(0.45, arena.sky); sky.addColorStop(1, '#140e0a');
+      g.fillStyle = sky; g.fillRect(0, 0, c.width, c.height);
+      const rnd = E.makeRng(11 + idx);
+      const lw = Math.max(1, S * 0.04);
+      // posizioni lungo i due lati del campo (in prospettiva), dal fondo verso chi guarda
+      const spots = [];
+      for (let yy = -1.5; yy < E.H + 0.5; yy += idx === 1 || idx === 2 || idx === 4 ? 1.1 : 1.6) {
+        for (const sideL of [true, false]) spots.push({ yy, sideL, r: rnd(), r2: rnd() });
+      }
+      const at = (sp, off) => {
+        const e = proj(sp.sideL ? 0 : E.W, Math.max(0, Math.min(E.H, sp.yy)));
+        return { x: e.x + (sp.sideL ? -1 : 1) * S * off * e.k, y: e.y, k: e.k, u: S * e.k };
+      };
+      if (idx === 3) {   // Isola: tutto intorno è mare con la schiuma
+        const sea = g.createLinearGradient(0, 0, 0, c.height);
+        sea.addColorStop(0, '#9fd4f5'); sea.addColorStop(0.25, '#2f86c9'); sea.addColorStop(1, '#0d3d6b');
+        g.fillStyle = sea; g.fillRect(0, c.height * 0.08, c.width, c.height);
+        g.strokeStyle = 'rgba(255,255,255,0.5)'; g.lineWidth = lw * 1.5;
+        for (let i = 0; i < 40; i++) {
+          const x = rnd() * c.width, y = c.height * (0.1 + rnd() * 0.9);
+          g.beginPath(); g.arc(x, y, S * 0.3, Math.PI * 1.1, Math.PI * 1.9); g.stroke();
+        }
+      }
+      if (idx === 5) {   // Inferi: bagliore rosso sullo sfondo
+        const glow = g.createRadialGradient(c.width / 2, 0, 0, c.width / 2, 0, c.height * 0.6);
+        glow.addColorStop(0, 'rgba(255,90,30,0.55)'); glow.addColorStop(1, 'rgba(255,90,30,0)');
+        g.fillStyle = glow; g.fillRect(0, 0, c.width, c.height);
+      }
+      if (idx === 6) {   // Olimpo: raggi di sole
+        g.fillStyle = 'rgba(255,240,180,0.25)';
+        for (let i = 0; i < 7; i++) {
+          g.beginPath(); g.moveTo(c.width / 2, -S); g.lineTo(c.width * (i / 6) - S, c.height); g.lineTo(c.width * (i / 6) + S * 1.2, c.height); g.fill();
+        }
+      }
+      stands(g, c, idx, rnd);
+      for (const sp of spots) {
+        if (idx === 4) continue;   // il Colosseo ha già le sue gradinate
+        const q = at(sp, 2.2 + sp.r * 1.2), u = q.u;
+        if ((sp.sideL && q.x < -u * 2) || (!sp.sideL && q.x > c.width + u * 2)) continue;
+        g.lineWidth = lw; g.strokeStyle = '#1b130d';
+        switch (idx) {
+          case 0: {   // Sparta: cipressi e ulivi
+            if (sp.r2 < 0.55) {
+              const h = u * (1.6 + sp.r);
+              g.fillStyle = 'rgba(0,0,0,0.25)'; g.beginPath(); g.ellipse(q.x, q.y, h * 0.25, h * 0.08, 0, 0, 7); g.fill();
+              g.fillStyle = sp.r > 0.5 ? '#2f5a2a' : '#3d6e34';
+              g.beginPath(); g.ellipse(q.x, q.y - h * 0.45, h * 0.17, h * 0.5, 0, 0, 7); g.fill(); g.stroke();
+            } else {
+              g.fillStyle = '#6b4a2a'; g.fillRect(q.x - u * 0.08, q.y - u * 0.7, u * 0.16, u * 0.7);
+              g.fillStyle = '#8fa86a';
+              for (let k = 0; k < 4; k++) { g.beginPath(); g.arc(q.x + (k - 1.5) * u * 0.28, q.y - u * (0.9 + (k % 2) * 0.25), u * 0.38, 0, 7); g.fill(); g.stroke(); }
+            }
+            break;
+          }
+          case 1: {   // Labirinto: siepi alte
+            const w = u * 1.3, h = u * (0.9 + (sp.r > 0.7 ? 0.5 : 0));
+            g.fillStyle = '#2f6a22'; g.fillRect(q.x - w / 2, q.y - h, w, h); g.strokeRect(q.x - w / 2, q.y - h, w, h);
+            g.fillStyle = '#4f9a3a'; g.fillRect(q.x - w / 2, q.y - h, w, h * 0.28);
+            g.fillStyle = 'rgba(255,255,255,0.12)';
+            for (let k = 0; k < 4; k++) { g.beginPath(); g.arc(q.x - w / 2 + (k + 0.5) * w / 4, q.y - h * 0.6, u * 0.08, 0, 7); g.fill(); }
+            break;
+          }
+          case 2: {   // Troia: mura di pietra con le merlature e le torri
+            const tower = sp.r > 0.78, w = u * 1.25, h = u * (tower ? 2.2 : 1.3);
+            g.fillStyle = tower ? '#b89a68' : '#c9b080'; g.fillRect(q.x - w / 2, q.y - h, w, h); g.strokeRect(q.x - w / 2, q.y - h, w, h);
+            g.fillStyle = '#d9c49a';
+            for (let k = 0; k < 3; k++) { g.fillRect(q.x - w / 2 + k * w * 0.4, q.y - h - u * 0.25, w * 0.22, u * 0.25); g.strokeRect(q.x - w / 2 + k * w * 0.4, q.y - h - u * 0.25, w * 0.22, u * 0.25); }
+            g.strokeStyle = 'rgba(80,60,30,0.5)';
+            for (let k = 1; k < 4; k++) { g.beginPath(); g.moveTo(q.x - w / 2, q.y - (h * k) / 4); g.lineTo(q.x + w / 2, q.y - (h * k) / 4); g.stroke(); }
+            if (tower) { g.fillStyle = '#2b1d14'; g.fillRect(q.x - u * 0.12, q.y - h * 0.7, u * 0.24, u * 0.4); }
+            break;
+          }
+          case 3: {   // Isola: scogli e schiuma
+            if (sp.r2 < 0.6) {
+              g.fillStyle = sp.r > 0.5 ? '#7d7466' : '#958b7a';
+              g.beginPath(); g.moveTo(q.x - u * 0.7, q.y); g.lineTo(q.x - u * 0.3, q.y - u * (0.7 + sp.r)); g.lineTo(q.x + u * 0.4, q.y - u * 0.5); g.lineTo(q.x + u * 0.7, q.y); g.closePath(); g.fill(); g.stroke();
+              g.strokeStyle = 'rgba(255,255,255,0.7)'; g.lineWidth = lw * 2;
+              g.beginPath(); g.ellipse(q.x, q.y, u * 0.85, u * 0.18, 0, 0, Math.PI); g.stroke();
+            }
+            break;
+          }
+          case 4: {   // Colosseo: gradinate con archi e pubblico
+            const w = u * 1.25, h = u * 2.2;
+            g.fillStyle = '#d9b98c'; g.fillRect(q.x - w / 2, q.y - h, w, h); g.strokeRect(q.x - w / 2, q.y - h, w, h);
+            g.fillStyle = '#3a2414';
+            for (let row = 0; row < 2; row++) {
+              g.beginPath(); g.arc(q.x, q.y - h * (0.25 + row * 0.42), u * 0.28, Math.PI, 0); g.lineTo(q.x + u * 0.28, q.y - h * (0.12 + row * 0.42)); g.lineTo(q.x - u * 0.28, q.y - h * (0.12 + row * 0.42)); g.fill();
+            }
+            const fans = ['#e0453a', '#3f7fe0', '#f2c24a', '#fff', '#4fa83a'];
+            for (let k = 0; k < 5; k++) { g.fillStyle = fans[(k + Math.floor(sp.r * 5)) % 5]; g.beginPath(); g.arc(q.x - w / 2 + (k + 0.5) * w / 5, q.y - h - u * 0.15, u * 0.12, 0, 7); g.fill(); }
+            break;
+          }
+          case 5: {   // Inferi: rocce scure, crepe di lava e fiammelle
+            g.fillStyle = sp.r > 0.5 ? '#2a1f24' : '#3a2a30';
+            g.beginPath(); g.moveTo(q.x - u * 0.8, q.y); g.lineTo(q.x - u * 0.4, q.y - u * (0.9 + sp.r)); g.lineTo(q.x + u * 0.3, q.y - u * 0.6); g.lineTo(q.x + u * 0.8, q.y); g.closePath(); g.fill(); g.stroke();
+            g.strokeStyle = '#ff6a1a'; g.lineWidth = lw * 1.6;
+            g.beginPath(); g.moveTo(q.x - u * 0.4, q.y - u * 0.1); g.lineTo(q.x - u * 0.1, q.y - u * 0.5); g.lineTo(q.x + u * 0.2, q.y - u * 0.3); g.stroke();
+            if (sp.r2 < 0.45) {
+              g.fillStyle = '#ff7b1a'; g.beginPath(); g.ellipse(q.x + u * 0.5, q.y - u * 0.35, u * 0.16, u * 0.35, 0, 0, 7); g.fill();
+              g.fillStyle = '#ffd166'; g.beginPath(); g.ellipse(q.x + u * 0.5, q.y - u * 0.25, u * 0.08, u * 0.18, 0, 0, 7); g.fill();
+            }
+            break;
+          }
+          default: {   // Olimpo: nuvole e colonne d'oro
+            if (sp.r2 < 0.35) {
+              const h = u * 2;
+              g.fillStyle = '#f2c24a'; g.fillRect(q.x - u * 0.22, q.y - h, u * 0.44, h); g.strokeRect(q.x - u * 0.22, q.y - h, u * 0.44, h);
+              g.fillStyle = '#fff0a8'; g.fillRect(q.x - u * 0.34, q.y - h - u * 0.18, u * 0.68, u * 0.2);
+            }
+            g.fillStyle = 'rgba(255,255,255,0.92)';
+            for (let k = 0; k < 4; k++) { g.beginPath(); g.arc(q.x + (k - 1.5) * u * 0.4, q.y - u * (0.1 + (k % 2) * 0.25), u * (0.42 + sp.r * 0.2), 0, 7); g.fill(); }
+          }
+        }
+      }
+    }
+
     // ---------------------------------------------------------------- terreno
     // Il campo è simmetrico: si disegna una volta sola (anche girato è uguale)
     function buildGround() {
       const c = document.createElement('canvas');
       c.width = canvas.width; c.height = canvas.height;
       const g = c.getContext('2d');
-      // cielo e colline dietro il campo
-      const sky = g.createLinearGradient(0, 0, 0, c.height);
-      sky.addColorStop(0, '#3a5f8f'); sky.addColorStop(0.5, arena.sky); sky.addColorStop(1, '#1b1410');
-      g.fillStyle = sky; g.fillRect(0, 0, c.width, c.height);
-      // cipressi ai lati, fuori dal campo
-      const rnd0 = E.makeRng(11);
-      for (let i = 0; i < 26; i++) {
-        const yy = rnd0() * E.H, sideL = i % 2 === 0;
-        const edge = proj(sideL ? 0 : E.W, yy);
-        const k = edge.k, x = edge.x + (sideL ? -1 : 1) * (S * (0.4 + rnd0() * 1.2) * k), h = S * (1.3 + rnd0()) * k;
-        if ((sideL && x < 0) || (!sideL && x > c.width)) continue;
-        g.fillStyle = 'rgba(0,0,0,0.25)';
-        g.beginPath(); g.ellipse(x, edge.y + h * 0.05, h * 0.25, h * 0.08, 0, 0, 7); g.fill();
-        g.fillStyle = i % 3 ? '#2f5a2a' : '#3d6e34';
-        g.beginPath(); g.ellipse(x, edge.y - h * 0.45, h * 0.18, h * 0.5, 0, 0, 7); g.fill();
-        g.strokeStyle = '#1d3a1a'; g.lineWidth = Math.max(1, S * 0.04); g.stroke();
-      }
+      scenery(g, c);
       // bordo di marmo rialzato (si vede lo spessore sotto il campo)
       const tl = proj(0, 0), tr = proj(E.W, 0), br = proj(E.W, E.H), bl = proj(0, E.H);
       const lip = S * 0.45;
@@ -84,19 +333,14 @@
       g.beginPath(); g.moveTo(bl.x - S * 0.3, bl.y); g.lineTo(br.x + S * 0.3, br.y); g.lineTo(br.x + S * 0.3, br.y + lip); g.lineTo(bl.x - S * 0.3, bl.y + lip); g.closePath(); g.fill();
       g.fillStyle = '#e8dfcc';
       g.beginPath(); g.moveTo(tl.x - S * 0.3 * KT, tl.y - S * 0.1); g.lineTo(tr.x + S * 0.3 * KT, tr.y - S * 0.1); g.lineTo(br.x + S * 0.3, br.y + S * 0.08); g.lineTo(bl.x - S * 0.3, bl.y + S * 0.08); g.closePath(); g.fill();
-      // erba a scacchi leggeri
-      for (let y = 0; y < E.H; y++) {
-        for (let x = 0; x < E.W; x++) {
-          g.fillStyle = arena.ground[(x + y) % 2];
-          quad(g, x, y, x + 1.02, y + 1.02); g.fill();
-        }
-      }
+      const idx = Math.max(0, D.ARENAS.indexOf(arena));
+      floor(g, idx, E.makeRng(5 + idx));
       // luce: più scuro lontano, più chiaro vicino
       const shade = g.createLinearGradient(0, tl.y, 0, bl.y);
       shade.addColorStop(0, 'rgba(0,0,0,0.18)'); shade.addColorStop(0.5, 'rgba(0,0,0,0)'); shade.addColorStop(1, 'rgba(255,255,220,0.06)');
       g.fillStyle = shade; quad(g, 0, 0, E.W, E.H); g.fill();
       // sentieri di terra battuta: le due corsie e il passaggio davanti ai Re
-      g.fillStyle = arena.path || 'rgba(222,196,140,0.78)';
+      g.fillStyle = PATHS[idx];
       quad(g, 2.6, 4.5, 4.4, 27.5); g.fill(); quad(g, 13.6, 4.5, 15.4, 27.5); g.fill();
       quad(g, 2.6, 1.6, 15.4, 3.4); g.fill(); quad(g, 2.6, 28.6, 15.4, 30.4); g.fill();
       const rnd = E.makeRng(7);
@@ -105,23 +349,6 @@
         const lx = rnd() < 0.5 ? 2.7 + rnd() * 1.6 : 13.7 + rnd() * 1.6, ly = 5 + rnd() * 22;
         const q = proj(lx, ly);
         g.beginPath(); g.ellipse(q.x, q.y, S * 0.06 * q.k, S * 0.04 * q.k, 0, 0, 7); g.fill();
-      }
-      // ciuffi d'erba e fiorellini
-      for (let i = 0; i < 80; i++) {
-        const x = 0.4 + rnd() * (E.W - 0.8), y = 0.8 + rnd() * (E.H - 1.6);
-        if (Math.abs(x - 3.5) < 1.6 || Math.abs(x - 14.5) < 1.6 || (y > 14.3 && y < 17.7)) continue;
-        if ((Math.abs(y - 3.2) < 3 || Math.abs(y - 28.8) < 3) && Math.abs(x - 9) < 3.5) continue;
-        const q = proj(x, y), u = S * q.k;
-        if (rnd() < 0.55) {
-          g.strokeStyle = 'rgba(30,60,10,0.3)'; g.lineWidth = Math.max(1, u * 0.06);
-          g.beginPath(); g.moveTo(q.x - u * 0.15, q.y); g.lineTo(q.x - u * 0.05, q.y - u * 0.25);
-          g.moveTo(q.x, q.y); g.lineTo(q.x, q.y - u * 0.3);
-          g.moveTo(q.x + u * 0.15, q.y); g.lineTo(q.x + u * 0.05, q.y - u * 0.25); g.stroke();
-        } else {
-          g.fillStyle = ['#fff6d6', '#ffd166', '#f4a3b5'][i % 3];
-          for (let k = 0; k < 4; k++) { g.beginPath(); g.arc(q.x + Math.cos(k * 1.57) * u * 0.08, q.y + Math.sin(k * 1.57) * u * 0.06, u * 0.07, 0, 7); g.fill(); }
-          g.fillStyle = '#e8a23a'; g.beginPath(); g.arc(q.x, q.y, u * 0.05, 0, 7); g.fill();
-        }
       }
       // fiume con le rive
       g.fillStyle = '#d8c79c'; quad(g, 0, E.RIVER_TOP - 0.15, E.W, E.RIVER_BOTTOM + 0.15); g.fill();
@@ -203,12 +430,16 @@
       ctx.fillStyle = 'rgba(255,255,255,0.3)';
       ctx.fillRect(x - w / 2, y, w * Math.max(0, e.hp / e.max), h * 0.4);
       if (showNum) {
-        ctx.font = `bold ${Math.round(Math.max(9, S * 0.42 * k))}px "Trebuchet MS", system-ui, sans-serif`;
-        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-        ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(40,25,10,0.85)';
-        ctx.strokeText(Math.ceil(e.hp), x, y + h + 2);
-        ctx.fillStyle = '#fff';
-        ctx.fillText(Math.ceil(e.hp), x, y + h + 2);
+        // Vita dei templi: numero grande in grassetto, accanto alla barra
+        const fs = Math.round(Math.max(11, S * 0.62 * k));
+        ctx.font = `900 ${fs}px "Trebuchet MS", system-ui, sans-serif`;
+        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = Math.max(3, fs * 0.28); ctx.strokeStyle = '#2b1d14';
+        const tx = x - w / 2 - 5, ty = y + h / 2 + 1;
+        ctx.strokeText(Math.ceil(e.hp), tx, ty);
+        ctx.fillStyle = e.hp / e.max < 0.3 ? '#ffb4a8' : '#ffffff';
+        ctx.fillText(Math.ceil(e.hp), tx, ty);
       }
     }
 
@@ -273,7 +504,7 @@
       facing.set(e.id, { x: e.x, y: e.y, dir });
 
       const R = e.r * u;
-      const size = u * (1.45 + e.r * 2.1);
+      const size = u * (1.8 + e.r * 2.4);
       const lift = e.flying ? u * 1.1 + Math.sin(t * 4 + e.id) * u * 0.12 : 0;
       const foot = p.y + R * 0.3;
       // ombra e cerchio della squadra
@@ -435,6 +666,30 @@
           ctx.font = `${Math.round(u)}px ${EMOJI_FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
           ctx.fillText('💥', x, y - u * 0.8);
           break;
+        case 'collapse': {   // tempio abbattuto: lampo, macerie che volano e polvere
+          const R = f.r * u;
+          if (k < 0.25) {
+            ctx.globalAlpha = 1 - k * 4;
+            ctx.fillStyle = '#fff6c4';
+            ctx.beginPath(); ctx.ellipse(x, y - R * 0.5, R * (1 + k * 6), R * (0.6 + k * 4), 0, 0, Math.PI * 2); ctx.fill();
+          }
+          ctx.globalAlpha = Math.max(0, 1 - k);
+          for (let i = 0; i < 14; i++) {
+            const a = (i / 14) * Math.PI * 2 + i, sp = 0.6 + (i % 4) * 0.25;
+            const dx = Math.cos(a) * R * 2.2 * sp * k, dy = -Math.abs(Math.sin(a)) * R * 2.8 * sp * k + R * 3.5 * k * k;
+            ctx.save(); ctx.translate(x + dx, y - R * 0.6 + dy); ctx.rotate(k * 8 + i);
+            ctx.fillStyle = i % 3 ? '#efe7d6' : '#cfc3a8'; ctx.strokeStyle = '#2b1d14'; ctx.lineWidth = Math.max(1, u * 0.04);
+            ctx.fillRect(-u * 0.2, -u * 0.12, u * 0.4, u * 0.24); ctx.strokeRect(-u * 0.2, -u * 0.12, u * 0.4, u * 0.24);
+            ctx.restore();
+          }
+          ctx.fillStyle = 'rgba(214,200,170,0.75)';
+          for (let i = 0; i < 9; i++) {
+            const a = (i / 9) * Math.PI * 2;
+            ctx.globalAlpha = 0.7 * (1 - k);
+            ctx.beginPath(); ctx.arc(x + Math.cos(a) * R * (0.4 + k * 1.6), y - R * 0.2 + Math.sin(a) * R * 0.5 * (0.4 + k * 1.6), u * (0.5 + k * 0.9), 0, Math.PI * 2); ctx.fill();
+          }
+          break;
+        }
         case 'poof':
           ctx.globalAlpha = 0.65 * (1 - k);
           ctx.fillStyle = '#efe7d6';
@@ -498,6 +753,10 @@
     return {
       resize, draw, toGame,
       aspect: () => E.W / FIELD_H,
+      // Altezza del fiume sullo schermo (in pixel CSS), per metterci sopra corone e tempo
+      // Posizione sullo schermo (pixel CSS) di un punto del campo
+      toScreen: (x, y) => { const q = proj(x, y); return { x: q.x / dpr, y: q.y / dpr }; },
+      riverY: () => proj(E.W / 2, (E.RIVER_TOP + E.RIVER_BOTTOM) / 2).y / dpr,
       setFlip(f) { flip = f; facing.clear(); bg = null; },
       setArena(i) { arena = D.ARENAS[i] || D.ARENAS[0]; bg = null; },
     };

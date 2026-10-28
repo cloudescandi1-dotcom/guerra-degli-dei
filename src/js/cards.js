@@ -20,7 +20,7 @@
     { name: 'Sparta', icon: '🏛️', trophies: 0, ground: ['#8fb35a', '#86a952'], river: '#4aa3df', sky: '#5d8a3a' },
     { name: 'Labirinto di Creta', icon: '🌀', trophies: 300, ground: ['#c2b28a', '#b8a77f'], river: '#4aa3df', sky: '#8c7a55' },
     { name: 'Mura di Troia', icon: '🐴', trophies: 600, ground: ['#cdb27c', '#c3a873'], river: '#3f95cf', sky: '#9a7b45' },
-    { name: 'Isola dei Ciclopi', icon: '🌊', trophies: 1000, ground: ['#7fb77e', '#76ad75'], river: '#2f86c9', sky: '#3c7a6a' },
+    { name: 'Isola dei Ciclopi', icon: '🌊', trophies: 1000, ground: ['#e8d6a4', '#dfcb96'], river: '#2f86c9', sky: '#3c7a6a' },
     { name: 'Colosseo', icon: '🏟️', trophies: 1400, ground: ['#dcc095', '#d2b58a'], river: '#4aa3df', sky: '#a5784a' },
     { name: 'Inferi di Ade', icon: '🔥', trophies: 1800, ground: ['#5a4a5f', '#524357'], river: '#d9572b', sky: '#2c2030' },
     { name: 'Monte Olimpo', icon: '⚡', trophies: 2300, ground: ['#e3e9f2', '#d7dfea'], river: '#8fc3ef', sky: '#7f9cc4' },

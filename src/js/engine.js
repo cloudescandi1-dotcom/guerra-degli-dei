@@ -386,6 +386,7 @@
       if (e.cat !== 'tower') continue;
       const enemy = 1 - e.owner;
       s.ruins.push({ x: e.x, y: e.y, r: e.r, owner: e.owner });
+      s.fx.push({ type: 'collapse', x: e.x, y: e.y, r: e.r, t0: s.t, dur: 1.4, owner: e.owner });
       s.events.push({ type: 'tower', owner: e.owner, king: e.tower === 'king' });
       if (e.tower === 'king') {
         s.crowns[enemy] = 3;

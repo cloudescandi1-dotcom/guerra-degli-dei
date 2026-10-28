@@ -66,7 +66,7 @@ h2 small { color: var(--muted); text-transform: none; font-weight: normal; lette
 .tab.active { display: block; }
 .tab > * { max-width: 640px; margin-left: auto; margin-right: auto; }
 .tabbar {
-  display: grid; grid-template-columns: repeat(5, 1fr);
+  display: grid; grid-template-columns: repeat(4, 1fr);
   background: linear-gradient(#182042, #0f1530);
   border-top: 2px solid var(--gold2);
   padding-bottom: var(--safe-b);
@@ -309,3 +309,64 @@ button.arena-row { width: 100%; text-align: left; color: inherit; font: inherit;
 .card-detail img.big-art { width: 9rem; height: 9rem; filter: drop-shadow(0 6px 6px #0008); }
 .msg.req .rq img.art { width: 2.6rem; height: 2.6rem; }
 .arena-row .unl img.mini { width: 1.9rem; height: 1.9rem; margin-right: 2px; filter: drop-shadow(0 1px 1px #0008); }
+
+/* ---------- Corone e tempo sul fiume ---------- */
+.river-hud {
+  position: absolute; left: 50%; transform: translate(-50%, -50%); top: 50%;
+  display: flex; align-items: center; gap: 6px; pointer-events: none; z-index: 3;
+}
+.river-hud .clock {
+  background: linear-gradient(#f6efe0, #d9cdb2); color: #2b1d14; border: 2px solid #2b1d14;
+  border-radius: 10px; padding: 1px 10px; min-width: 70px; box-shadow: 0 3px 0 #0006;
+}
+.river-hud .clock small { color: #6b5a40; font-weight: bold; }
+.river-hud .clock.double small { color: #a21caf; }
+.river-hud .clock.over b { color: #c0392b; }
+.river-hud .crowns { border: 2px solid #2b1d14; box-shadow: 0 3px 0 #0006; color: #fff; font-size: .95rem; }
+.river-hud .crowns.red { background: linear-gradient(#f87171, #b91c1c); }
+.river-hud .crowns.blue { background: linear-gradient(#60a5fa, #1d4ed8); }
+.countdown {
+  position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%);
+  font: 900 7rem/1 "Trebuchet MS", sans-serif; color: #fff; pointer-events: none; z-index: 4;
+  text-shadow: 0 0 0 #000, 0 4px 0 #2b1d14, 0 0 24px #0009; -webkit-text-stroke: 3px #2b1d14;
+  animation: tick 1s ease-out;
+}
+.countdown.red { color: #ffd2cc; }
+@keyframes tick { from { transform: translate(-50%, -50%) scale(1.6); opacity: 0; } 30% { opacity: 1; } to { transform: translate(-50%, -50%) scale(1); opacity: .85; } }
+
+/* ---------- Arena (riquadro da toccare) e cammino delle ricompense ---------- */
+button.arena-banner { width: 100%; color: inherit; font: inherit; display: block; cursor: pointer; }
+.arena-banner .tap-hint { display: inline-block; margin-top: 10px; font-size: .8rem; font-weight: bold; background: #0006; padding: 4px 12px; border-radius: 12px; color: #fff; }
+.road-badge { position: absolute; top: 10px; right: 10px; background: linear-gradient(#4ade80, #16a34a); color: #fff; font-weight: bold; border-radius: 14px; padding: 4px 10px; border: 2px solid #fff; animation: pulse 1.2s infinite; }
+.arena-detail { position: relative; }
+.arena-detail .nav { position: absolute; top: 50%; transform: translateY(-50%); width: 38px; height: 38px; border-radius: 50%; border: 2px solid #fff; background: #0007; color: #fff; font-size: 1.6rem; line-height: 1; }
+.arena-detail .nav.prev { left: 8px; } .arena-detail .nav.next { right: 8px; }
+.arena-detail .nav:disabled { opacity: .25; }
+.road { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 10px; scroll-snap-type: x mandatory; }
+.road-step { flex: none; width: 96px; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center;
+  background: var(--panel); border: 2px solid var(--line); border-radius: 12px; padding: 6px 4px 8px; }
+.road-step small { font-size: .7rem; color: var(--muted); min-height: 2em; }
+.road-step.ready { border-color: var(--green); box-shadow: 0 0 12px #22c55e66; }
+.road-step.got { opacity: .55; }
+.road-t { font-weight: bold; color: var(--gold); font-size: .8rem; }
+.road-ok { color: var(--green); font-size: .75rem; font-weight: bold; }
+.road-lock { font-size: 1.1rem; }
+.big-ico { font-size: 2.6rem; line-height: 1.1; }
+.unlocks .card.to-unlock::before { content: '🔒'; position: absolute; top: -8px; right: -6px; font-size: 1rem; }
+img.chest-art { width: 3.2rem; height: 3.2rem; object-fit: contain; filter: drop-shadow(0 2px 2px #0007); }
+.chest .ci img.chest-art { width: 3rem; height: 3rem; }
+img.chest-big { width: 8rem; height: 8rem; filter: drop-shadow(0 6px 8px #0008); }
+.chest-pop img { animation: chestpop .6s cubic-bezier(.2,1.6,.4,1); }
+@keyframes chestpop { from { transform: scale(.3) rotate(-12deg); } }
+.gift .gi img.chest-art { width: 3rem; height: 3rem; }
+.gem-item .ci img.chest-art, .chest-row .ci img.chest-art { width: 2.8rem; height: 2.8rem; }
+
+/* ---------- Tempio abbattuto ---------- */
+.field.shake { animation: shake .5s; }
+@keyframes shake { 20% { transform: translate(-6px, 3px); } 40% { transform: translate(5px, -4px); } 60% { transform: translate(-4px, 2px); } 80% { transform: translate(3px, -1px); } }
+.crown-fly { position: absolute; z-index: 6; font-size: 3.4rem; pointer-events: none; filter: drop-shadow(0 4px 4px #000a);
+  transition: transform .9s cubic-bezier(.5,-0.4,.6,1), opacity .9s; }
+.crown-fly b { position: absolute; right: -18px; top: -6px; font: 900 1.6rem "Trebuchet MS", sans-serif; color: #ffe066; -webkit-text-stroke: 2px #2b1d14; }
+.river-hud .crowns.bump { animation: bump .5s; }
+@keyframes bump { 40% { transform: scale(1.6); } }
+.sheet .close { z-index: 5; }

@@ -36,7 +36,6 @@
       <div id="tab-carte" class="tab"></div>
       <div id="tab-battaglia" class="tab active"></div>
       <div id="tab-clan" class="tab"></div>
-      <div id="tab-arene" class="tab"></div>
     </main>
 
     <nav class="tabbar">
@@ -44,20 +43,24 @@
       <button data-tab="carte" type="button"><span>🃏</span>Carte</button>
       <button data-tab="battaglia" type="button" class="active"><span>⚔️</span>Battaglia</button>
       <button data-tab="clan" type="button"><span>🛡️</span>Clan<i id="clan-badge" class="badge" hidden></i></button>
-      <button data-tab="arene" type="button"><span>🏛️</span>Arene</button>
     </nav>
   </section>
 
   <!-- Battaglia -->
   <section id="battle" class="screen" hidden>
     <div class="hud-top">
-      <div class="foe"><b id="foe-name">Avversario</b><span id="foe-crowns" class="crowns red">👑 0</span></div>
-      <div class="clock"><small id="clock-label">Tempo</small><b id="clock">3:00</b></div>
-      <div class="mine"><span id="my-crowns" class="crowns blue">👑 0</span></div>
+      <div class="foe"><b id="foe-name">Avversario</b></div>
       <button id="btn-emote" class="icon-btn small" type="button" title="Emoticon">😀</button>
     </div>
     <div class="field" id="field">
       <canvas id="canvas"></canvas>
+      <!-- Corone e tempo al centro, sopra il fiume -->
+      <div id="river-hud" class="river-hud">
+        <span id="foe-crowns" class="crowns red">👑 0</span>
+        <div class="clock"><small id="clock-label">Tempo</small><b id="clock">3:00</b></div>
+        <span id="my-crowns" class="crowns blue">👑 0</span>
+      </div>
+      <div id="countdown" class="countdown" hidden></div>
       <div id="banner" class="banner" hidden></div>
       <div id="emote-bar" class="emote-bar" hidden></div>
       <div id="emote-foe" class="emote-bubble foe-bubble" hidden></div>

@@ -614,6 +614,38 @@
     meander(22, 76, 56, O, 4) +
     `<path d="M28 30 Q34 26 40 28" fill="none" stroke="#ffd6a8" stroke-width="2.2" opacity=".8"/>`;
 
+  // ---------- bauli ----------
+  // body/lid: colori del legno o del metallo; trim: bordi; gem: pietra sul lucchetto
+  function chest(o) {
+    return `<ellipse cx="50" cy="92" rx="42" ry="6" fill="#000" opacity=".25"/>` +
+      `<path d="M12 50 H88 L86 88 Q50 93 14 88 Z" fill="${o.body}" ${S()}/>` +
+      (o.planks ? `<path d="M13 62 H87 M13.5 75 H86.5" stroke="${o.dark}" stroke-width="1.6"/>` : '') +
+      `<path d="M12 50 H88 L87.6 56 H12.4 Z" fill="${o.trim}" ${S(1.6)}/>` +
+      `<path d="M14 82 Q50 87 86 82 L86 88 Q50 93 14 88 Z" fill="${o.trim}" ${S(1.6)}/>` +
+      `<path d="M24 50 V89 M76 50 V89" stroke="${O}" stroke-width="9"/><path d="M24 50 V89 M76 50 V89" stroke="${o.trimS}" stroke-width="6"/>` +
+      (o.meander ? meander(30, 66, 40, o.meander, 5) : '') +
+      `<path d="M10 50 Q10 22 50 20 Q90 22 90 50 Z" fill="${o.lid}" ${S()}/>` +
+      `<path d="M24 50 Q24 26 34 22 M76 50 Q76 26 66 22" fill="none" stroke="${O}" stroke-width="9"/><path d="M24 50 Q24 26 34 22 M76 50 Q76 26 66 22" fill="none" stroke="${o.trimS}" stroke-width="6"/>` +
+      `<path d="M20 34 Q30 26 44 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" opacity=".55"/>` +
+      `<path d="M42 44 H58 V62 Q50 68 42 62 Z" fill="url(#gold)" ${S(1.8)}/>` +
+      `<circle cx="50" cy="52" r="4.6" fill="${o.gem}" ${S(1.4)}/><circle cx="48.6" cy="50.6" r="1.4" fill="#fff" opacity=".8"/>` +
+      `<path d="M50 56 V61" stroke="${O}" stroke-width="2"/>` +
+      (o.glow ? `<circle cx="50" cy="20" r="26" fill="url(#glow)" opacity=".55"/>` : '');
+  }
+  D.ch_legno = () => chest({ body: 'url(#wdv)', lid: 'url(#wdv)', dark: '#5a3418', trim: '#7d7466', trimS: '#9a917f', gem: '#7a4520', planks: true });
+  D.ch_argento = () => chest({ body: 'url(#st)', lid: 'url(#st)', dark: '#6d7783', trim: '#5b6672', trimS: '#8d97a3', gem: '#3f7fe0', meander: '#5b6672' });
+  D.ch_oro = () => chest({ body: 'url(#gold)', lid: 'url(#gold)', dark: '#8a5a1c', trim: '#b8841c', trimS: '#d9a62e', gem: '#c0392b', meander: '#8a5a1c', glow: true });
+  D.ch_magico = () => chest({ body: 'url(#pur)', lid: 'url(#pur)', dark: '#3f1f66', trim: '#e9b949', trimS: '#f2c24a', gem: '#2ee6c8', meander: '#f2c24a', glow: true }) +
+    `<g fill="#fff6b0"><path d="M14 16 l2 5 l5 2 l-5 2 l-2 5 l-2 -5 l-5 -2 l5 -2 Z"/><path d="M86 10 l1.5 4 l4 1.5 l-4 1.5 l-1.5 4 l-1.5 -4 l-4 -1.5 l4 -1.5 Z"/><path d="M90 40 l1 3 l3 1 l-3 1 l-1 3 l-1 -3 l-3 -1 l3 -1 Z"/></g>`;
+  D.ch_dono = () =>
+    `<ellipse cx="50" cy="92" rx="40" ry="6" fill="#000" opacity=".25"/>` +
+    `<rect x="16" y="46" width="68" height="44" rx="4" fill="url(#terra)" ${S()}/>` +
+    `<rect x="10" y="34" width="80" height="14" rx="4" fill="url(#terra)" ${S()}/>` +
+    `<rect x="44" y="34" width="12" height="56" fill="url(#gold)" ${S(1.4)}/>` +
+    meander(18, 62, 24, O, 6) + meander(58, 62, 24, O, 6) +
+    `<path d="M50 34 Q30 10 22 22 Q18 32 50 34 Q70 10 78 22 Q82 32 50 34 Z" fill="url(#gold)" ${S()}/>` +
+    `<circle cx="50" cy="33" r="5" fill="url(#gold)" ${S(1.6)}/><path d="M20 40 Q30 36 40 37" fill="none" stroke="#fff" stroke-width="2" opacity=".5"/>`;
+
   // ---------- templi e rovine ----------
   function temple(T, king) {
     const cols = king ? [20, 35, 50, 65, 80] : [24, 41.3, 58.6, 76];

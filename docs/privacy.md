@@ -26,7 +26,7 @@ Il gioco è pubblicato su GitHub Pages. GitHub può registrare dati tecnici dell
 https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement
 
 ## Cancellare i dati
-Impostazioni → "Ricomincia da zero" cancella il profilo. Cancellando i dati del sito dal
+Cancellando i dati del sito dal
 browser (o disinstallando l'app) sparisce tutto.
 
 ## Minori

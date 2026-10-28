@@ -11,6 +11,7 @@ con personaggi, nomi e grafica originali.
 ## Stato (27/10/2026)
 - ✅ Versione 1.1: aggiunti **Negozio** (offerte del giorno e gemme), baule del giorno e schede delle arene
 - ✅ 22 test automatici superati (motore di gioco, computer, progressione, negozio, clan)
+- ✅ Versione 1.3: ogni arena è un **anfiteatro con il pubblico** e un terreno diverso; corone e tempo sul fiume, conto alla rovescia finale, crollo dei templi ben visibile, **cammino dei trofei** con ricompense, bauli ridisegnati
 - ✅ Versione 1.2: **nuova grafica** con aspetto 3D (personaggi disegnati con luci e ombre) e campo in prospettiva
 - ✅ Diritti d'autore (tutti i diritti riservati) e informativa privacy
 
@@ -25,7 +26,7 @@ con personaggi, nomi e grafica originali.
 - **Negozio**: 6 carte in offerta da comprare con le monete, che cambiano ogni giorno a mezzanotte (ora di Roma);
   con le **gemme** 💎 si comprano bauli e monete o si apre subito un baule. Le gemme non si comprano:
   si trovano (non sempre) nei bauli
-- **Arene**: toccandone una vedi le tue vittorie e sconfitte lì, i bauli e le carte che sblocca
+- **Arene**: tocca l'arena nella schermata Battaglia per vedere le **ricompense delle coppe** (un premio ogni 50 coppe da ritirare), le carte che sblocca, i bauli e le tue vittorie lì
 - **Amici**: codice amico, online/offline, chat, sfide amichevoli in tempo reale
 - **Clan**: nome e stemma, chat, richiesta e donazione di carte
 - Funziona offline (tranne amici e clan) e si installa sulla schermata Home

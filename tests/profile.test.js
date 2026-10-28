@@ -188,3 +188,22 @@ test('le gemme non sono in tutti i bauli e monete e gemme non sono mai sempre ug
   assert.ok(new Set(legno.map((r) => r.gold)).size > 5, 'monete diverse');
   assert.ok(new Set(magico.map((r) => r.gems)).size > 5, 'gemme diverse');
 });
+
+test('cammino dei trofei: premi ogni 50 coppe, si ritirano una volta sola', () => {
+  for (let i = 0; i < D.ARENAS.length; i++) {
+    const r = P.road(i);
+    assert.ok(r.length >= 5, 'arena ' + i);
+    for (const x of r) assert.ok(x.t > D.ARENAS[i].trophies);
+  }
+  const p = P.fresh();
+  assert.strictEqual(P.roadPending(p), 0);
+  p.best = 120; p.trophies = 120;
+  assert.strictEqual(P.roadPending(p), 2);
+  const g = p.gold;
+  assert.ok(P.claimRoad(p, 0, 50));
+  assert.ok(p.gold > g);
+  assert.strictEqual(P.claimRoad(p, 0, 50), null, 'già ritirato');
+  assert.strictEqual(P.claimRoad(p, 0, 150), null, 'coppe non ancora raggiunte');
+  assert.ok(P.claimRoad(p, 0, 100).cards, 'baule');
+  assert.strictEqual(P.roadPending(p), 0);
+});
