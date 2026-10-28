@@ -516,37 +516,74 @@
       sprite('rovine', 0, p.x, p.y + r.r * u * 0.75, r.r * u * 2.8, false, null);
     }
 
+    // Stato dell'animazione di ogni truppa: passo, verso (che ruota piano), ultimo attacco visto
+    const anim = new Map();
+    let lastNow = 0;
     function unit(e, t) {
       const d = D.BY_KEY[e.key] || {};
       const p = proj(e.x, e.y), u = S * p.k;
-      // verso: guarda dove sta andando
-      const last = facing.get(e.id);
-      let dir = last ? last.dir : (side(e.owner) === 0 ? 1 : -1);
-      if (last && Math.abs(e.x - last.x) > 0.01) dir = (flip ? -1 : 1) * Math.sign(e.x - last.x);
-      const moving = last ? Math.hypot(e.x - last.x, e.y - last.y) > 0.002 : false;
-      facing.set(e.id, { x: e.x, y: e.y, dir });
+      const now = (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000;
+      let a = anim.get(e.id);
+      if (!a) { a = { x: e.x, y: e.y, phase: (e.id * 1.7) % 6.28, dir: side(e.owner) === 0 ? 1 : -1, face: 0, speed: 0, born: now }; a.face = a.dir; anim.set(e.id, a); }
+      const dt = Math.min(0.1, Math.max(0, now - (a.now || now)));
+      a.now = now;
+      // quanto si è mosso da prima: fa avanzare il passo (passi più lunghi per chi è grande)
+      const dist = Math.hypot(e.x - a.x, e.y - a.y);
+      const sp = dt > 0 ? dist / dt : 0;
+      a.speed += (sp - a.speed) * Math.min(1, dt * 10);
+      a.phase += dist * (5.5 / Math.max(0.6, e.r * 1.6));
+      if (Math.abs(e.x - a.x) > 0.004) a.dir = (flip ? -1 : 1) * Math.sign(e.x - a.x);
+      // verso il bersaglio quando attacca
+      if (e.atkT && e.atkT !== a.atkT) {
+        a.atkT = e.atkT; a.atkAt = now;
+        const q = proj(e.atkX, e.atkY);
+        const dx = q.x - p.x, dy = q.y - p.y, l = Math.hypot(dx, dy) || 1;
+        a.ax = dx / l; a.ay = dy / l;
+        if (Math.abs(dx) > 2) a.dir = Math.sign(dx);
+      }
+      a.x = e.x; a.y = e.y;
+      a.face += (a.dir - a.face) * Math.min(1, dt * 14);   // si gira in un attimo, non di colpo
 
       const R = e.r * u;
       const size = u * (1.8 + e.r * 2.4);
-      const lift = e.flying ? u * 1.1 + Math.sin(t * 4 + e.id) * u * 0.12 : 0;
+      const walking = a.speed > 0.15 && e.stun <= 0 && !(e.deploy > 0);
+      const w = Math.min(1, a.speed / 1.2);
+      const step = Math.sin(a.phase);
+      const lift = e.flying ? u * 1.1 + Math.sin(t * 4 + e.id) * u * 0.14 : 0;
       const foot = p.y + R * 0.3;
-      // ombra e cerchio della squadra
-      shadow(p.x, foot, R * (e.flying ? 0.8 : 1.1), R * 0.45, e.flying ? 0.18 : 0.28);
+      // entrata in campo: cade dall'alto e atterra con un rimbalzo
+      const age = now - a.born;
+      const drop = e.deploy > 0 && age < 0.3 ? Math.pow(1 - age / 0.3, 2) * u * 3.2 : 0;
+      const land = e.deploy > 0 && age >= 0.3 && age < 0.5 ? Math.sin(((age - 0.3) / 0.2) * Math.PI) : 0;
+      // ombra (più piccola mentre cade) e cerchio della squadra
+      shadow(p.x, foot, R * (e.flying ? 0.8 : 1.1) * (1 - drop / (u * 6)), R * 0.45, e.flying ? 0.18 : 0.28);
       ctx.strokeStyle = TEAM[side(e.owner)];
       ctx.lineWidth = Math.max(1.5, u * 0.09);
       ctx.beginPath(); ctx.ellipse(p.x, foot, R, R * 0.42, 0, 0, Math.PI * 2); ctx.stroke();
+      if (land > 0) { ctx.fillStyle = `rgba(230,215,180,${0.5 * land})`; ctx.beginPath(); ctx.ellipse(p.x, foot, R * (1.2 + land), R * 0.5 * (1 + land), 0, 0, Math.PI * 2); ctx.fill(); }
+
+      // attacco: scatto in avanti verso il bersaglio e ritorno
+      const ak = a.atkAt ? (now - a.atkAt) / 0.28 : 1;
+      const lunge = ak < 1 ? Math.sin(ak * Math.PI) * (d.range > 2 ? 0.12 : 0.35) * u : 0;
+      // passo: su e giù, dondolio e schiacciamento a ogni appoggio
+      const bob = walking && !e.flying ? Math.abs(step) * u * 0.13 * w : 0;
+      const sway = walking ? step * 0.08 * w : e.flying ? Math.sin(t * 4 + e.id) * 0.05 : 0;
+      const squash = walking && !e.flying ? 1 - (1 - Math.abs(step)) * 0.06 * w : 1 + land * -0.12;
+      // respiro da fermo
+      const breathe = !walking && !e.flying ? Math.sin(now * 2.4 + e.id) * 0.018 : 0;
 
       ctx.save();
-      ctx.globalAlpha = e.deploy > 0 ? 0.55 : 1;
-      const hop = moving && !e.flying && e.stun <= 0 ? Math.abs(Math.sin(t * 9 + e.id)) * u * 0.12 : 0;
-      ctx.translate(p.x, foot - lift - hop);
-      if (moving && e.stun <= 0) ctx.rotate(Math.sin(t * 9 + e.id) * 0.06);
+      ctx.globalAlpha = e.deploy > 0 ? 0.6 + 0.4 * (1 - Math.min(1, e.deploy)) : 1;
+      ctx.translate(p.x + (a.ax || 0) * lunge, foot - lift - bob - drop + (a.ay || 0) * lunge * 0.5);
+      ctx.rotate(sway + (ak < 1 ? Math.sin(ak * Math.PI) * 0.12 * a.face : 0));
+      ctx.scale(a.face * (2 - squash + breathe * -1), squash + breathe);
       if (e.flash > 0) ctx.filter = 'brightness(1.7)';
       if (e.stun > 0) ctx.filter = 'grayscale(1) brightness(1.1)';
-      sprite(e.key, side(e.owner), 0, 0, size, dir < 0, d.emoji);
+      sprite(e.key, side(e.owner), 0, 0, size, false, d.emoji);
       ctx.filter = 'none';
       ctx.restore();
       ctx.globalAlpha = 1;
+      if (anim.size > 400 && now - lastNow > 2) { lastNow = now; for (const [id, v] of anim) if (now - v.now > 2) anim.delete(id); }
 
       const top = foot - lift - size * 0.92;
       if (e.charging) {

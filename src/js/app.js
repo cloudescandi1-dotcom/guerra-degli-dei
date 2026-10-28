@@ -919,6 +919,20 @@
     render();
   }
 
+  // Stato da disegnare con le posizioni a metà strada tra il passo precedente e quello attuale
+  function smoothView(s, prev, k) {
+    if (!prev) return s;
+    k = Math.max(0, Math.min(1, k));
+    return Object.assign({}, s, {
+      t: s.t - (1 - k) * E.TICK,
+      ents: s.ents.map((e) => {
+        const p = prev.get(e.id);
+        if (!p || e.cat === 'tower' || (p.x === e.x && p.y === e.y)) return e;
+        return Object.assign({}, e, { x: p.x + (e.x - p.x) * k, y: p.y + (e.y - p.y) * k });
+      }),
+    });
+  }
+
   function guestSnap(sn) {
     const S = B.snaps;
     S.prev = S.cur;
@@ -966,6 +980,8 @@
       B.acc += dt;
       while (B.acc >= E.TICK) {
         B.acc -= E.TICK;
+        // posizioni prima del passo: servono per disegnare i movimenti in modo continuo
+        B.prevPos = new Map(B.state.ents.map((e) => [e.id, e.x, e.y]).map((a) => [a[0], { x: a[1], y: a[2] }]));
         if (B.cfg.bot) {
           const a = B.cfg.bot.think(B.state, 1, E.TICK);
           if (a) E.play(B.state, 1, a.slot, a.x, a.y);
@@ -973,7 +989,7 @@
         for (const m of B.remote.splice(0)) E.play(B.state, 1, m.slot, m.x, m.y);
         E.step(B.state);
       }
-      B.view = B.state;
+      B.view = smoothView(B.state, B.prevPos, B.acc / E.TICK);
       if (B.cfg.role === 'host') {
         B.sendT -= dt;
         if (B.sendT <= 0) { B.sendT = 0.1; Social.send(B.cfg.friendId, { t: 'snap', s: E.snapshot(B.state) }); }

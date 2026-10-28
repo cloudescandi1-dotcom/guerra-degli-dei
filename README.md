@@ -9,6 +9,7 @@ con personaggi, nomi e grafica originali.
 **Gioca online:** https://cloudescandi1-dotcom.github.io/guerra-degli-dei/
 
 ## Stato (28/10/2026)
+- ✅ Versione 1.9: **movimenti fluidi**: posizioni calcolate anche tra un passo e l'altro del motore, camminata al ritmo della velocità, rotazione quando cambiano verso, scatto quando attaccano, entrata in campo con caduta e polvere
 - ✅ Versione 1.8: supplementari di 2 minuti con orologio rosso e ambrosia ×3 quando mancano 1:30, pannello emoticon con frasi ("Buona fortuna!", "Bella giocata!"…), schermata finale VS con le corone
 - ✅ Versione 1.7: battaglia come in Clash: tempo in alto a destra ("Termina tra"), corone sul bordo destro che compaiono alla prima corona, scritta "Nemico"/"Tu" con le corone, "60 secondi restanti" e x2, metà avversaria rossa quando trascini, nome e livello della carta, livelli su torri e truppe, "Succ.:" e "Massimo: 10"
 - ✅ Versione 1.6: **Cammino degli Eroi rifatto come il Cammino dei Trofei**: barra delle coppe a sinistra con l'etichetta, premi su piattaforme in rilievo con la spunta, arene come plastici con fascia blu e carte sbloccate, pulsante OK in basso

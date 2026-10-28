@@ -228,6 +228,7 @@
     if (u.charging) { amount *= 2; s.fx.push({ type: 'charge', x: t.x, y: t.y, t0: s.t, dur: 0.4 }); }
     if (d.heads) amount *= u.heads;
     u.charging = false; u.run = 0;
+    u.atkT = s.t; u.atkX = t.x; u.atkY = t.y;
     const src = { owner: u.owner, splash: u.splash, hitsAir: u.hitsAir, stunOnHit: d.stunOnHit || 0 };
     let targets = [t];
     if (d.multi) {
@@ -448,7 +449,7 @@
       t: r1(s.t), over: s.over, winner: s.winner, crowns: s.crowns, inOvertime: s.inOvertime, duration: s.duration, overtime: s.overtime,
       players: s.players.map((p) => ({ amb: r1(p.amb), hand: p.hand, queue: [p.queue[0]] })),
       ents: s.ents.map((e) => [e.id, e.key, e.owner, r1(e.x), r1(e.y), Math.round(e.hp), e.max, e.cat === 'tower' ? (e.tower === 'king' ? 2 : 1) : 0,
-        r1(e.deploy > 0 ? e.deploy : 0), e.stun > 0 ? 1 : 0, e.flash > 0 ? 1 : 0, e.heads || 1, e.charging ? 1 : 0, r1(e.r), e.level || 1, e.active === false ? 0 : 1]),
+        r1(e.deploy > 0 ? e.deploy : 0), e.stun > 0 ? 1 : 0, e.flash > 0 ? 1 : 0, e.heads || 1, e.charging ? 1 : 0, r1(e.r), e.level || 1, e.active === false ? 0 : 1, r1(e.atkT || 0), r1(e.atkX || 0), r1(e.atkY || 0)]),
       shots: s.shots.map((sh) => [r1(sh.x), r1(sh.y), sh.owner, sh.shot]),
       fx: s.fx.map((f) => Object.assign({}, f)),
       ruins: s.ruins,
@@ -465,7 +466,7 @@
         id: a[0], key: a[1], owner: a[2], x: a[3], y: a[4], hp: a[5], max: a[6],
         cat: a[7] ? 'tower' : (D.BY_KEY[a[1]] && D.BY_KEY[a[1]].type === 'building' ? 'building' : 'unit'),
         tower: a[7] === 2 ? 'king' : a[7] === 1 ? 'princess' : undefined,
-        deploy: a[8], stun: a[9], flash: a[10] ? 0.1 : 0, heads: a[11], charging: !!a[12], r: a[13], level: a[14] || 1, active: a[15] !== 0,
+        deploy: a[8], stun: a[9], flash: a[10] ? 0.1 : 0, heads: a[11], charging: !!a[12], r: a[13], level: a[14] || 1, active: a[15] !== 0, atkT: a[16] || 0, atkX: a[17] || 0, atkY: a[18] || 0,
         flying: !!(D.BY_KEY[a[1]] && D.BY_KEY[a[1]].flying),
       })),
     };
