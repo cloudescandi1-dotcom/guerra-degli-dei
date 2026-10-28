@@ -3,10 +3,33 @@
 Ultimo aggiornamento: 28 ottobre 2026. Titolare: cloudescandi1-dotcom.
 
 ## In breve
-- **Niente account, niente email, niente pubblicità, niente statistiche o tracciamenti.**
-- I tuoi progressi (coppe, carte, monete, gemme, mazzo, amici, clan, chat) restano
-  **solo sul tuo dispositivo**, nella memoria del browser. Non esiste un nostro server.
-- Il gioco non usa cookie.
+- **Niente pubblicità, niente statistiche o tracciamenti, niente cookie.**
+- I tuoi progressi (coppe, carte, monete, gemme, mazzo, amici, clan, chat) sono salvati
+  sul tuo dispositivo e, per non perderli, anche **online nel tuo account**.
+- Appena apri il gioco entri come **ospite**, senza dare nessun dato personale.
+  Se vuoi, puoi collegare un'**email e una password** per ritrovare i progressi su un altro telefono.
+
+## Account e salvataggi online
+Per gli account e i salvataggi usiamo **Supabase** (Supabase Inc.), con i dati conservati
+in un centro dati in **Europa**. Vengono salvati:
+- un codice casuale che identifica il tuo account;
+- i progressi del gioco (gli stessi elencati sopra);
+- solo se crei un account: la tua **email** e la password (Supabase la conserva cifrata:
+  nessuno, nemmeno noi, può leggerla);
+- dati tecnici dell'accesso (per esempio data e indirizzo IP), che Supabase usa per sicurezza.
+
+**Perché:** per farti giocare e conservare i tuoi progressi (base giuridica: l'esecuzione del
+servizio che chiedi usando il gioco). L'email serve solo per entrare e recuperare l'account:
+non la usiamo per pubblicità e non la diamo a nessuno.
+
+**Per quanto tempo:** finché l'account esiste. Puoi **eliminarlo quando vuoi** dal gioco
+(⚙️ Impostazioni → 👤 Account → Elimina account): vengono cancellati l'account e i progressi online.
+
+Informativa di Supabase: https://supabase.com/privacy
+
+**I tuoi diritti (GDPR):** puoi chiedere di vedere, correggere o cancellare i tuoi dati, o
+opporti al loro uso, scrivendo tramite la pagina GitHub del progetto. Puoi anche rivolgerti
+al Garante per la protezione dei dati personali (www.garanteprivacy.it).
 
 ## Quando giochi con amici e clan
 Per collegare i telefoni tra loro il gioco usa la tecnologia WebRTC tramite il servizio
@@ -26,11 +49,13 @@ Il gioco è pubblicato su GitHub Pages. GitHub può registrare dati tecnici dell
 https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement
 
 ## Cancellare i dati
-Cancellando i dati del sito dal
-browser (o disinstallando l'app) sparisce tutto.
+- I dati sul telefono: cancella i dati del sito dal browser (o disinstalla l'app).
+- I dati online: ⚙️ Impostazioni → 👤 Account → **Elimina account**. Se giochi come ospite
+  senza aver creato un account, puoi chiedere la cancellazione tramite la pagina GitHub del progetto.
 
 ## Minori
-Il gioco non chiede dati personali. Consigliamo ai più giovani di non scrivere in chat
+Per creare un account con l'email bisogna avere almeno **14 anni** (in Italia è l'età
+per dare da soli il consenso ai servizi online); i più piccoli possono giocare come ospiti. Consigliamo ai più giovani di non scrivere in chat
 il proprio nome vero, l'indirizzo o altri dati personali.
 
 ## Contatti

@@ -620,3 +620,6 @@ img.chest-big { width: 8rem; height: 8rem; filter: drop-shadow(0 6px 8px #0008);
 .vs-row.me { background: linear-gradient(#3f8ff0, #1a4fa8); }
 .vs-row span { font-size: 3rem; filter: grayscale(1) brightness(.3); }
 .vs-row span.on { filter: drop-shadow(0 4px 0 #0008); animation: pop .4s; }
+/* finestra Account: campi email e password (16px: su iPhone niente zoom quando li tocchi) */
+.acct-form { display: grid; gap: 8px; margin: 8px 0; }
+.acct-form input { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--frame); font: inherit; font-size: 16px; color: #1a1030; background: #fff; }

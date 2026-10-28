@@ -43,6 +43,13 @@
     return fresh();
   }
 
+  // Profilo ricostruito dai dati salvati online (stesse regole del caricamento dal telefono)
+  function restore(data) {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+    const p = Object.assign(fresh(), data);
+    unlockArenaCards(p);
+    return p;
+  }
   function save(p, storage) {
     try { storage && storage.setItem(KEY, JSON.stringify(p)); } catch (e) { /* spazio pieno o modalità privata */ }
   }
@@ -503,7 +510,7 @@
     romeDay, msToRomeMidnight, shopOffers, buyOffer, buyGemItem, skipCost, skipChest,
     road, roadReady, roadPending, claimRoad,
     tourPrize, tourFree, tourStart, tourResult, tourClaim, tourDifficulty, TOUR_MAX_WINS, TOUR_MAX_LOSSES, TOUR_RETRY_GEMS, TOUR_LEVEL,
-    addFriend, removeFriend, myFriendKey, checkFriendKey, addChat, createClan, mergeClan, cleanClan, canRequest, requestMax, creditDonations, randomId,
+    restore, addFriend, removeFriend, myFriendKey, checkFriendKey, addChat, createClan, mergeClan, cleanClan, canRequest, requestMax, creditDonations, randomId,
     WIN_TROPHIES, LOSS_TROPHIES, REQUEST_EVERY,
   };
   if (isNode) module.exports = api;

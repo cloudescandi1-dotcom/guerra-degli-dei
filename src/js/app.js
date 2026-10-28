@@ -5,7 +5,8 @@
   const $ = (s) => document.querySelector(s);
   const store = (() => { try { return window.localStorage; } catch (e) { return null; } })();
   let profile = P.load(store);
-  const save = () => P.save(profile, store);
+  // salva sul telefono e (dopo qualche secondo) anche online, nell'account
+  const save = () => { P.save(profile, store); if (window.Cloud) Cloud.save(profile); };
   Sound.setOn(profile.sound);
 
   const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -1267,14 +1268,99 @@
 
   $('#btn-settings').onclick = () => {
     const body = modal(`<h3>⚙️ Impostazioni</h3>
+      <button id="acct" class="btn full gold" type="button" style="width:100%">👤 Account</button>
       <button id="snd" class="btn full ${profile.sound ? 'green' : 'grey'}" type="button" style="width:100%">${profile.sound ? '🔊 Suoni attivi' : '🔇 Suoni spenti'}</button>
       <button id="howto" class="btn full" type="button" style="width:100%">📖 Come si gioca</button>
       <button id="legal" class="btn full grey" type="button" style="width:100%">🔒 Privacy e diritti</button>
       <p class="muted">© 2026 ${COPYRIGHT}. Tutti i diritti riservati.</p>`);
     body.querySelector('#snd').onclick = () => { profile.sound = !profile.sound; Sound.setOn(profile.sound); save(); $('#btn-settings').click(); };
     body.querySelector('#howto').onclick = howTo;
+    body.querySelector('#acct').onclick = account;
     body.querySelector('#legal').onclick = legal;
   };
+
+  // ---------------------------------------------------------------- account (Supabase)
+  let pendingLogin = false;
+  function account() {
+    const me = window.Cloud && Cloud.info();
+    if (!me) {
+      modal(`<h3>👤 Account</h3><p>Non riesco a collegarmi al server degli account. Controlla la connessione a internet e riprova.</p>`);
+      return;
+    }
+    if (!me.guest) {
+      const body = modal(`<h3>👤 Account</h3>
+        <p>Sei collegato come <b>${esc(me.email)}</b> ${me.confirmed ? '✅' : '<br><span class="muted">⏳ Email da confermare: apri il link che ti abbiamo mandato (guarda anche nello spam).</span>'}</p>
+        <p>I tuoi progressi sono salvati online: su un altro telefono basta fare "Accedi" con la stessa email.</p>
+        <button id="out" class="btn full grey" type="button" style="width:100%">Esci dall'account</button>
+        <button id="del" class="btn full red" type="button" style="width:100%">Elimina account</button>`);
+      body.querySelector('#out').onclick = async () => {
+        await Cloud.logout();
+        // i progressi restano nell'account; su questo telefono si riparte da capo finché non rientri
+        profile = P.fresh(); P.save(profile, store); closeModal(); render(); toast('Sei uscito: i tuoi progressi restano nell\'account');
+      };
+      body.querySelector('#del').onclick = () => {
+        const b2 = modal(`<h3>Eliminare l'account?</h3><p>Verranno cancellati per sempre l'account e i progressi salvati online. Non si può annullare.</p>
+          <div class="row"><button id="no" class="btn grey" type="button">Annulla</button><button id="yes" class="btn red" type="button">Elimina</button></div>`);
+        b2.querySelector('#no').onclick = account;
+        b2.querySelector('#yes').onclick = async () => {
+          const err = await Cloud.remove();
+          if (err) { toast(err, 3500); return; }
+          profile = P.fresh(); P.save(profile, store); closeModal(); render(); toast('Account eliminato');
+        };
+      };
+      return;
+    }
+    const body = modal(`<h3>👤 Account</h3>
+      <p>Stai giocando come <b>ospite</b>: i progressi sono salvati online, ma li ritrova solo questo telefono.
+      Crea un account per non perderli e per giocare anche da un altro dispositivo.</p>
+      <div class="acct-form">
+        <input id="em" type="email" autocomplete="email" placeholder="Email" maxlength="120">
+        <input id="pw" type="password" autocomplete="new-password" placeholder="Password (almeno 8 caratteri)" maxlength="72">
+        <button id="reg" class="btn full gold" type="button" style="width:100%">Crea account</button>
+        <button id="log" class="btn full" type="button" style="width:100%">Ho già un account: accedi</button>
+      </div>
+      <p class="muted">Usiamo l'email solo per l'accesso e per recuperare l'account. Niente pubblicità.</p>`);
+    const val = () => ({ email: body.querySelector('#em').value.trim(), password: body.querySelector('#pw').value });
+    const okForm = ({ email, password }) => {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { toast('Email non valida'); return false; }
+      if (password.length < 8) { toast('Password troppo corta: almeno 8 caratteri'); return false; }
+      return true;
+    };
+    body.querySelector('#reg').onclick = async () => {
+      const v = val();
+      if (!okForm(v)) return;
+      const err = await Cloud.register(v.email, v.password);
+      if (err) { toast(err, 4000); return; }
+      modal(`<h3>📧 Controlla la posta</h3><p>Ti abbiamo mandato un'email a <b>${esc(v.email)}</b>. Apri il link per confermare l'account
+        (se non la trovi guarda nello spam). Intanto puoi continuare a giocare.</p>`);
+    };
+    body.querySelector('#log').onclick = () => {
+      const v = val();
+      if (!okForm(v)) return;
+      const b2 = modal(`<h3>Accedere all'account?</h3><p>I progressi di <b>questo telefono</b> (🏆 ${profile.trophies}) verranno sostituiti da quelli dell'account.</p>
+        <div class="row"><button id="no" class="btn grey" type="button">Annulla</button><button id="yes" class="btn gold" type="button">Accedi</button></div>`);
+      b2.querySelector('#no').onclick = account;
+      b2.querySelector('#yes').onclick = async () => {
+        pendingLogin = true;
+        const err = await Cloud.login(v.email, v.password);
+        if (err) { pendingLogin = false; toast(err, 4000); account(); return; }
+        closeModal();
+      };
+    };
+  }
+  // Quando cambia chi è collegato: carica i progressi dell'account oppure salva online quelli del telefono
+  async function onAccount(me, event, changed) {
+    if (!me || !changed) return;
+    const row = await Cloud.load();
+    const cloud = row && P.restore(row.dati);
+    if (cloud && (pendingLogin || !me.guest)) {
+      profile = cloud; P.save(profile, store); render();
+      if (pendingLogin) toast('Bentornato! Progressi dell\'account caricati');
+    } else {
+      Cloud.saveNow(profile);
+    }
+    pendingLogin = false;
+  }
 
   // Titolare dei diritti: cambia qui il nome se vuoi che compaia il tuo nome vero
   const COPYRIGHT = 'cloudescandi1-dotcom';
@@ -1282,13 +1368,15 @@
     modal(`<h3>🔒 Privacy e diritti</h3>
       <p><b>© 2026 ${COPYRIGHT}. Tutti i diritti riservati.</b> Guerra degli Dèi, i suoi disegni, i nomi e i testi delle carte e il codice
       sono opere originali di proprietà esclusiva del titolare: è vietato copiarli, ripubblicarli o usarli altrove senza permesso scritto.
-      La libreria PeerJS (licenza MIT) appartiene ai suoi autori.</p>
-      <p><b>Privacy in breve:</b> niente account, email, pubblicità, cookie o statistiche. I tuoi progressi restano <b>solo su questo dispositivo</b>.</p>
+      Le librerie PeerJS e supabase-js (licenza MIT) appartengono ai loro autori.</p>
+      <p><b>Privacy in breve:</b> niente pubblicità, cookie o statistiche. I tuoi progressi sono salvati su questo dispositivo e online
+      nel tuo account (servizio <b>Supabase</b>, dati in Europa). Entri come ospite senza dati personali; l'email serve solo se crei un account
+      (dai 14 anni in su). Puoi eliminare l'account e i progressi online da 👤 Account.</p>
       <p><b>Amici e clan:</b> per collegare i telefoni si usa il servizio gratuito PeerJS, che vede il tuo codice amico e il tuo indirizzo IP.
       Gli amici e i membri del clan con cui ti colleghi vedono il tuo nome nel gioco, le coppe, i messaggi e il tuo indirizzo IP.
       Se non vuoi, non aggiungere amici: il resto del gioco funziona lo stesso.</p>
       <p><b>Consiglio:</b> in chat non scrivere il tuo nome vero, l'indirizzo o altri dati personali.</p>
-      <p class="muted">Il sito è ospitato da GitHub Pages, che può registrare dati tecnici delle visite. Per cancellare i tuoi dati, cancella i dati del sito dal browser.</p>`);
+      <p class="muted">Il sito è ospitato da GitHub Pages, che può registrare dati tecnici delle visite. Per cancellare i dati sul telefono, cancella i dati del sito dal browser.</p>`);
   }
 
   function howTo() {
@@ -1323,6 +1411,7 @@
       } else renderClan();
     }, 150);
   }
+  if (window.Cloud) Cloud.start('guerra', { onUser: onAccount, onError: (m) => console.warn('Account:', m) });
   Social.start(() => profile, save, {
     onStatus: (st) => { netDot(st); softClan(); },
     onPeers: softClan,

@@ -18,6 +18,8 @@ Senza il permesso scritto del titolare è vietato:
 Componenti di terze parti (non coperti da questa dichiarazione, restano dei loro autori):
 - PeerJS 1.5.4 (src/js/peerjs.min.js), licenza MIT, Copyright (c) 2015 Michelle Bu e
   Eric Zhang. Il testo della licenza MIT è in docs/licenze-terze-parti.md.
+- supabase-js 2.45.4 (src/js/supabase.js), licenza MIT, Copyright (c) 2020 Supabase.
+  Il testo della licenza MIT è in docs/licenze-terze-parti.md.
 
 I riferimenti alla mitologia greca e romana (nomi di dèi, eroi e mostri) appartengono al
 patrimonio culturale comune; la loro interpretazione grafica e di gioco è originale.
