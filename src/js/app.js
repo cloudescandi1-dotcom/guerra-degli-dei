@@ -77,7 +77,7 @@
     $('#top-trophies').textContent = profile.trophies;
     $('#top-gold').textContent = profile.gold;
     $('#top-gems').textContent = profile.gems || 0;
-    $('#top-arena').textContent = D.ARENAS[P.arena(profile)].icon;
+    $('#top-level').textContent = Math.max(1, Math.round(P.avgLevel(profile)));
   }
   function render() {
     renderTop();
@@ -137,6 +137,7 @@
       };
     };
   }
+  for (const b of document.querySelectorAll('[data-go]')) b.onclick = () => document.querySelector(`.tabbar [data-tab=${b.dataset.go}]`).click();
   for (const b of document.querySelectorAll('.tabbar button')) {
     b.addEventListener('click', () => {
       Sound.unlock(); Sound.play('tap');
@@ -162,27 +163,30 @@
       return `<button type="button" class="chest full ${st === 'pronto' ? 'ready' : ''}" data-slot="${i}"><span class="ci">${chestArt(c.type)}</span>${label}<small>${D.ARENAS[c.arena].name.split(' ')[0]}</small></button>`;
     }).join('');
     const giftOk = P.giftReady(profile, now);
+    const pend = P.roadPending(profile);
     $('#tab-battaglia').innerHTML = `
-      <button type="button" id="arena-open" class="arena-banner" style="background:linear-gradient(${ar.sky}, ${ar.ground[0]})">
-        ${P.roadPending(profile) ? `<span class="road-badge">🎁 ${P.roadPending(profile)}</span>` : ''}
-        <div class="icon">${ar.icon}</div>
-        <h3>Arena ${a + 1}: ${esc(ar.name)}</h3>
-        <p>🏆 ${profile.trophies}${next ? ' / ' + next.trophies + ' per ' + esc(next.name) : ' — arena finale!'}</p>
-        <div class="trophy-bar"><div style="width:${Math.max(0, Math.min(100, pct))}%"></div></div>
-        <span class="tap-hint">Tocca per arene e ricompense ›</span>
-      </button>
-      <button id="go-battle" class="btn gold battle-btn" type="button">⚔️ BATTAGLIA</button>
-      <div class="row">
-        <button id="go-train" class="btn" type="button">🎯 Allenamento</button>
-        <button id="go-friend" class="btn green" type="button">🤝 Sfida un amico</button>
+      <div id="arena-open" class="home-arena" role="button" tabindex="0">
+        <div id="arena-view"></div>
+        ${pend ? `<span class="road-badge">🎁 ${pend}</span>` : ''}
+        <div class="arena-tag">
+          <h3>Arena ${a + 1} · ${esc(ar.name)}</h3>
+          <p>🏆 ${profile.trophies}${next ? ' / ' + next.trophies : ''}</p>
+          <div class="trophy-bar"><div style="width:${Math.max(0, Math.min(100, pct))}%"></div></div>
+        </div>
+        <span class="arena-tap">Ricompense e arene ›</span>
       </div>
-      <h2>Bauli <small>— vinci le battaglie per ottenerne</small></h2>
+      <div class="battle-row">
+        <button id="go-train" class="btn side-btn" type="button"><span class="si">🎯</span>Allena</button>
+        <button id="go-battle" class="btn gold battle-btn" type="button">Battaglia</button>
+        <button id="go-friend" class="btn green side-btn" type="button"><span class="si">🤝</span>Amico</button>
+      </div>
       <div class="chests">${chests}</div>
       <button type="button" class="gift" id="gift">
         <span class="gi">${chestArt('dono')}</span>
         <div><b>Baule del giorno</b><small>${giftOk ? 'Pronto: toccalo per aprirlo!' : 'Il prossimo a mezzanotte (ora di Roma), tra ' + fmtWait(P.msToRomeMidnight(now))}</small></div>
         <span class="btn small ${giftOk ? 'gold' : 'grey'}">${giftOk ? 'Apri' : '⏳'}</span>
       </button>`;
+    homeArena(a);
     $('#arena-open').onclick = () => { Sound.play('tap'); arenaDialog(a); };
     $('#go-battle').onclick = () => startLadder();
     $('#go-train').onclick = () => trainDialog();
@@ -194,6 +198,30 @@
     };
     for (const el of document.querySelectorAll('.chest.full')) el.onclick = () => chestDialog(+el.dataset.slot);
   }
+
+  const home = { canvas: null, r: null, key: '' };
+  function homeArena(a) {
+    const box = $('#arena-view');
+    if (!box) return;
+    if (!home.canvas) {
+      home.canvas = document.createElement('canvas');
+      home.r = Render.create(home.canvas, { top: 6.5, bot: 2.2 });
+      home.state = Engine.createMatch({ decks: [D.START_DECK, D.START_DECK], seed: 1 });
+    }
+    box.replaceWith(home.canvas);
+    home.canvas.id = 'arena-view';
+    const rect = home.canvas.getBoundingClientRect();
+    const key = a + ':' + Math.round(rect.width) + 'x' + Math.round(rect.height);
+    if (key === home.key || !rect.width) return;
+    home.key = key;
+    home.r.setArena(a);
+    home.r.resize();
+    home.r.draw(home.state);
+    // i disegni potrebbero non essere ancora pronti: si ridisegna poco dopo
+    setTimeout(() => { home.r.draw(home.state); }, 600);
+    setTimeout(() => { home.r.draw(home.state); }, 2000);
+  }
+  window.addEventListener('resize', () => { home.key = ''; if (tab === 'battaglia' && !B) renderBattleTab(); });
 
   function chestDialog(slot) {
     const now = Date.now();

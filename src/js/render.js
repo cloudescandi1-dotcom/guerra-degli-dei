@@ -7,7 +7,9 @@
   const TEAM_DARK = ['#22509f', '#9e231b'];
   const EMOJI_FONT = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",serif';
 
-  function create(canvas) {
+  // opts.top / opts.bot: spazio extra sopra e sotto il campo (in caselle)
+  function create(canvas, opts) {
+    opts = opts || {};
     const ctx = canvas.getContext('2d');
     let S = 20, ox = 0, oy = 0, flip = false, arena = D.ARENAS[0], dpr = 1;
     const FOOT = (SP && SP.FOOT) || 0.94;
@@ -24,7 +26,7 @@
       canvas.width = Math.round(r.width * dpr);
       canvas.height = Math.round(r.height * dpr);
       // Sopra il campo serve spazio per il tempio del Re nemico (TOP) e sotto per il bordo (BOT)
-      const TOP = 2.6, BOT = 0.6;
+      const TOP = opts.top || 2.6, BOT = opts.bot || 0.6;
       S = Math.min(canvas.width / E.W, canvas.height / (FIELD_H + TOP + BOT));
       ox = (canvas.width - S * E.W) / 2;
       // Il campo sta in basso (vicino alle carte); lo spazio che avanza in alto diventa cielo

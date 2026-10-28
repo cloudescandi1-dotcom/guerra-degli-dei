@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
   <title>Guerra degli Dèi</title>
   <meta name="description" content="Battaglie di carte in tempo reale con eroi e mostri della mitologia greca e romana.">
-  <meta name="theme-color" content="#141b33">
+  <meta name="theme-color" content="#12295e">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.png" type="image/png">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
@@ -13,6 +13,9 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Guerra Dèi">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;800;900&display=swap">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -20,14 +23,13 @@
   <section id="home" class="screen">
     <header class="top">
       <button id="btn-profile" class="profile" type="button">
-        <span class="lvl" id="top-arena">🏛️</span>
-        <span><b id="top-name">Eroe</b><small><span id="top-trophies">0</span> 🏆</small></span>
+        <span class="lvl-shield"><b id="top-level">1</b></span>
+        <span class="pname"><b id="top-name">Eroe</b><span class="tro">🏆 <span id="top-trophies">0</span></span></span>
       </button>
       <div class="top-right">
-        <span class="gold">🪙 <b id="top-gold">0</b></span>
-        <span class="gold gems">💎 <b id="top-gems">0</b></span>
-        <span id="net-dot" class="net-dot" title="Collegamento amici"></span>
-        <button id="btn-settings" class="icon-btn" type="button" title="Impostazioni">⚙️</button>
+        <button class="res" type="button" data-go="negozio"><span class="ico">🪙</span><b id="top-gold">0</b><i>+</i></button>
+        <button class="res gems" type="button" data-go="negozio"><span class="ico">💎</span><b id="top-gems">0</b><i>+</i></button>
+        <button id="btn-settings" class="icon-btn" type="button" title="Impostazioni">☰<span id="net-dot" class="net-dot" title="Collegamento amici"></span></button>
       </div>
     </header>
 
@@ -39,10 +41,10 @@
     </main>
 
     <nav class="tabbar">
-      <button data-tab="negozio" type="button"><span>🛒</span>Negozio</button>
-      <button data-tab="carte" type="button"><span>🃏</span>Carte</button>
-      <button data-tab="battaglia" type="button" class="active"><span>⚔️</span>Battaglia</button>
-      <button data-tab="clan" type="button"><span>🛡️</span>Clan<i id="clan-badge" class="badge" hidden></i></button>
+      <button data-tab="negozio" type="button"><span class="ti"><svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="tb-st" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#9aa6b5"/></linearGradient><linearGradient id="tb-gd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe680"/><stop offset="1" stop-color="#e5a21c"/></linearGradient></defs><path d="M6 18 L24 8 L42 18 Z" fill="url(#tb-gd)" stroke="#0f1b3a" stroke-width="2.4" stroke-linejoin="round"/><rect x="9" y="18" width="30" height="20" rx="2" fill="#c0392b" stroke="#0f1b3a" stroke-width="2.4"/><path d="M9 18 h30" stroke="#ffe680" stroke-width="3"/><rect x="19" y="26" width="10" height="12" fill="#5a3418" stroke="#0f1b3a" stroke-width="2"/><circle cx="24" cy="14" r="2.6" fill="#fff"/></svg></span><em>Negozio</em></button>
+      <button data-tab="carte" type="button"><span class="ti"><svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="tb-st" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#9aa6b5"/></linearGradient><linearGradient id="tb-gd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe680"/><stop offset="1" stop-color="#e5a21c"/></linearGradient></defs><rect x="8" y="10" width="20" height="28" rx="3" fill="#8b5cf6" stroke="#0f1b3a" stroke-width="2.4" transform="rotate(-12 18 24)"/><rect x="18" y="8" width="22" height="30" rx="3" fill="#3f8ff0" stroke="#0f1b3a" stroke-width="2.4" transform="rotate(8 29 23)"/><circle cx="29" cy="20" r="5" fill="url(#tb-gd)" stroke="#0f1b3a" stroke-width="1.8" transform="rotate(8 29 23)"/></svg></span><em>Carte</em></button>
+      <button data-tab="battaglia" type="button" class="active"><span class="ti"><svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="tb-st" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#9aa6b5"/></linearGradient><linearGradient id="tb-gd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe680"/><stop offset="1" stop-color="#e5a21c"/></linearGradient></defs><path d="M10 8 L34 34 M38 8 L14 34" stroke="#0f1b3a" stroke-width="7" stroke-linecap="round"/><path d="M10 8 L34 34 M38 8 L14 34" stroke="url(#tb-st)" stroke-width="4" stroke-linecap="round"/><path d="M28 36 L36 28 M20 36 L12 28" stroke="#0f1b3a" stroke-width="7" stroke-linecap="round"/><path d="M28 36 L36 28 M20 36 L12 28" stroke="url(#tb-gd)" stroke-width="4" stroke-linecap="round"/><circle cx="38" cy="38" r="3.6" fill="url(#tb-gd)" stroke="#0f1b3a" stroke-width="1.8"/><circle cx="10" cy="38" r="3.6" fill="url(#tb-gd)" stroke="#0f1b3a" stroke-width="1.8"/></svg></span><em>Battaglia</em></button>
+      <button data-tab="clan" type="button"><span class="ti"><svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="tb-st" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#9aa6b5"/></linearGradient><linearGradient id="tb-gd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe680"/><stop offset="1" stop-color="#e5a21c"/></linearGradient></defs><path d="M24 5 L40 11 V24 Q40 37 24 44 Q8 37 8 24 V11 Z" fill="url(#tb-gd)" stroke="#0f1b3a" stroke-width="2.4" stroke-linejoin="round"/><path d="M24 10 L35 14 V24 Q35 33 24 39 Q13 33 13 24 V14 Z" fill="#c0392b"/><path d="M24 14 L27 22 H35 L28.5 27 L31 35 L24 30 L17 35 L19.5 27 L13 22 H21 Z" fill="#fff" stroke="#0f1b3a" stroke-width="1.2"/></svg></span><em>Clan</em><i id="clan-badge" class="badge" hidden></i></button>
     </nav>
   </section>
 
