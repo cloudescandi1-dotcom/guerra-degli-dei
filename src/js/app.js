@@ -362,39 +362,47 @@
     renderRoad(true);
   }
   $('#road-close').onclick = () => { $('#road').hidden = true; render(); };
+  // Colori delle "piattaforme" dei premi in ogni arena (piano e bordo) e oggetti decorativi
+  const SLAB = [['#d8c39a', '#9c8258'], ['#efe8d8', '#b7a98c'], ['#d6a56a', '#93622e'], ['#a9d8e6', '#5f98ad'],
+    ['#ecd6a6', '#b4955c'], ['#7a5560', '#46293a'], ['#f6f1e4', '#c9b98f']];
+  const PROPS = ['lancia', 'vaso', 'fuoco', 'fulmine', 'balista'];
   function renderRoad(scroll) {
     const cur = P.arena(profile), list = $('#road-list');
-    let html = '';
+    let html = '<div class="rwrap"><div class="rbar"><div class="rbar-fill"></div></div>';
+    let n = 0;
     // dall'alto (Olimpo) al basso (Sparta): si sale verso gli dèi
     for (let i = D.ARENAS.length - 1; i >= 0; i--) {
       const a = D.ARENAS[i];
-      const steps = P.road(i).slice().reverse();
-      for (const r of steps) {
-        const got = profile.roadClaimed.includes(r.t), ready = P.roadReady(profile, r), reached = profile.best >= r.t;
-        const pic = r.kind === 'chest' ? chestArt(r.chest) : r.kind === 'gold' ? '<span class="big-ico">🪙</span>' : '<span class="big-ico">💎</span>';
-        const what = r.kind === 'chest' ? D.CHESTS[r.chest].name : r.kind === 'gold' ? `${r.amount} monete` : `${r.amount} gemme`;
-        html += `<div class="rnode ${reached ? 'reached' : ''} ${ready ? 'ready' : ''} ${got ? 'got' : ''}">
-          <span class="rt">🏆 ${r.t}</span><span class="rdot"></span>
-          <div class="rprize">${pic}<div><small>${what}</small>${got ? '<b class="ok">✔</b>' : ready ? `<button class="btn small gold" data-road="${i}:${r.t}" type="button">Ritira</button>` : reached ? '' : '<span class="lock">🔒</span>'}</div></div></div>`;
-        if (profile.trophies >= r.t && (steps.indexOf(r) === 0 || profile.trophies < steps[steps.indexOf(r) - 1].t) && i === cur) html += youMarker();
+      for (const r of P.road(i).slice().reverse()) {
+        const got = profile.roadClaimed.includes(r.t), ready = P.roadReady(profile, r);
+        const pic = r.kind === 'chest' ? chestArt(r.chest) : `<span class="pico">${r.kind === 'gold' ? '🪙' : '💎'}</span>`;
+        const amount = r.kind === 'chest' ? '' : `<b class="pamt">${r.amount}</b>`;
+        const title = r.kind === 'chest' ? D.CHESTS[r.chest].name : r.kind === 'gold' ? `${r.amount} monete` : `${r.amount} gemme`;
+        const prize = `<button class="prize ${ready ? 'ready' : ''} ${got ? 'got' : ''}" type="button" title="${esc(title)}" ${ready ? `data-road="${i}:${r.t}"` : `data-info="${esc(title)}"`}>
+          ${amount}${pic}${got ? '<i class="chk">✔</i>' : ''}${ready ? '<em class="tap">Ritira!</em>' : ''}</button>`;
+        const prop = `<span class="prop">${art(PROPS[(r.t / 50) % PROPS.length], 'prop-art')}</span>`;
+        const side = n++ % 2 === 0;
+        html += `<div class="rrow" data-t="${r.t}"><span class="rt">${r.t}</span>
+          <div class="slab" style="--s1:${SLAB[i][0]};--s2:${SLAB[i][1]}">${side ? prop : prize}<span class="carpet"></span>${side ? prize : prop}</div></div>`;
       }
-      const cards = D.CARDS.filter((c) => c.arena === i).map((c) => art(c.key, 'mini')).join('');
-      html += `<div class="rgate ${i > cur ? 'locked' : ''} ${i === cur ? 'current' : ''}">
-        <div class="rgate-title"><b>Arena ${i + 1}</b><span>${esc(a.name)}</span></div>
-        <div class="rgate-view" data-arena="${i}"></div>
-        <div class="rgate-foot"><span class="rgate-t">🏆 ${a.trophies}</span><div class="rgate-cards">${cards}</div>
-          <button class="btn small" data-detail="${i}" type="button">Dettagli</button></div>
-        ${i > cur ? '<span class="rgate-lock">🔒</span>' : ''}
+      const cards = D.CARDS.filter((c) => c.arena === i).map((c) => `<span class="shield" style="--rc:${D.RARITY[c.rarity].color}">${art(c.key, 'shield-art')}</span>`).join('');
+      html += `<div class="rarena ${i === cur ? 'current' : ''}">
+        <button class="diorama" type="button" data-detail="${i}" aria-label="Dettagli dell'arena ${i + 1}"><span class="dio-view" data-arena="${i}"></span></button>
+        <h3 class="rname">${esc(a.name)}</h3>
+        <div class="rbanner-row" data-t="${a.trophies}"><span class="rt">${a.trophies}</span>
+          <div class="rbanner"><span class="crownlv">${i + 1}</span><b>ARENA ${i + 1}</b><span class="rtro">🏆 ${a.trophies}</span></div></div>
+        <div class="rgems"><i></i><i></i><i></i></div>
+        <p class="unl">Carte sbloccate:</p><div class="unl-cards">${cards}</div>
       </div>`;
-      if (i === cur && !P.road(i).some((r) => profile.trophies >= r.t)) html += youMarker();
     }
+    html += `<div class="you-tag">🏆 ${profile.trophies}</div></div>`;
     list.innerHTML = html;
-    // immagini delle arene (canvas disegnati una volta e riusati)
-    for (const box of list.querySelectorAll('.rgate-view')) {
+    // plastici delle arene (canvas disegnati una volta e riusati)
+    for (const box of list.querySelectorAll('.dio-view')) {
       const i = +box.dataset.arena;
       if (!roadViews[i]) {
         const cv = document.createElement('canvas');
-        roadViews[i] = { cv, r: Render.create(cv, { top: 5, bot: 0.8 }), drawn: false };
+        roadViews[i] = { cv, r: Render.create(cv, { top: 3.2, bot: 1.6 }), drawn: false };
       }
       const v = roadViews[i];
       box.appendChild(v.cv);
@@ -412,15 +420,36 @@
       if (r.cards) showReward(r); else { Sound.play('chest'); toast(r.gold ? `🪙 +${r.gold} monete` : `💎 +${r.gems} gemme`); }
       renderRoad(false); renderTop();
     };
+    for (const b of list.querySelectorAll('[data-info]')) b.onclick = () => toast(b.dataset.info);
     for (const b of list.querySelectorAll('[data-detail]')) b.onclick = () => arenaDialog(+b.dataset.detail);
-    if (scroll) {
-      const me = list.querySelector('.you') || list.querySelector('.rgate.current');
-      if (me) requestAnimationFrame(() => me.scrollIntoView({ block: 'center' }));
-    }
+    requestAnimationFrame(() => { placeYou(); if (scroll) scrollToYou(false); });
   }
-  function youMarker() {
-    return `<div class="you"><span class="lvl-shield"><b>${Math.max(1, Math.round(P.avgLevel(profile)))}</b></span><b>${esc(profile.name)}</b><span class="you-t">🏆 ${profile.trophies}</span></div>`;
+  // Etichetta delle coppe sulla barra a sinistra, tra il premio sotto e quello sopra
+  function placeYou() {
+    const wrap = $('#road-list .rwrap');
+    if (!wrap) return;
+    const top0 = wrap.getBoundingClientRect().top;
+    const pts = [...wrap.querySelectorAll('[data-t]')].map((el) => {
+      const r = el.querySelector('.rt').getBoundingClientRect();
+      return { t: +el.dataset.t, y: r.top + r.height / 2 - top0 };
+    }).sort((a, b) => a.t - b.t);
+    const T = profile.trophies;
+    let lo = pts[0], hi = null;
+    for (const p of pts) { if (p.t <= T) lo = p; else { hi = p; break; } }
+    const y = hi ? lo.y + ((T - lo.t) / (hi.t - lo.t)) * (hi.y - lo.y) : lo.y;
+    const bottom = pts[0].y, top = pts[pts.length - 1].y;
+    const bar = wrap.querySelector('.rbar');
+    bar.style.top = top + 'px'; bar.style.height = (bottom - top) + 'px';
+    wrap.querySelector('.rbar-fill').style.height = Math.max(0, bottom - y) + 'px';
+    const tag = wrap.querySelector('.you-tag');
+    tag.style.top = y + 'px';
   }
+  function scrollToYou(smooth) {
+    const list = $('#road-list'), tag = list.querySelector('.you-tag');
+    if (tag) list.scrollTo({ top: tag.offsetTop - list.clientHeight * 0.6, behavior: smooth ? 'smooth' : 'auto' });
+  }
+  $('#road-me').onclick = () => scrollToYou(true);
+  window.addEventListener('resize', () => { if (!$('#road').hidden) placeYou(); });
 
   // ---------------------------------------------------------------- scheda Carte
   let pickKey = null;   // carta scelta da mettere nel mazzo

@@ -9,6 +9,7 @@ con personaggi, nomi e grafica originali.
 **Gioca online:** https://cloudescandi1-dotcom.github.io/guerra-degli-dei/
 
 ## Stato (28/10/2026)
+- ✅ Versione 1.6: **Cammino degli Eroi rifatto come il Cammino dei Trofei**: barra delle coppe a sinistra con l'etichetta, premi su piattaforme in rilievo con la spunta, arene come plastici con fascia blu e carte sbloccate, pulsante OK in basso
 - ✅ Versione 1.5: **guardiani dei templi** (sacerdotessa arciera sui templi laterali, il Re sul tempio grande che dorme finché non lo attacchi), pubblico fino in cima all'arena, avversario in alto con scudo del livello
 - ✅ Versione 1.1: aggiunti **Negozio** (offerte del giorno e gemme), baule del giorno e schede delle arene
 - ✅ 22 test automatici superati (motore di gioco, computer, progressione, negozio, clan)
