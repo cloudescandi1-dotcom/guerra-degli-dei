@@ -96,7 +96,8 @@
     switch (msg.t) {
       case 'hello': {
         // Chi si collega con noi diventa nostro amico (anche al contrario)
-        P.addFriend(p, { id, name: String(msg.name || '').slice(0, 20), trophies: msg.trophies | 0, clan: msg.clan, seen: Date.now() });
+        const clan = msg.clan && typeof msg.clan === 'object' ? { id: String(msg.clan.id || '').slice(0, 24), name: String(msg.clan.name || '').slice(0, 24), badge: String(msg.clan.badge || '').slice(0, 4) } : null;
+        P.addFriend(p, { id, name: String(msg.name || '').slice(0, 20), trophies: Math.max(0, msg.trophies | 0), clan, seen: Date.now() });
         me.save();
         cb.onPeers && cb.onPeers();
         break;
@@ -119,7 +120,8 @@
         break;
       }
       case 'clan-invite':
-        if (msg.clan && msg.clan.id && (!p.clan || p.clan.id !== msg.clan.id)) cb.onClanInvite && cb.onClanInvite(id, msg.clan);
+        const inv = P.cleanClan(msg.clan);
+        if (inv && (!p.clan || p.clan.id !== inv.id)) cb.onClanInvite && cb.onClanInvite(id, inv);
         break;
       default:
         // Messaggi della battaglia: li gestisce l'app
@@ -161,7 +163,8 @@
 
   function joinClan(clan) {
     const p = me.get();
-    p.clan = JSON.parse(JSON.stringify(clan));
+    p.clan = P.cleanClan(clan);
+    if (!p.clan) return;
     const mine = p.clan.members.find((m) => m.id === p.id);
     const info = { id: p.id, name: p.name, trophies: p.trophies, role: 'membro', at: Date.now(), left: false };
     if (mine) Object.assign(mine, info); else p.clan.members.push(info);

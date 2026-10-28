@@ -175,6 +175,7 @@
 
   function addCards(p, cards) {
     for (const [key, n] of Object.entries(cards)) {
+      if (!Object.prototype.hasOwnProperty.call(D.BY_KEY, key)) continue; // solo carte vere
       if (!p.cards[key]) p.cards[key] = { level: 1, count: 0 };
       p.cards[key].count += n;
     }
@@ -402,8 +403,38 @@
     };
     return p.clan;
   }
+  // Il clan che arriva da un altro giocatore può essere stato manomesso: si tengono solo
+  // dati del tipo giusto e di lunghezza limitata (niente codice nascosto nei testi, niente liste enormi)
+  const isCard = (k) => typeof k === 'string' && Object.prototype.hasOwnProperty.call(D.BY_KEY, k);
+  const BADGES = ['🏛️', '⚡', '🔱', '🦉', '🐺', '🐉', '🛡️', '🦅', '🌿', '☀️', '🌊', '🔥'];
+  const str = (v, n) => String(v == null ? '' : v).slice(0, n);
+  const num = (v, max) => Math.max(0, Math.min(max, Math.floor(Number(v)) || 0));
+  function cleanClan(c) {
+    if (!c || typeof c !== 'object' || typeof c.id !== 'string') return null;
+    const members = (Array.isArray(c.members) ? c.members : []).slice(0, 50)
+      .filter((m) => m && typeof m.id === 'string')
+      .map((m) => ({ id: str(m.id, 24), name: str(m.name, 20), trophies: num(m.trophies, 1e6), role: m.role === 'capo' ? 'capo' : 'membro', at: num(m.at, 1e14), left: !!m.left }));
+    const chat = (Array.isArray(c.chat) ? c.chat : []).slice(-150)
+      .filter((m) => m && typeof m.id === 'string' && (m.type !== 'request' || isCard(m.card)))
+      .map((m) => {
+        const out = { id: str(m.id, 24), from: str(m.from, 24), name: str(m.name, 20), text: str(m.text, 200), at: num(m.at, 1e14) };
+        if (m.type === 'info') out.type = 'info';
+        if (m.type === 'request') {
+          out.type = 'request'; out.card = m.card; out.max = Math.min(num(m.max, 10), requestMax(m.card));
+          out.donations = (Array.isArray(m.donations) ? m.donations : []).slice(0, out.max)
+            .filter((d) => d && typeof d.id === 'string').map((d) => ({ id: str(d.id, 24), from: str(d.from, 24) }));
+        }
+        return out;
+      });
+    return {
+      id: str(c.id, 24), name: str(c.name, 24) || 'Clan', badge: BADGES.includes(c.badge) ? c.badge : '🏛️',
+      leader: str(c.leader, 24), members, chat, updated: num(c.updated, 1e14),
+    };
+  }
+
   // Unisce due versioni dello stesso clan (quella di un altro membro e la nostra)
   function mergeClan(p, other) {
+    other = cleanClan(other);
     if (!other || !p.clan || other.id !== p.clan.id) return false;
     const c = p.clan;
     let changed = false;
@@ -418,7 +449,7 @@
       if (!mine) { c.chat.push(JSON.parse(JSON.stringify(msg))); changed = true; }
       else if (msg.donations && msg.donations.length > (mine.donations || []).length) {
         const ids = new Set((mine.donations || []).map((d) => d.id));
-        mine.donations = (mine.donations || []).concat(msg.donations.filter((d) => !ids.has(d.id)));
+        mine.donations = (mine.donations || []).concat(msg.donations.filter((d) => !ids.has(d.id))).slice(0, mine.max || 10);
         changed = true;
       }
     }
@@ -438,7 +469,7 @@
     if (!p.clan) return 0;
     let got = 0;
     for (const m of p.clan.chat) {
-      if (m.type !== 'request' || m.from !== p.id) continue;
+      if (m.type !== 'request' || m.from !== p.id || !isCard(m.card)) continue;
       for (const d of m.donations || []) {
         if (p.credited.includes(d.id)) continue;
         p.credited.push(d.id);
@@ -456,7 +487,7 @@
     romeDay, msToRomeMidnight, shopOffers, buyOffer, buyGemItem, skipCost, skipChest,
     road, roadReady, roadPending, claimRoad,
     tourPrize, tourFree, tourStart, tourResult, tourClaim, tourDifficulty, TOUR_MAX_WINS, TOUR_MAX_LOSSES, TOUR_RETRY_GEMS, TOUR_LEVEL,
-    addFriend, removeFriend, addChat, createClan, mergeClan, canRequest, requestMax, creditDonations, randomId,
+    addFriend, removeFriend, addChat, createClan, mergeClan, cleanClan, canRequest, requestMax, creditDonations, randomId,
     WIN_TROPHIES, LOSS_TROPHIES, REQUEST_EVERY,
   };
   if (isNode) module.exports = api;

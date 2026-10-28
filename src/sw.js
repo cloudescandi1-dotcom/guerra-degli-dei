@@ -1,12 +1,17 @@
 // Service worker: salva i file del gioco nel dispositivo, così funziona anche offline.
 // Se aggiungi o rinomini file, aggiorna l'elenco e aumenta il numero di versione.
-const CACHE = 'guerra-dei-v13';
+const CACHE = 'guerra-dei-v14';
 
 const FILES = [
   './',
   'index.html',
   'style.css',
   'manifest.webmanifest',
+  'fonts/fonts.css',
+  'fonts/lilita-one-latin-1.woff2',
+  'fonts/lilita-one-latin-ext-0.woff2',
+  'fonts/nunito-latin-3.woff2',
+  'fonts/nunito-latin-ext-2.woff2',
   'js/cards.js',
   'js/engine.js',
   'js/bot.js',

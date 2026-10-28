@@ -228,3 +228,25 @@ test('torneo: gratis una volta al giorno, finisce a 3 sconfitte o 12 vittorie, p
   assert.strictEqual(P.tourDifficulty(0), 'facile');
   assert.strictEqual(P.tourDifficulty(10), 'difficile');
 });
+
+test('clan ricevuto da un altro giocatore: niente codice nascosto né dati enormi', () => {
+  const p = P.fresh();
+  P.createClan(p, 'Prova', '🦉');
+  const evil = {
+    id: p.clan.id, name: '<img src=x onerror=alert(1)>'.repeat(5), badge: '<img src=x onerror=alert(1)>', updated: Date.now(),
+    members: Array.from({ length: 500 }, (_, i) => ({ id: 'm' + i, name: 'x'.repeat(999), trophies: '<b>', role: 'dio', at: 1 })),
+    chat: [{ id: 'r1', type: 'request', from: p.id, card: '__proto__', max: 99, donations: [{ id: 'd1' }], at: 1 },
+      { id: 'c1', from: 'm1', text: 'y'.repeat(5000), at: 2 }],
+  };
+  P.mergeClan(p, evil);
+  assert.strictEqual(p.clan.badge, '🦉'); // stemma non valido scartato (lo stemma resta quello nostro)
+  assert.ok(p.clan.name.length <= 24);
+  assert.ok(p.clan.members.length <= 51);
+  assert.ok(p.clan.members.every((m) => typeof m.trophies === 'number' && m.name.length <= 20 && ['capo', 'membro'].includes(m.role)));
+  assert.ok(!p.clan.chat.some((m) => m.card === '__proto__'));
+  assert.ok(p.clan.chat.every((m) => (m.text || '').length <= 200));
+  P.creditDonations(p);
+  assert.strictEqual({}.count, undefined); // nessuna modifica agli oggetti di JavaScript
+  P.addCards(p, { __proto__x: 1, constructor: 5 });
+  assert.ok(!Object.prototype.hasOwnProperty.call(p.cards, 'constructor'));
+});

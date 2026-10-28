@@ -605,17 +605,17 @@
           const mineCard = profile.cards[m.card];
           const canGive = !mine && got < m.max && mineCard && mineCard.count > 0;
           return `<div class="msg req ${mine ? 'mine' : ''}">${who}<div class="rq"><span class="em">${art(m.card)}</span>
-            <div>Chiede <b>${esc(d.name)}</b><br>${got}/${m.max} ricevute</div>
-            ${mine ? '' : `<button class="btn small ${canGive ? 'green' : 'grey'}" data-donate="${m.id}" type="button" ${canGive ? '' : 'disabled'}>Dona</button>`}</div></div>`;
+            <div>Chiede <b>${esc(d.name)}</b><br>${got}/${m.max | 0} ricevute</div>
+            ${mine ? '' : `<button class="btn small ${canGive ? 'green' : 'grey'}" data-donate="${esc(m.id)}" type="button" ${canGive ? '' : 'disabled'}>Dona</button>`}</div></div>`;
         }
         return `<div class="msg ${mine ? 'mine' : ''}">${who}${esc(m.text)}</div>`;
       }).join('');
       clanHtml = `<div class="box">
-        <div class="clan-head"><span class="cb">${clan.badge}</span><div><h3>${esc(clan.name)}</h3>
+        <div class="clan-head"><span class="cb">${esc(clan.badge)}</span><div><h3>${esc(clan.name)}</h3>
           <span class="muted">${members.length} membri · ${online} online</span></div></div>
         <h2>Membri</h2>
         ${members.sort((a, b) => b.trophies - a.trophies).map((m) => `<div class="friend"><span class="dot ${m.id === profile.id || Social.isOnline(m.id) ? 'on' : ''}"></span>
-          <div class="who"><b>${esc(m.id === profile.id ? profile.name + ' (tu)' : m.name)}</b><small>🏆 ${m.id === profile.id ? profile.trophies : m.trophies} · ${m.role === 'capo' ? '👑 capo' : 'membro'}</small></div></div>`).join('')}
+          <div class="who"><b>${esc(m.id === profile.id ? profile.name + ' (tu)' : m.name)}</b><small>🏆 ${m.id === profile.id ? profile.trophies : (m.trophies | 0)} · ${m.role === 'capo' ? '👑 capo' : 'membro'}</small></div></div>`).join('')}
         <h2>Chat del clan</h2>
         <div class="chat" id="clan-chat">${chat || '<p class="muted">Nessun messaggio. Saluta il tuo clan!</p>'}</div>
         <div class="field-row"><input id="clan-msg" type="text" maxlength="200" placeholder="Scrivi al clan..."><button id="clan-send" class="btn small gold" type="button">Invia</button></div>
