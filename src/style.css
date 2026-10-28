@@ -491,3 +491,34 @@ img.chest-big { width: 8rem; height: 8rem; filter: drop-shadow(0 6px 8px #0008);
 .you b { font-family: var(--font); font-weight: 400; text-shadow: var(--ol); font-size: 1.1rem; }
 .you .lvl-shield { width: 34px; height: 38px; }
 .you-t { font-family: var(--font); text-shadow: var(--ol); }
+
+/* ---------- Copertina dell'arena nella schermata principale ---------- */
+.arena-cover {
+  position: relative; margin: 4px -12px 0; height: 44vh; min-height: 250px; max-height: 430px; overflow: hidden; cursor: pointer;
+  background: linear-gradient(var(--g1), var(--g2) 62%, var(--fl) 62.1%, #0003 100%), var(--fl);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 88%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 88%, transparent 100%);
+}
+.cover-rays { position: absolute; inset: 0; background: repeating-conic-gradient(from 0deg at 50% 52%, #ffffff26 0 8deg, transparent 8deg 22deg); animation: spin 60s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.cover-floor { position: absolute; left: -10%; right: -10%; bottom: -22%; height: 50%; border-radius: 50%; background: radial-gradient(ellipse at 50% 30%, #ffffff33, transparent 60%), var(--fl); border-top: 4px solid #0002; }
+.cover-temple { position: absolute; left: 50%; bottom: 26%; transform: translateX(-50%); width: 58%; max-width: 270px; }
+.cover-temple img.cover-king { width: 100%; height: auto; filter: drop-shadow(0 10px 10px #0006); }
+.cover-chars { position: absolute; left: 0; right: 0; bottom: 6%; height: 40%; }
+.cover-chars .cc { position: absolute; bottom: 0; width: 34%; max-width: 150px; }
+.cover-chars .cc img { width: 100%; height: auto; filter: drop-shadow(0 8px 6px #0007); }
+.cover-chars .cc0 { left: 4%; transform: rotate(-4deg); }
+.cover-chars .cc1 { left: 50%; transform: translateX(-50%); bottom: -6%; width: 38%; z-index: 2; }
+.cover-chars .cc2 { right: 4%; transform: scaleX(-1) rotate(-4deg); }
+.arena-cover .arena-tag { top: 12%; z-index: 3; }
+.arena-cover .arena-tap { z-index: 3; bottom: 14%; }
+.arena-cover .road-badge { z-index: 4; top: 12%; }
+.arena-cover.c5 .cover-floor { box-shadow: 0 -6px 30px #ff6a1a88; }
+.cover-temple { width: 46%; max-width: 220px; bottom: 30%; }
+.arena-cover .arena-tag { top: 9%; }
+.arena-cover .arena-tap { bottom: 3%; }
+.cover-chars { bottom: 12%; height: 36%; }
+.cover-chars .cc { width: 30%; }
+.cover-chars .cc1 { width: 33%; bottom: -4%; }
+.arena-cover { -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 96%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 96%, transparent 100%); }
+.arena-cover .arena-tap { bottom: 5%; }

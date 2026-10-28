@@ -166,8 +166,11 @@
     const giftOk = P.giftReady(profile, now);
     const pend = P.roadPending(profile);
     $('#tab-battaglia').innerHTML = `
-      <div id="arena-open" class="home-arena" role="button" tabindex="0">
-        <div id="arena-view"></div>
+      <div id="arena-open" class="arena-cover c${a}" role="button" tabindex="0" style="--g1:${COVER_SKY[a][0]};--g2:${COVER_SKY[a][1]};--fl:${ar.ground[0]}">
+        <div class="cover-rays"></div>
+        <div class="cover-temple">${art('king', 'cover-king')}</div>
+        <div class="cover-floor"></div>
+        <div class="cover-chars">${D.CARDS.filter((c) => c.arena === a && c.type !== 'spell').slice(0, 3).map((c, i) => `<span class="cc cc${i}">${art(c.unit || c.key, 'cover-char')}</span>`).join('')}</div>
         ${pend ? `<span class="road-badge">🎁 ${pend}</span>` : ''}
         <div class="arena-tag">
           <h3>Arena ${a + 1} · ${esc(ar.name)}</h3>
@@ -186,7 +189,6 @@
         <div><b>Baule del giorno</b><small>${giftOk ? 'Pronto: toccalo per aprirlo!' : 'Il prossimo a mezzanotte (ora di Roma), tra ' + fmtWait(P.msToRomeMidnight(now))}</small></div>
         <span class="btn small ${giftOk ? 'gold' : 'grey'}">${giftOk ? 'Apri' : '⏳'}</span>
       </button>`;
-    homeArena(a);
     $('#arena-open').onclick = () => { Sound.play('tap'); openRoad(); };
     $('#go-battle').onclick = () => startLadder();
     $('#go-friend').onclick = () => { tab = 'clan'; document.querySelector('[data-tab=clan]').click(); };
@@ -198,6 +200,9 @@
     for (const el of document.querySelectorAll('.chest.full')) el.onclick = () => chestDialog(+el.dataset.slot);
   }
 
+  // Colori del cielo della copertina di ogni arena (in alto e verso l'orizzonte)
+  const COVER_SKY = [['#7fc4ff', '#ffe3a3'], ['#f2c98a', '#a8d77a'], ['#ffb36b', '#ffe0a8'], ['#5fc8ff', '#c9f1ff'],
+    ['#ffcf8a', '#ffeacc'], ['#3a0c10', '#ff7a2a'], ['#cfe6ff', '#fff6d6']];
   const home = { canvas: null, r: null, key: '' };
   function homeArena(a) {
     const box = $('#arena-view');
