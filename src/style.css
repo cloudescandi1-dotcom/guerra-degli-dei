@@ -529,11 +529,7 @@ img.chest-big { width: 8rem; height: 8rem; filter: drop-shadow(0 6px 8px #0008);
   background: linear-gradient(#ffe680, #e0a020); clip-path: polygon(0 20%, 22% 45%, 50% 0, 78% 45%, 100% 20%, 92% 100%, 8% 100%); padding-top: 6px;
 }
 .rtro { font-family: var(--font); color: var(--gold); text-shadow: var(--ol); font-size: 1.2rem; white-space: nowrap; }
-.rgems { display: flex; gap: 6px; padding: 4px 18px 6px; background: linear-gradient(#1f74d6, #155cb0); border: 3px solid #0c3f86; border-top: 0; border-radius: 0 0 14px 14px; }
-.rgems i { width: 16px; height: 16px; transform: rotate(45deg); border: 2px solid var(--frame); border-radius: 3px; background: linear-gradient(135deg, #e6b2ff, #8b3fd6); }
-.rgems i:nth-child(2) { background: linear-gradient(135deg, #ffe680, #e08a10); }
-.rgems i:nth-child(3) { background: linear-gradient(135deg, #ffd1f0, #c04fa0); }
-.unl { margin: 16px 0 6px; font-family: var(--font); color: #7ff0ff; text-shadow: var(--ol); font-size: 1rem; }
+.unl { margin: 18px 0 6px; font-family: var(--font); color: #7ff0ff; text-shadow: var(--ol); font-size: 1rem; }
 .unl-cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .shield {
   width: 60px; height: 72px; display: grid; place-items: center; padding: 4px;

@@ -391,7 +391,6 @@
         <h3 class="rname">${esc(a.name)}</h3>
         <div class="rbanner-row" data-t="${a.trophies}"><span class="rt">${a.trophies}</span>
           <div class="rbanner"><span class="crownlv">${i + 1}</span><b>ARENA ${i + 1}</b><span class="rtro">🏆 ${a.trophies}</span></div></div>
-        <div class="rgems"><i></i><i></i><i></i></div>
         <p class="unl">Carte sbloccate:</p><div class="unl-cards">${cards}</div>
       </div>`;
     }
