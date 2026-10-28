@@ -146,7 +146,7 @@
       // base dell'arena con scacchi appena accennati (quasi invisibili)
       g.fillStyle = arena.ground[0];
       quad(g, 0, 0, E.W, E.H); g.fill();
-      g.globalAlpha = 0.3;
+      g.globalAlpha = 0.12;
       g.fillStyle = arena.ground[1];
       for (let y = 0; y < E.H; y++) {
         for (let x = (y % 2); x < E.W; x += 2) { quad(g, x, y, x + 1, y + 1); g.fill(); }
@@ -553,7 +553,7 @@
         if (Math.abs(dx) > 2) a.dir = Math.sign(dx);
       }
       a.x = e.x; a.y = e.y;
-      a.face += (a.dir - a.face) * Math.min(1, dt * 14);   // si gira in un attimo, non di colpo
+      a.face += (a.dir - a.face) * Math.min(1, dt * 18);   // si gira in un attimo
 
       const R = e.r * u;
       const size = u * (1.8 + e.r * 2.4);
@@ -587,7 +587,9 @@
       ctx.globalAlpha = e.deploy > 0 ? 0.6 + 0.4 * (1 - Math.min(1, e.deploy)) : 1;
       ctx.translate(p.x + (a.ax || 0) * lunge, foot - lift - bob - drop + (a.ay || 0) * lunge * 0.5);
       ctx.rotate(sway + (ak < 1 ? Math.sin(ak * Math.PI) * 0.12 * a.face : 0));
-      ctx.scale(a.face * (2 - squash + breathe * -1), squash + breathe);
+      // girarsi: il disegno si specchia di colpo, con un piccolo schiacciamento (mai sottile come un foglio)
+      const turn = (a.face < 0 ? -1 : 1) * (0.82 + 0.18 * Math.abs(a.face));
+      ctx.scale(turn * (2 - squash + breathe * -1), squash + breathe);
       if (e.flash > 0) ctx.filter = 'brightness(1.7)';
       if (e.stun > 0) ctx.filter = 'grayscale(1) brightness(1.1)';
       sprite(e.key, side(e.owner), 0, 0, size, false, d.emoji);
@@ -777,19 +779,23 @@
     function placeZone(state, me, key) {
       const d = D.BY_KEY[key];
       if (!d || d.type === 'spell') return;
-      // Come una scacchiera: i colori vengono dal terreno dell'arena, così la griglia si "fonde" col campo.
-      // Le caselle vietate sono solo un po' più scure.
-      const g = gridColors();
-      ctx.lineWidth = Math.max(1, S * 0.035);
+      // Zona vietata: un'unica macchia rossa trasparente, senza righe né quadretti
+      // (per ogni riga si uniscono le caselle vicine, e tutto viene colorato in una volta sola)
+      ctx.beginPath();
       for (let y = 0; y < E.H; y++) {
-        for (let x = 0; x < E.W; x++) {
-          quad(ctx, x + 0.04, y + 0.04, x + 0.96, y + 0.96);
-          if (!E.canPlace(state, me, key, x + 0.5, y + 0.5)) { ctx.fillStyle = 'rgba(232,48,72,0.38)'; ctx.fill(); }
-          else {
-            ctx.fillStyle = (x + y) % 2 ? g.a : g.b; ctx.fill();
+        let x0 = -1;
+        for (let x = 0; x <= E.W; x++) {
+          const no = x < E.W && !E.canPlace(state, me, key, x + 0.5, y + 0.5);
+          if (no && x0 < 0) x0 = x;
+          if (!no && x0 >= 0) {
+            const a = proj(x0, y), b = proj(x, y), c = proj(x, y + 1.02), d = proj(x0, y + 1.02);
+            ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(c.x, c.y); ctx.lineTo(d.x, d.y); ctx.closePath();
+            x0 = -1;
           }
         }
       }
+      ctx.fillStyle = 'rgba(232,48,72,0.32)';
+      ctx.fill('nonzero');
     }
     // Colori della griglia presi dal terreno dell'arena (chiaro o scuro)
     function gridColors() {

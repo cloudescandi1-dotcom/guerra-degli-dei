@@ -1185,14 +1185,18 @@
       const moved = B.drag.moved;
       B.drag = null;
       if (moved) {
-        if (overCanvas(e)) { const g = R.toGame(e.clientX, e.clientY); tryPlay(B.selected, g.x, g.y); }
-        else { B.selected = -1; B.gx = null; }
+        // se non si può mettere lì, la carta torna in mano (come in Clash) invece di restare appesa sul campo
+        const g = overCanvas(e) ? R.toGame(e.clientX, e.clientY) : null;
+        if (!g || !tryPlay(B.selected, g.x, g.y)) { B.selected = -1; B.gx = null; }
       }
       return;
     }
-    if (B.selected >= 0 && overCanvas(e)) { const g = R.toGame(e.clientX, e.clientY); tryPlay(B.selected, g.x, g.y); }
+    if (B.selected >= 0 && overCanvas(e)) {
+      const g = R.toGame(e.clientX, e.clientY);
+      if (!tryPlay(B.selected, g.x, g.y)) B.gx = null;   // resta scelta, ma l'anteprima sparisce
+    }
   });
-  window.addEventListener('pointercancel', () => { if (B) { B.drag = null; } });
+  window.addEventListener('pointercancel', () => { if (B) { B.drag = null; B.gx = null; } });
 
   // Pannello delle emoticon e delle frasi (al posto delle carte, come in Clash)
   $('#btn-emote').onclick = () => {
