@@ -739,9 +739,12 @@
   // ---------- trasformazione in immagini ----------
   // flat: senza il filtro di luce (usato per le icone piccole se serve)
   function svgText(key, team, flat) {
+    const T = TEAMS[team || 0];
+    // personaggi già ridisegnati nel nuovo stile "cartone" (sprites-chibi.js)
+    const chibi = root.SpritesChibi;
+    if (chibi && chibi.has(key)) return chibi.svgText(key, T);
     const f = D[key];
     if (!f) return null;
-    const T = TEAMS[team || 0];
     const body = f(T);
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${VIEW}">${defs(T)}` +
       (flat ? body : `<g filter="url(#vol)">${body}</g>`) + `</svg>`;

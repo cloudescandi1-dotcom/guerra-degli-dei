@@ -1,6 +1,6 @@
-// PROVA: nuovi disegni 2D in stile "cartone" (testa grande, contorno spesso, ombre nette).
+// Nuovi disegni 2D in stile "cartone" (testa grande, contorno spesso, ombre nette).
 // Stesso riquadro dei disegni attuali: (-5,-8)-(105,100), piedi in basso (y ≈ 95).
-// Se piacciono, prenderanno il posto di quelli in sprites.js.
+// sprites.js usa questi al posto dei vecchi per i personaggi che ci sono qui.
 (function (root) {
   'use strict';
   const K = '#1f120a';                      // colore dei contorni
@@ -225,5 +225,5 @@
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${VIEW}">${defs(T)}<g filter="url(#c-ol)">${f(T)}</g></svg>`;
   }
   const url = (key, T) => 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgText(key, T));
-  root.SpritesChibi = { svgText, url, keys: () => Object.keys(D) };
+  root.SpritesChibi = { svgText, url, has: (k) => !!D[k], keys: () => Object.keys(D) };
 })(typeof self !== 'undefined' ? self : this);
