@@ -370,3 +370,10 @@ img.chest-big { width: 8rem; height: 8rem; filter: drop-shadow(0 6px 8px #0008);
 .river-hud .crowns.bump { animation: bump .5s; }
 @keyframes bump { 40% { transform: scale(1.6); } }
 .sheet .close { z-index: 5; }
+/* Corone e tempo semitrasparenti, per vedere il campo sotto */
+.river-hud { opacity: .72; }
+.river-hud .clock { background: rgba(246, 239, 224, .55); border-color: rgba(43, 29, 20, .6); box-shadow: none; backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
+.river-hud .crowns { box-shadow: none; border-color: rgba(43, 29, 20, .6); }
+.river-hud .crowns.red { background: rgba(220, 50, 40, .55); }
+.river-hud .crowns.blue { background: rgba(40, 100, 220, .55); }
+.river-hud .crowns.bump { opacity: 1; }
