@@ -706,10 +706,17 @@
     function placeZone(state, me, key) {
       const d = D.BY_KEY[key];
       if (!d || d.type === 'spell') return;
-      ctx.fillStyle = 'rgba(150,20,20,0.3)';
+      // Come una scacchiera: le caselle dove puoi mettere la truppa hanno il bordo chiaro,
+      // quelle vietate sono scurite di rosso
+      ctx.lineWidth = Math.max(1, S * 0.035);
       for (let y = 0; y < E.H; y++) {
         for (let x = 0; x < E.W; x++) {
-          if (!E.canPlace(state, me, key, x + 0.5, y + 0.5)) { quad(ctx, x, y, x + 1.02, y + 1.02); ctx.fill(); }
+          quad(ctx, x + 0.04, y + 0.04, x + 0.96, y + 0.96);
+          if (!E.canPlace(state, me, key, x + 0.5, y + 0.5)) { ctx.fillStyle = 'rgba(150,20,20,0.3)'; ctx.fill(); }
+          else {
+            ctx.fillStyle = (x + y) % 2 ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.04)'; ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.45)'; ctx.stroke();
+          }
         }
       }
     }
@@ -720,6 +727,11 @@
       let x = gx, y = gy;
       if (d.type !== 'spell') { x = Math.floor(x) + 0.5; y = Math.floor(y) + 0.5; }
       const ok = E.canPlace(state, me, key, x, y);
+      if (d.type !== 'spell') {   // la casella scelta si illumina
+        quad(ctx, x - 0.5, y - 0.5, x + 0.5, y + 0.5);
+        ctx.fillStyle = ok ? 'rgba(255,255,200,0.55)' : 'rgba(255,60,60,0.5)'; ctx.fill();
+        ctx.strokeStyle = ok ? '#fff' : '#ff6b6b'; ctx.lineWidth = Math.max(1.5, S * 0.07); ctx.stroke();
+      }
       const p = proj(x, y), u = S * p.k;
       const r = d.type === 'spell' ? d.radius : (D.BY_KEY[d.unit || key].radius || 0.5) + ((d.count || 1) > 1 ? 0.6 : 0);
       ctx.fillStyle = ok ? 'rgba(255,255,255,0.3)' : 'rgba(255,60,60,0.35)';
