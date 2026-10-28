@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>Prova 3D · Guerra degli Dèi</title>
+  <meta name="theme-color" content="#12295e">
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <style>
+    :root { color-scheme: dark; }
+    html, body { margin: 0; height: 100%; background: #12295e; overflow: hidden; font-family: "Nunito", system-ui, sans-serif; color: #fff; }
+    canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+    .tag {
+      position: fixed; left: 50%; top: calc(10px + env(safe-area-inset-top)); transform: translateX(-50%);
+      padding: 6px 14px; border-radius: 10px; background: #0b1a40cc; border: 2px solid #0d2150;
+      font-family: "Lilita One", sans-serif; font-size: 1.1rem; text-shadow: 0 2px 0 #0008; white-space: nowrap;
+    }
+    .bar { position: fixed; left: 0; right: 0; bottom: calc(12px + env(safe-area-inset-bottom)); display: flex; justify-content: center; gap: 8px; padding: 0 12px; flex-wrap: wrap; }
+    .bar button {
+      font-family: "Lilita One", sans-serif; font-size: 1rem; color: #fff; text-shadow: 0 2px 0 #0008;
+      padding: 10px 14px; border-radius: 12px; border: 2px solid #0d2150; background: linear-gradient(#8fd0ff, #2c86e8); box-shadow: inset 0 3px 0 #fff6, 0 3px 0 #0b1b42;
+    }
+    .bar button.on { background: linear-gradient(#ffe680, #f29b00); }
+    .err { position: fixed; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; font-size: 1.1rem; }
+  </style>
+</head>
+<body>
+  <div class="tag">Prova 3D · personaggi veri</div>
+  <div class="bar">
+    <button id="b-restart" type="button">Ricomincia</button>
+    <button id="b-slow" type="button">Al rallentatore</button>
+    <button id="b-cam" type="button">Avvicina</button>
+  </div>
+
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+
+    // ---------------------------------------------------------------- scena, luce, telecamera
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setPixelRatio(Math.min(3, window.devicePixelRatio || 1));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    document.body.prepend(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#7fc4ff');
+    scene.fog = new THREE.Fog('#a9d8ff', 40, 75);
+
+    const W = 18, H = 32;                 // stesso campo del gioco
+    const camera = new THREE.PerspectiveCamera(36, 1, 0.5, 200);
+    let close = false;
+    function placeCamera() {
+      // inclinata come in Clash: guarda il campo dal lato del giocatore blu
+      if (close) { camera.position.set(9, 7, 9); camera.lookAt(-1, 1, 2); }
+      else { camera.position.set(0, 32, 27); camera.lookAt(0, 0, 1.5); }
+    }
+    placeCamera();
+
+    scene.add(new THREE.HemisphereLight('#ffffff', '#6b8a4a', 1.1));
+    const sun = new THREE.DirectionalLight('#fff4dd', 2.2);
+    sun.position.set(-10, 25, 12);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 20, bottom: -20, near: 1, far: 70 });
+    sun.shadow.bias = -0.0005;
+    scene.add(sun);
+
+    // Materiale "cartone animato": pochi toni di luce, come i giocattoli di Clash
+    const ramp = (() => {
+      const c = new Uint8Array([90, 170, 255]);
+      const t = new THREE.DataTexture(c, c.length, 1, THREE.RedFormat);
+      t.minFilter = t.magFilter = THREE.NearestFilter; t.needsUpdate = true;
+      return t;
+    })();
+    const mats = {};
+    const toon = (color) => mats[color] || (mats[color] = new THREE.MeshToonMaterial({ color, gradientMap: ramp }));
+    // contorno scuro: una copia un po' più grande, vista da dietro
+    const outlineMat = new THREE.MeshBasicMaterial({ color: '#1a1030', side: THREE.BackSide });
+    function part(geo, color, { outline = 0.06, shadow = true } = {}) {
+      const g = new THREE.Group();
+      const m = new THREE.Mesh(geo, toon(color));
+      m.castShadow = shadow; m.receiveShadow = true;
+      g.add(m);
+      if (outline) {
+        const o = new THREE.Mesh(geo, outlineMat);
+        o.scale.setScalar(1 + outline);
+        g.add(o);
+      }
+      return g;
+    }
+
+    // ---------------------------------------------------------------- campo
+    function fieldTexture() {
+      const c = document.createElement('canvas'); c.width = 18 * 32; c.height = 32 * 32;
+      const g = c.getContext('2d');
+      g.fillStyle = '#8fb35a'; g.fillRect(0, 0, c.width, c.height);
+      g.fillStyle = '#86a95255';
+      for (let y = 0; y < 32; y++) for (let x = y % 2; x < 18; x += 2) g.fillRect(x * 32, y * 32, 32, 32);
+      // sentieri delle corsie
+      g.fillStyle = '#d9c48e';
+      for (const x of [3.5, 14.5]) g.fillRect((x - 0.9) * 32, 2 * 32, 1.8 * 32, 28 * 32);
+      for (let i = 0; i < 400; i++) { g.fillStyle = `rgba(60,100,30,${0.15 + Math.random() * 0.2})`; g.fillRect(Math.random() * c.width, Math.random() * c.height, 3, 5); }
+      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+      return t;
+    }
+    const ground = new THREE.Mesh(new THREE.BoxGeometry(W, 0.6, H), [
+      toon('#6e8a42'), toon('#6e8a42'), new THREE.MeshToonMaterial({ map: fieldTexture(), gradientMap: ramp }), toon('#6e8a42'), toon('#6e8a42'), toon('#6e8a42'),
+    ]);
+    ground.position.y = -0.3; ground.receiveShadow = true;
+    scene.add(ground);
+    // fiume
+    const river = new THREE.Mesh(new THREE.BoxGeometry(W + 0.2, 0.62, 2), new THREE.MeshToonMaterial({ color: '#4aa3df', gradientMap: ramp }));
+    river.position.set(0, -0.32, 0); scene.add(river);
+    // ponti di marmo
+    for (const x of [-5.5, 5.5]) {
+      const b = part(new THREE.BoxGeometry(2.4, 0.35, 3), '#efe7d6', { outline: 0.03 });
+      b.position.set(x, 0.05, 0); scene.add(b);
+      for (const s of [-1.1, 1.1]) { const r = part(new THREE.BoxGeometry(0.18, 0.5, 3), '#fbf7ef', { outline: 0.08 }); r.position.set(x + s, 0.4, 0); scene.add(r); }
+    }
+    // gradinate attorno (semplici, con il "pubblico" fatto di palline colorate)
+    const crowdCols = ['#e0453a', '#3f7fe0', '#f2c24a', '#7ab84a', '#ffffff', '#b46cf5'];
+    const crowdGeo = new THREE.SphereGeometry(0.28, 10, 8);
+    for (let row = 0; row < 5; row++) {
+      for (const side of [-1, 1]) {
+        const step = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.6 + row * 0.7, H + 8), toon('#b9a98a'));
+        step.position.set(side * (W / 2 + 0.8 + row * 1.2), (0.6 + row * 0.7) / 2 - 0.3, 0); step.receiveShadow = true; scene.add(step);
+        for (let z = -H / 2 - 3; z < H / 2 + 3; z += 0.8) {
+          if (Math.random() < 0.15) continue;
+          const p = new THREE.Mesh(crowdGeo, toon(crowdCols[(Math.random() * crowdCols.length) | 0]));
+          p.position.set(side * (W / 2 + 0.8 + row * 1.2) + (Math.random() - 0.5) * 0.3, 0.6 + row * 0.7, z);
+          scene.add(p);
+        }
+      }
+      const back = new THREE.Mesh(new THREE.BoxGeometry(W + 12, 0.6 + row * 0.7, 1.2), toon('#b9a98a'));
+      back.position.set(0, (0.6 + row * 0.7) / 2 - 0.3, -(H / 2 + 0.8 + row * 1.2)); scene.add(back);
+    }
+
+    // ---------------------------------------------------------------- templi
+    const TEAM = { blue: { c: '#3f7fe0', d: '#22509f' }, red: { c: '#e0453a', d: '#9e231b' } };
+    function temple(team, king) {
+      const g = new THREE.Group();
+      const s = king ? 1.35 : 1;
+      const base1 = part(new THREE.BoxGeometry(3.4 * s, 0.4, 3 * s), '#efe7d6', { outline: 0.03 }); base1.position.y = 0.2; g.add(base1);
+      const base2 = part(new THREE.BoxGeometry(3 * s, 0.35, 2.6 * s), '#fbf7ef', { outline: 0.03 }); base2.position.y = 0.55; g.add(base2);
+      const n = king ? 4 : 3;
+      for (let i = 0; i < n; i++) for (const zz of [-0.9 * s, 0.9 * s]) {
+        const col = part(new THREE.CylinderGeometry(0.2 * s, 0.24 * s, 2 * s, 12), '#fffdf8', { outline: 0.06 });
+        col.position.set((i - (n - 1) / 2) * 0.85 * s, 0.7 + s, zz); g.add(col);
+      }
+      const top = part(new THREE.BoxGeometry(3.2 * s, 0.3, 2.6 * s), TEAM[team].c, { outline: 0.03 }); top.position.y = 0.75 + 2 * s; g.add(top);
+      // tetto a capanna
+      const tri = new THREE.Shape(); tri.moveTo(-1.65 * s, 0); tri.lineTo(1.65 * s, 0); tri.lineTo(0, 0.9 * s); tri.closePath();
+      const roofGeo = new THREE.ExtrudeGeometry(tri, { depth: 2.7 * s, bevelEnabled: false }); roofGeo.translate(0, 0, -1.35 * s);
+      const roof = part(roofGeo, '#efe7d6', { outline: 0.03 }); roof.position.y = 0.9 + 2 * s; g.add(roof);
+      const front = part(new THREE.ShapeGeometry(tri), TEAM[team].c, { outline: 0 }); front.scale.setScalar(0.75); front.position.set(0, 0.97 + 2 * s, 1.36 * s); g.add(front);
+      // guardiano sul gradino, davanti alle colonne
+      const guard = king ? makeRe(team) : makeArciere(team);
+      guard.root.scale.setScalar(king ? 1.05 : 0.85); guard.root.position.set(0, 0.72, 1.45 * s); g.add(guard.root);
+      g.userData.guard = guard;
+      if (king) { const cr = part(new THREE.ConeGeometry(0.4, 0.6, 5), '#f2c24a'); cr.position.y = 2.3 + 2 * s; g.add(cr); }
+      g.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+      return g;
+    }
+    const towers = [
+      ['blue', false, -5.5, 9.5], ['blue', false, 5.5, 9.5], ['blue', true, 0, 12.8],
+      ['red', false, -5.5, -9.5], ['red', false, 5.5, -9.5], ['red', true, 0, -12.8],
+    ];
+
+
+    // ---------------------------------------------------------------- personaggi (modellini snodati)
+    // Ogni personaggio ha "ossa": anche, gambe, braccia, testa. L'animazione muove le ossa.
+    const SKIN = '#f0b98c';
+    function humanoid({ team, body = TEAM[team].c, skin = SKIN, scale = 1, legs = '#f0b98c', belly = 1 } = {}) {
+      const root = new THREE.Group();
+      const rig = new THREE.Group(); root.add(rig);          // si muove su e giù camminando
+      const hips = new THREE.Group(); hips.position.y = 0.95; rig.add(hips);
+      const leg = (side) => {
+        const pivot = new THREE.Group(); pivot.position.set(side * 0.22, 0, 0); hips.add(pivot);
+        const l = part(new THREE.CapsuleGeometry(0.13, 0.55, 4, 10), legs); l.position.y = -0.4; pivot.add(l);
+        const foot = part(new THREE.BoxGeometry(0.24, 0.12, 0.36), '#6b3f1f'); foot.position.set(0, -0.82, 0.07); pivot.add(foot);
+        return pivot;
+      };
+      const legL = leg(-1), legR = leg(1);
+      const torso = new THREE.Group(); hips.add(torso);
+      const chest = part(new THREE.CapsuleGeometry(0.38 * belly, 0.45, 6, 14), body); chest.position.y = 0.45; torso.add(chest);
+      const belt = part(new THREE.CylinderGeometry(0.4 * belly, 0.42 * belly, 0.14, 16), '#8f5a17', { outline: 0.04 }); belt.position.y = 0.2; torso.add(belt);
+      const arm = (side) => {
+        const pivot = new THREE.Group(); pivot.position.set(side * 0.5 * belly, 0.78, 0); torso.add(pivot);
+        const a = part(new THREE.CapsuleGeometry(0.11, 0.48, 4, 10), skin); a.position.y = -0.3; pivot.add(a);
+        const hand = part(new THREE.SphereGeometry(0.13, 12, 10), skin); hand.position.y = -0.62; pivot.add(hand);
+        return pivot;
+      };
+      const armL = arm(-1), armR = arm(1);
+      const head = new THREE.Group(); head.position.y = 1.18; torso.add(head);
+      const skull = part(new THREE.SphereGeometry(0.36, 20, 16), skin); head.add(skull);
+      // occhi grandi da cartone
+      for (const s of [-1, 1]) {
+        const eye = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), toon('#ffffff')); eye.position.set(s * 0.13, 0.03, 0.31); head.add(eye);
+        const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), toon('#1a1030')); pupil.position.set(s * 0.13, 0.03, 0.375); head.add(pupil);
+      }
+      root.scale.setScalar(scale);
+      return { root, rig, hips, torso, head, legL, legR, armL, armR };
+    }
+    function spear(len = 2.4) {
+      const g = new THREE.Group();
+      const shaft = part(new THREE.CylinderGeometry(0.04, 0.04, len, 8), '#a0683a', { outline: 0.15 }); g.add(shaft);
+      const tip = part(new THREE.ConeGeometry(0.1, 0.35, 8), '#dfe6ee', { outline: 0.1 }); tip.position.y = len / 2 + 0.15; g.add(tip);
+      return g;
+    }
+
+    function makeOplita(team) {
+      const h = humanoid({ team });
+      // elmo corinzio d'oro con cresta della squadra
+      const helm = part(new THREE.SphereGeometry(0.4, 18, 14, 0, Math.PI * 2, 0, Math.PI * 0.62), '#e2a83f'); helm.position.y = 0.03; h.head.add(helm);
+      const crest = part(new THREE.BoxGeometry(0.12, 0.35, 0.8), TEAM[team].c); crest.position.set(0, 0.45, -0.05); h.head.add(crest);
+      // scudo rotondo
+      const shield = part(new THREE.CylinderGeometry(0.55, 0.55, 0.1, 24), '#e2a83f', { outline: 0.05 });
+      shield.rotation.x = Math.PI / 2; shield.position.set(0, -0.35, 0.22); h.armL.add(shield);
+      const em = part(new THREE.CylinderGeometry(0.4, 0.4, 0.11, 24), TEAM[team].c, { outline: 0 });
+      em.rotation.x = Math.PI / 2; em.position.set(0, -0.35, 0.25); h.armL.add(em);
+      const sp = spear(); sp.position.set(0, -0.6, 0.1); sp.rotation.x = Math.PI / 2.4; h.armR.add(sp);
+      return h;
+    }
+    function makeArciere(team) {
+      const h = humanoid({ team, body: '#f4eedf' });
+      const band = part(new THREE.TorusGeometry(0.36, 0.06, 8, 20), TEAM[team].c, { outline: 0 }); band.rotation.x = Math.PI / 2; band.position.y = 0.12; h.head.add(band);
+      const hair = part(new THREE.SphereGeometry(0.38, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.45), '#4a2c18'); hair.position.y = 0.05; h.head.add(hair);
+      const bow = part(new THREE.TorusGeometry(0.55, 0.04, 6, 20, Math.PI), '#a0683a', { outline: 0.2 }); bow.rotation.z = -Math.PI / 2; bow.position.set(0, -0.62, 0.1); h.armL.add(bow);
+      const quiver = part(new THREE.CylinderGeometry(0.12, 0.1, 0.7, 10), '#8a5228'); quiver.position.set(0.15, 0.55, -0.35); quiver.rotation.z = 0.3; h.torso.add(quiver);
+      return h;
+    }
+    function makeCiclope(team) {
+      const h = humanoid({ team, skin: '#9fdc84', legs: '#7fbf64', belly: 1.35, scale: 1.7 });
+      // un solo grande occhio
+      h.head.children.filter((c) => c.isMesh && c.geometry.type === 'SphereGeometry' && c.geometry.parameters.radius < 0.1).forEach((c) => h.head.remove(c));
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 10), toon('#ffffff')); eye.position.set(0, 0.06, 0.29); h.head.add(eye);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), toon('#1a1030')); pupil.position.set(0, 0.06, 0.41); h.head.add(pupil);
+      const loin = part(new THREE.CylinderGeometry(0.55, 0.62, 0.35, 14), '#7f4b28', { outline: 0.04 }); loin.position.y = 0.05; h.torso.add(loin);
+      const club = part(new THREE.CylinderGeometry(0.22, 0.08, 1.5, 10), '#8a5228', { outline: 0.06 }); club.position.set(0, -0.95, 0.35); club.rotation.x = Math.PI / 2.2; h.armR.add(club);
+      return h;
+    }
+    function makeRe(team) {
+      const h = humanoid({ team, belly: 1.15 });
+      const beard = part(new THREE.SphereGeometry(0.3, 14, 10), '#ffffff'); beard.scale.set(1, 1.1, 0.7); beard.position.set(0, -0.22, 0.2); h.head.add(beard);
+      const crown = part(new THREE.CylinderGeometry(0.34, 0.3, 0.28, 8, 1, true), '#f2c24a', { outline: 0.05 }); crown.position.y = 0.38; h.head.add(crown);
+      const cape = part(new THREE.BoxGeometry(0.9, 1.1, 0.12), TEAM[team].d); cape.position.set(0, 0.4, -0.35); h.torso.add(cape);
+      const sc = part(new THREE.CylinderGeometry(0.05, 0.05, 1.6, 8), '#f2c24a', { outline: 0.15 }); sc.position.set(0, -0.5, 0.1); sc.rotation.x = 0.2; h.armR.add(sc);
+      return h;
+    }
+    function makeMinotauro(team) {
+      const h = humanoid({ team, skin: '#8a5a3a', legs: '#6e4228', belly: 1.25, scale: 1.45 });
+      const snout = part(new THREE.SphereGeometry(0.22, 12, 10), '#c08a6a'); snout.scale.set(1.2, 0.8, 1); snout.position.set(0, -0.12, 0.3); h.head.add(snout);
+      for (const s of [-1, 1]) {
+        const horn = part(new THREE.ConeGeometry(0.08, 0.5, 8), '#fff3c4', { outline: 0.1 }); horn.position.set(s * 0.38, 0.28, 0); horn.rotation.z = -s * 1.1; h.head.add(horn);
+      }
+      const axe = new THREE.Group();
+      const handle = part(new THREE.CylinderGeometry(0.05, 0.05, 1.6, 8), '#a0683a', { outline: 0.15 }); axe.add(handle);
+      const blade = part(new THREE.CylinderGeometry(0.4, 0.4, 0.06, 16, 1, false, 0, Math.PI), '#dfe6ee', { outline: 0.06 }); blade.rotation.z = Math.PI / 2; blade.position.y = 0.65; axe.add(blade);
+      axe.position.set(0, -0.8, 0.3); axe.rotation.x = Math.PI / 2.2; h.armR.add(axe);
+      return h;
+    }
+
+    // ---------------------------------------------------------------- piccola battaglia dimostrativa
+    const units = [];
+    const MAKE = { oplita: makeOplita, arciere: makeArciere, ciclope: makeCiclope, minotauro: makeMinotauro };
+    function spawn(kind, team, x, z) {
+      const h = MAKE[kind](team);
+      h.root.position.set(x, 0, z);
+      h.root.traverse((o) => { if (o.isMesh && o.material !== outlineMat) o.castShadow = true; });
+      // anello della squadra a terra
+      const ring = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.62, 28), new THREE.MeshBasicMaterial({ color: TEAM[team].c, transparent: true, opacity: 0.85 }));
+      ring.rotation.x = -Math.PI / 2; ring.position.y = 0.02; h.root.add(ring);
+      scene.add(h.root);
+      const u = { ...h, kind, team, hp: kind === 'ciclope' ? 900 : kind === 'minotauro' ? 1100 : 300, range: kind === 'arciere' ? 5 : 1.2,
+        speed: kind === 'ciclope' || kind === 'minotauro' ? 1.1 : 1.6, phase: Math.random() * 6, atk: 0, cd: 0, born: 0, dead: 0 };
+      units.push(u);
+      return u;
+    }
+    function reset() {
+      for (const u of units) scene.remove(u.root);
+      units.length = 0;
+      spawn('oplita', 'blue', -5.5, 6);
+      spawn('arciere', 'blue', -4.3, 8);
+      spawn('ciclope', 'blue', 5.5, 7);
+      spawn('minotauro', 'red', -5.5, -6);
+    }
+    const temples = [];
+    for (const [team, king, x, z] of towers) { const t = temple(team, king); t.position.set(x, 0, z); if (team === 'red') t.rotation.y = Math.PI; scene.add(t); temples.push(t); }
+    reset();
+
+    let slow = false;
+    document.getElementById('b-restart').onclick = reset;
+    document.getElementById('b-slow').onclick = (e) => { slow = !slow; e.currentTarget.classList.toggle('on', slow); };
+    document.getElementById('b-cam').onclick = (e) => { close = !close; e.currentTarget.textContent = close ? 'Allontana' : 'Avvicina'; placeCamera(); };
+
+    function nearestFoe(u) {
+      let best = null, bd = 1e9;
+      for (const o of units) if (o.team !== u.team && !o.dead) { const d = o.root.position.distanceTo(u.root.position); if (d < bd) { bd = d; best = o; } }
+      return [best, bd];
+    }
+
+    const clock = new THREE.Clock();
+    function tick() {
+      let dt = Math.min(0.05, clock.getDelta());
+      if (slow) dt *= 0.3;
+      const t = clock.elapsedTime;
+      for (const u of units) {
+        u.born += dt;
+        const p = u.root.position;
+        if (u.dead) {
+          // cade all'indietro e sprofonda
+          u.dead += dt;
+          u.rig.rotation.x = Math.max(-Math.PI / 2, -u.dead * 4);
+          if (u.dead > 1.2) p.y -= dt * 1.5;
+          continue;
+        }
+        // entrata in campo: cade dall'alto
+        if (u.born < 0.4) { p.y = Math.pow(1 - u.born / 0.4, 2) * 6; continue; } else p.y = 0;
+        const [foe, d] = nearestFoe(u);
+        let walking = false;
+        if (foe && d > u.range) {
+          const dir = foe.root.position.clone().sub(p).setY(0).normalize();
+          p.addScaledVector(dir, u.speed * dt);
+          walking = true;
+          u.root.rotation.y += (Math.atan2(dir.x, dir.z) - u.root.rotation.y) * Math.min(1, dt * 8);
+        } else if (!foe) {
+          const goal = new THREE.Vector3(p.x, 0, u.team === 'blue' ? -9.5 : 9.5);
+          if (Math.abs(goal.z - p.z) > 2) { p.z += Math.sign(goal.z - p.z) * u.speed * dt; walking = true; u.root.rotation.y = u.team === 'blue' ? Math.PI : 0; }
+        } else {
+          const dir = foe.root.position.clone().sub(p);
+          u.root.rotation.y = Math.atan2(dir.x, dir.z);
+          u.cd -= dt;
+          if (u.cd <= 0) { u.cd = 1.1; u.atk = 0.001; foe.hp -= u.kind === 'ciclope' ? 160 : u.kind === 'minotauro' ? 140 : 70; if (foe.hp <= 0) foe.dead = 0.001; }
+        }
+        // camminata: gambe e braccia opposte, corpo che sale e scende
+        if (walking) u.phase += dt * u.speed * 5.5;
+        const s = Math.sin(u.phase), w = walking ? 1 : 0;
+        u.legL.rotation.x = s * 0.7 * w; u.legR.rotation.x = -s * 0.7 * w;
+        u.armL.rotation.x = -s * 0.5 * w; u.armR.rotation.x = s * 0.5 * w;
+        u.rig.position.y = Math.abs(Math.cos(u.phase)) * 0.12 * w;
+        u.torso.rotation.z = s * 0.06 * w;
+        u.head.rotation.y = Math.sin(t * 1.3 + u.phase) * 0.15;
+        if (!walking) u.torso.scale.y = 1 + Math.sin(t * 2.5 + u.phase) * 0.02;   // respiro
+        // attacco: braccio alzato e colpo in avanti
+        if (u.atk > 0) {
+          u.atk += dt;
+          const k = u.atk / 0.45;
+          if (k >= 1) u.atk = 0;
+          else if (u.kind === 'arciere') { u.armL.rotation.x = -1.5; u.armR.rotation.x = -1.5 + Math.sin(k * Math.PI) * 0.6; }
+          else { u.armR.rotation.x = k < 0.4 ? -2.6 * (k / 0.4) : -2.6 + (k - 0.4) / 0.6 * 3.4; u.torso.rotation.x = k > 0.4 ? Math.sin((k - 0.4) / 0.6 * Math.PI) * 0.3 : 0; }
+        }
+      }
+      for (const tp of temples) { const gd = tp.userData.guard; gd.torso.scale.y = 1 + Math.sin(t * 2 + tp.position.x) * 0.02; gd.head.rotation.y = Math.sin(t * 0.8 + tp.position.x) * 0.4; }
+      renderer.render(scene, camera);
+      requestAnimationFrame(tick);
+    }
+
+    function resize() {
+      const w = window.innerWidth, h = window.innerHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      // su schermi stretti si allarga l'inquadratura per vedere tutto il campo
+      camera.fov = w / h < 0.6 ? 46 : 36;
+      camera.updateProjectionMatrix();
+    }
+    window.addEventListener('resize', resize);
+    resize();
+    tick();
+  </script>
+  <noscript><div class="err">Questa prova ha bisogno di JavaScript.</div></noscript>
+</body>
+</html>
