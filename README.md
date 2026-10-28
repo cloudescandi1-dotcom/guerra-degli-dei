@@ -1,15 +1,18 @@
 # Guerra degli Dèi
 
 Battaglie di carte in tempo reale con eroi e mostri della **mitologia greca e romana**,
-per telefono, PC e iPad (web app installabile). Ispirato ai giochi di carte come Clash Royale,
-con personaggi, nomi e grafica tutti nostri.
+per telefono, PC e iPad (web app installabile). Ispirato ai giochi di carte in tempo reale,
+con personaggi, nomi e grafica originali.
+
+**© 2026 cloudescandi1-dotcom. Tutti i diritti riservati** — vedi [LICENSE](LICENSE) e [privacy](docs/privacy.md).
 
 **Gioca online:** https://cloudescandi1-dotcom.github.io/guerra-degli-dei/
 
 ## Stato (27/10/2026)
 - ✅ Versione 1.1: aggiunti **Negozio** (offerte del giorno e gemme), baule del giorno e schede delle arene
 - ✅ 22 test automatici superati (motore di gioco, computer, progressione, negozio, clan)
-- ⏳ Da fare: **rifare la grafica** (ora i personaggi sono emoji su dischi colorati)
+- ✅ Versione 1.2: **nuova grafica** con aspetto 3D (personaggi disegnati con luci e ombre) e campo in prospettiva
+- ✅ Diritti d'autore (tutti i diritti riservati) e informativa privacy
 
 ## Cosa sa fare
 - **Battaglia** di 3 minuti (+1 di supplementari): abbatti i templi nemici, ogni tempio laterale vale 👑,
@@ -53,9 +56,18 @@ npm test
 | `src/js/bot.js` | Il **computer** avversario (3 livelli) |
 | `src/js/profile.js` | **Progressione**: coppe, bauli, potenziamenti, mazzo, dati di amici e clan |
 | `src/js/social.js` | **Collegamento tra telefoni** per amici, clan e sfide |
-| `src/js/render.js` | **Disegno** del campo di battaglia |
+| `src/js/sprites.js` | **Disegni** di personaggi, templi e incantesimi (SVG con luci e ombre) |
+| `src/js/render.js` | **Disegno** del campo di battaglia in prospettiva |
 | `src/js/sound.js` | Effetti sonori |
 | `src/js/app.js` | **Interfaccia**: menu, schede, battaglia, finestre |
 | `src/js/peerjs.min.js` | Libreria PeerJS 1.5.4 (licenza MIT) |
 | `tests/` | Test automatici |
 | `tools/` | Server di prova e generatore di icone |
+
+## Diritti d'autore e privacy
+- Il gioco e tutti i suoi contenuti originali (codice, disegni, nomi e testi delle carte) sono di
+  **proprietà esclusiva** del titolare: **tutti i diritti riservati**. Il codice è visibile su GitHub
+  ma questo non dà a nessuno il permesso di copiarlo o riusarlo. Dettagli in [LICENSE](LICENSE).
+- Unico componente di terzi: PeerJS (licenza MIT), vedi [docs/licenze-terze-parti.md](docs/licenze-terze-parti.md).
+- Privacy: niente account, cookie, pubblicità o statistiche; i dati restano sul dispositivo.
+  Dettagli in [docs/privacy.md](docs/privacy.md) e nel gioco (Impostazioni → Privacy e diritti).

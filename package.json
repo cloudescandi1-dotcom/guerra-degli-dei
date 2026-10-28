@@ -8,5 +8,5 @@
     "test": "node --test tests/engine.test.js tests/profile.test.js",
     "icons": "node tools/make-icons.js"
   },
-  "license": "UNLICENSED"
+  "license": "SEE LICENSE IN LICENSE"
 }

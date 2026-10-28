@@ -1,0 +1,23 @@
+Guerra degli Dèi
+Copyright (c) 2026 cloudescandi1-dotcom. Tutti i diritti riservati.
+
+Il gioco "Guerra degli Dèi" e tutti i suoi contenuti (codice sorgente, disegni dei
+personaggi, dei templi e delle arene, nomi e descrizioni delle carte, testi, regole di
+gioco, icone e suoni) sono opere originali di proprietà esclusiva del titolare indicato
+sopra e sono protetti dalla legge sul diritto d'autore (in Italia la Legge 22 aprile 1941
+n. 633) e dai trattati internazionali.
+
+Il fatto che il codice sia visibile pubblicamente su GitHub NON concede alcuna licenza.
+Senza il permesso scritto del titolare è vietato:
+- copiare, modificare, distribuire, ripubblicare o vendere il gioco o parti di esso;
+- usare i disegni, i nomi o i testi in altri giochi, app, siti o prodotti;
+- creare opere derivate basate sul gioco.
+
+È consentito soltanto giocare al gioco tramite il sito ufficiale per uso personale.
+
+Componenti di terze parti (non coperti da questa dichiarazione, restano dei loro autori):
+- PeerJS 1.5.4 (src/js/peerjs.min.js), licenza MIT, Copyright (c) 2015 Michelle Bu e
+  Eric Zhang. Il testo della licenza MIT è in docs/licenze-terze-parti.md.
+
+I riferimenti alla mitologia greca e romana (nomi di dèi, eroi e mostri) appartengono al
+patrimonio culturale comune; la loro interpretazione grafica e di gioco è originale.

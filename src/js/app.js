@@ -48,6 +48,9 @@
     toastTimer = setTimeout(() => { t.hidden = true; }, ms || 2200);
   }
 
+  // Disegno del personaggio (immagine); se manca, l'emoji
+  const art = (key, cls) => (Sprites.has(key) ? `<img class="${cls || 'art'}" src="${Sprites.url(key, 0)}" alt="" draggable="false">` : D.BY_KEY[key].emoji);
+
   // Disegno di una carta (HTML)
   function cardHtml(key, o) {
     o = o || {};
@@ -62,7 +65,7 @@
     if (o.count != null) extra += `<span class="n">×${o.count}</span>`;
     const cls = ['card', o.cls || '', !c && o.lockable ? 'locked' : '', o.progress && P.canUpgrade(profile, key) ? 'can-up' : ''].join(' ');
     return `<button type="button" class="${cls}" data-key="${key}" ${o.attrs || ''} style="--rc:${D.RARITY[d.rarity].color}">
-      <span class="cost"><span>${d.cost}</span></span><span class="em">${d.emoji}</span><span class="nm">${esc(d.name)}</span>${extra}</button>`;
+      <span class="cost"><span>${d.cost}</span></span><span class="em">${art(key)}</span><span class="nm">${esc(d.name)}</span>${extra}</button>`;
   }
 
   // ---------------------------------------------------------------- barra in alto e schede
@@ -314,7 +317,7 @@
     const up = c && P.upgradeInfo(profile, key);
     const inDeck = profile.deck.includes(key);
     const body = modal(`<div class="card-detail">
-      <div class="big">${d.emoji}</div><h3>${esc(d.name)}</h3>
+      <div class="big">${art(key, 'art big-art')}</div><h3>${esc(d.name)}</h3>
       <span class="rar" style="background:${r.color}">${r.name}</span>
       <span class="rar" style="background:#f0abfc">💧 ${d.cost}</span>
       ${c ? `<span class="rar" style="background:var(--gold)">Livello ${c.level}</span>` : `<span class="rar" style="background:#999">Arena ${d.arena + 1}</span>`}
@@ -340,7 +343,7 @@
     const cur = P.arena(profile);
     $('#tab-arene').innerHTML = '<h2>Il cammino verso l\'Olimpo</h2>' + D.ARENAS.map((a, i) => i).reverse().map((i) => {
       const a = D.ARENAS[i];
-      const cards = D.CARDS.filter((c) => c.arena === i).map((c) => c.emoji).join('');
+      const cards = D.CARDS.filter((c) => c.arena === i).map((c) => art(c.key, 'mini')).join('');
       return `<button type="button" data-arena="${i}" class="arena-row ${i === cur ? 'current' : ''} ${i > cur ? 'locked' : ''}" style="background:linear-gradient(90deg, ${a.sky}, ${a.ground[0]})">
         <span class="ai">${i > cur ? '🔒' : a.icon}</span>
         <div><h3>Arena ${i + 1}: ${esc(a.name)}</h3><p>🏆 da ${a.trophies} coppe${i === cur ? ' — <b>sei qui!</b>' : ''}</p><div class="unl">${cards}</div></div>
@@ -426,7 +429,7 @@
           const got = (m.donations || []).length;
           const mineCard = profile.cards[m.card];
           const canGive = !mine && got < m.max && mineCard && mineCard.count > 0;
-          return `<div class="msg req ${mine ? 'mine' : ''}">${who}<div class="rq"><span class="em">${d.emoji}</span>
+          return `<div class="msg req ${mine ? 'mine' : ''}">${who}<div class="rq"><span class="em">${art(m.card)}</span>
             <div>Chiede <b>${esc(d.name)}</b><br>${got}/${m.max} ricevute</div>
             ${mine ? '' : `<button class="btn small ${canGive ? 'green' : 'grey'}" data-donate="${m.id}" type="button" ${canGive ? '' : 'disabled'}>Dona</button>`}</div></div>`;
         }
@@ -671,9 +674,9 @@
 
   function fitCanvas() {
     const f = $('#field').getBoundingClientRect();
-    const w = Math.min(f.width, (f.height * E.W) / E.H);
-    canvas.style.width = Math.floor(w) + 'px';
-    canvas.style.height = Math.floor((w * E.H) / E.W) + 'px';
+    // Il canvas riempie tutta la zona: il campo in prospettiva sta al centro, ai lati cielo e cipressi
+    canvas.style.width = Math.floor(f.width) + 'px';
+    canvas.style.height = Math.floor(f.height) + 'px';
     R.resize();
   }
   window.addEventListener('resize', () => { if (B) fitCanvas(); });
@@ -810,10 +813,10 @@
       $('#hand').innerHTML = pl.hand.map((k, i) => {
         const d = D.BY_KEY[k];
         return `<div class="card ${i === B.selected ? 'sel' : ''}" data-slot="${i}" style="--rc:${D.RARITY[d.rarity].color}">
-          <span class="cost"><span>${d.cost}</span></span><span class="em">${d.emoji}</span><span class="nm">${esc(d.name)}</span><span class="wait"></span></div>`;
+          <span class="cost"><span>${d.cost}</span></span><span class="em">${art(k)}</span><span class="nm">${esc(d.name)}</span><span class="wait"></span></div>`;
       }).join('');
       const nx = D.BY_KEY[pl.queue[0]];
-      $('#next-card').textContent = nx ? nx.emoji : '';
+      $('#next-card').innerHTML = nx ? art(pl.queue[0]) : '';
     }
     document.querySelectorAll('#hand .card').forEach((el, i) => {
       const cost = D.BY_KEY[pl.hand[i]].cost;
@@ -900,7 +903,7 @@
       if (out.newArena != null) {
         const a = D.ARENAS[out.newArena];
         extra += `<div class="box center"><div style="font-size:3rem">${a.icon}</div><b>Nuova arena: ${esc(a.name)}!</b>
-          <p>Carte sbloccate: ${out.newCards.map((k) => D.BY_KEY[k].emoji + ' ' + esc(D.BY_KEY[k].name)).join(', ')}</p></div>`;
+          <p>Carte sbloccate: ${out.newCards.map((k) => esc(D.BY_KEY[k].name)).join(', ')}</p></div>`;
       }
     } else if (cfg.mode === 'friend') {
       const f = profile.friends.find((x) => x.id === cfg.friendId);
@@ -937,10 +940,12 @@
     const body = modal(`<h3>⚙️ Impostazioni</h3>
       <button id="snd" class="btn full ${profile.sound ? 'green' : 'grey'}" type="button" style="width:100%">${profile.sound ? '🔊 Suoni attivi' : '🔇 Suoni spenti'}</button>
       <button id="howto" class="btn full" type="button" style="width:100%">📖 Come si gioca</button>
+      <button id="legal" class="btn full grey" type="button" style="width:100%">🔒 Privacy e diritti</button>
       <button id="reset" class="btn full red" type="button" style="width:100%">Ricomincia da zero</button>
-      <p class="muted">Personaggi disegnati con le emoji del tuo dispositivo. Gioco creato per divertimento, ispirato ai giochi di carte in tempo reale.</p>`);
+      <p class="muted">© 2026 ${COPYRIGHT}. Tutti i diritti riservati.</p>`);
     body.querySelector('#snd').onclick = () => { profile.sound = !profile.sound; Sound.setOn(profile.sound); save(); $('#btn-settings').click(); };
     body.querySelector('#howto').onclick = howTo;
+    body.querySelector('#legal').onclick = legal;
     body.querySelector('#reset').onclick = () => {
       const b2 = modal(`<h3>Ricominciare?</h3><p>Perdi coppe, carte, monete, amici e clan. <b>Non si può annullare.</b></p>
         <div class="row"><button class="btn grey" id="no" type="button">No</button><button class="btn red" id="yes" type="button">Sì, cancella tutto</button></div>`);
@@ -951,6 +956,21 @@
       };
     };
   };
+
+  // Titolare dei diritti: cambia qui il nome se vuoi che compaia il tuo nome vero
+  const COPYRIGHT = 'cloudescandi1-dotcom';
+  function legal() {
+    modal(`<h3>🔒 Privacy e diritti</h3>
+      <p><b>© 2026 ${COPYRIGHT}. Tutti i diritti riservati.</b> Guerra degli Dèi, i suoi disegni, i nomi e i testi delle carte e il codice
+      sono opere originali di proprietà esclusiva del titolare: è vietato copiarli, ripubblicarli o usarli altrove senza permesso scritto.
+      La libreria PeerJS (licenza MIT) appartiene ai suoi autori.</p>
+      <p><b>Privacy in breve:</b> niente account, email, pubblicità, cookie o statistiche. I tuoi progressi restano <b>solo su questo dispositivo</b>.</p>
+      <p><b>Amici e clan:</b> per collegare i telefoni si usa il servizio gratuito PeerJS, che vede il tuo codice amico e il tuo indirizzo IP.
+      Gli amici e i membri del clan con cui ti colleghi vedono il tuo nome nel gioco, le coppe, i messaggi e il tuo indirizzo IP.
+      Se non vuoi, non aggiungere amici: il resto del gioco funziona lo stesso.</p>
+      <p><b>Consiglio:</b> in chat non scrivere il tuo nome vero, l'indirizzo o altri dati personali.</p>
+      <p class="muted">Il sito è ospitato da GitHub Pages, che può registrare dati tecnici delle visite. "Ricomincia da zero" cancella tutti i tuoi dati dal dispositivo.</p>`);
+  }
 
   function howTo() {
     modal(`<h3>📖 Come si gioca</h3>
