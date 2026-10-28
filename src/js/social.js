@@ -9,6 +9,7 @@
   let peer = null, me = null, cb = {}, retry = null;
   const conns = {};          // id amico -> connessione aperta
   const pending = {};        // id amico -> connessione in corso
+  const verified = {};       // id amico -> ha mandato la chiave segreta giusta
   let status = 'offline';    // 'offline' | 'connessione' | 'online' | 'doppio'
 
   function setStatus(s) { status = s; cb.onStatus && cb.onStatus(s); }
@@ -64,9 +65,17 @@
     setTimeout(() => { if (pending[id] === conn) { delete pending[id]; try { conn.close(); } catch (e) { /* già chiusa */ } } }, 15000);
   }
 
-  function hello() {
+  // chiave casuale difficile da indovinare (per riconoscere gli amici veri)
+  function makeKey() {
+    const a = new Uint8Array(16);
+    root.crypto.getRandomValues(a);
+    return Array.from(a, (b) => b.toString(16).padStart(2, '0')).join('');
+  }
+  function hello(id) {
     const p = me.get();
-    return { t: 'hello', id: p.id, name: p.name, trophies: p.trophies, clan: p.clan ? { id: p.clan.id, name: p.clan.name, badge: p.clan.badge } : null };
+    const key = P.myFriendKey(p, id, makeKey);
+    me.save();
+    return { t: 'hello', key, id: p.id, name: p.name, trophies: p.trophies, clan: p.clan ? { id: p.clan.id, name: p.clan.name, badge: p.clan.badge } : null };
   }
 
   function setup(conn) {
@@ -75,7 +84,8 @@
       delete pending[id];
       if (conns[id] && conns[id] !== conn) { try { conns[id].close(); } catch (e) { /* vecchia */ } }
       conns[id] = conn;
-      conn.send(hello());
+      verified[id] = false;
+      conn.send(hello(id));
       const p = me.get();
       if (p.clan && p.clan.members.some((m) => m.id === id)) conn.send({ t: 'clan', clan: p.clan });
       cb.onPeers && cb.onPeers();
@@ -92,9 +102,19 @@
 
   function receive(id, msg) {
     if (!msg || typeof msg !== 'object') return;
+    // prima del saluto con la chiave giusta non accettiamo nessun altro messaggio
+    if (msg.t !== 'hello' && !verified[id]) return;
     const p = me.get();
     switch (msg.t) {
       case 'hello': {
+        // Chi usa il codice di un amico ma non ha la sua chiave segreta è un impostore: lo respingiamo
+        if (!P.checkFriendKey(p, id, msg.key)) {
+          verified[id] = false;
+          try { conns[id] && conns[id].close(); } catch (e) { /* già chiusa */ }
+          cb.onImpostor && cb.onImpostor(id);
+          return;
+        }
+        verified[id] = true;
         // Chi si collega con noi diventa nostro amico (anche al contrario)
         const clan = msg.clan && typeof msg.clan === 'object' ? { id: String(msg.clan.id || '').slice(0, 24), name: String(msg.clan.name || '').slice(0, 24), badge: String(msg.clan.badge || '').slice(0, 4) } : null;
         P.addFriend(p, { id, name: String(msg.name || '').slice(0, 20), trophies: Math.max(0, msg.trophies | 0), clan, seen: Date.now() });

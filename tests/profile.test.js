@@ -250,3 +250,16 @@ test('clan ricevuto da un altro giocatore: niente codice nascosto né dati enorm
   P.addCards(p, { __proto__x: 1, constructor: 5 });
   assert.ok(!Object.prototype.hasOwnProperty.call(p.cards, 'constructor'));
 });
+
+test('amici: chi non ha la chiave segreta giusta viene respinto', () => {
+  const p = P.fresh();
+  let n = 0;
+  const k = P.myFriendKey(p, 'AMICO1', () => 'chiave-mia-' + (++n));
+  assert.equal(k, 'chiave-mia-1');
+  assert.equal(P.myFriendKey(p, 'AMICO1', () => 'altra'), 'chiave-mia-1');   // sempre la stessa per lo stesso amico
+  assert.equal(P.checkFriendKey(p, 'AMICO1', 'segreto-vero'), true);          // prima volta: la ricordiamo
+  assert.equal(P.checkFriendKey(p, 'AMICO1', 'segreto-vero'), true);
+  assert.equal(P.checkFriendKey(p, 'AMICO1', 'falso'), false);                // impostore
+  assert.equal(P.checkFriendKey(p, 'AMICO1', undefined), false);
+  assert.equal(P.checkFriendKey(p, 'SCONOSCIUTO', 'x'), false);
+});

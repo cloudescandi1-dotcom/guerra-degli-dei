@@ -633,6 +633,42 @@
     eyes(50, 30, 7.5, { rx: 3.2, ry: 3.8 }) + brows(50, 24.6, 7.5, true) +
     line('M20 56 L26 52 M82 50 L76 54 M24 74 L30 72 M78 72 L72 70', '#ffcf33', 2.4);
 
+
+  // ---------- bauli ----------
+  const glow = '<radialGradient id="c-glow"><stop offset="0" stop-color="#fff6b0"/><stop offset=".55" stop-color="#ffd21a" stop-opacity=".55"/><stop offset="1" stop-color="#ffd21a" stop-opacity="0"/></radialGradient>';
+  const sparkle = (x, y, r) => `<path d="M${x} ${y - r} L${x + r * 0.3} ${y - r * 0.3} L${x + r} ${y} L${x + r * 0.3} ${y + r * 0.3} L${x} ${y + r} L${x - r * 0.3} ${y + r * 0.3} L${x - r} ${y} L${x - r * 0.3} ${y - r * 0.3} Z" fill="#fff6b0"/>`;
+  function chest(o) {
+    const under = '<ellipse cx="50" cy="93" rx="42" ry="6" fill="#000" opacity=".25"/>' +
+      (o.glow ? glow + '<circle cx="50" cy="34" r="40" fill="url(#c-glow)"/>' : '');
+    return [under,
+      // corpo e coperchio a cupola
+      P('M14 52 H86 V87 Q86 92 81 92 H19 Q14 92 14 87 Z', o.body, 2.4) +
+      (o.planks ? line('M15 64 H85 M15 76 H85', '#6c3814', 1.6) : line('M15 70 H85', '#0003', 1.4)) +
+      P('M11 52 Q11 25 50 23 Q89 25 89 52 Z', o.body, 2.4) +
+      (o.planks ? line('M14 42 Q50 36 86 42', '#6c3814', 1.6) : '') +
+      // rinforzi di metallo
+      P('M22 31 Q25 28 31 27 V92 H22 Z M78 31 Q75 28 69 27 V92 H78 Z', o.trim, 2) +
+      P('M9 49 H91 V57 H9 Z', o.trim, 2) + P('M12 85 H88 V93 H12 Z', o.trim, 2) +
+      [[26.5, 62], [26.5, 78], [73.5, 62], [73.5, 78], [26.5, 40], [73.5, 40]].map(([x, y]) => C(x, y, 1.5, '#fff6c8', 0.8)).join('') +
+      shine('M18 40 Q26 30 40 27', 3, 0.6) +
+      // serratura con la gemma
+      P('M41 48 H59 V65 L50 72 L41 65 Z', 'url(#c-go)', 2) + C(50, 57, 4.6, o.gem, 1.4) + C(48.5, 55.5, 1.4, '#fff', 0) +
+      (o.extra || '')];
+  }
+  D.ch_legno = () => chest({ body: 'url(#c-wd)', trim: 'url(#c-st)', gem: '#7a4520', planks: true });
+  D.ch_argento = () => chest({ body: 'url(#c-st)', trim: 'url(#c-br)', gem: '#3f7fe0' });
+  D.ch_oro = () => chest({ body: 'url(#c-go)', trim: 'url(#c-br)', gem: '#d62d20', glow: true });
+  D.ch_magico = () => chest({ body: 'url(#c-pu)', trim: 'url(#c-go)', gem: '#2ee6c8', glow: true,
+    extra: sparkle(12, 18, 6) + sparkle(88, 12, 5) + sparkle(92, 40, 3.5) });
+  // regalo: scatola con il nastro d'oro e il fiocco
+  D.ch_dono = () => ['<ellipse cx="50" cy="93" rx="40" ry="6" fill="#000" opacity=".25"/>',
+    P('M16 48 H84 V88 Q84 92 80 92 H20 Q16 92 16 88 Z', 'url(#c-tc)', 2.4) +
+    P('M10 35 H90 V49 H10 Z', 'url(#c-tc)', 2.4) +
+    P('M44 35 H56 V92 H44 Z', 'url(#c-go)', 1.8) + P('M16 64 H84 V72 H16 Z', 'url(#c-go)', 1.8) +
+    P('M50 35 Q28 6 20 20 Q16 32 50 35 Z M50 35 Q72 6 80 20 Q84 32 50 35 Z', 'url(#c-go)', 2.2) +
+    line('M48 32 Q32 18 26 22 M52 32 Q68 18 74 22', '#c98a0e', 1.4) +
+    C(50, 34, 5.4, 'url(#c-go)', 1.8) + shine('M18 41 Q28 38 40 38.5', 2.4, 0.6)];
+
   const VIEW = '-5 -8 110 108';
   function svgText(key, T) {
     const f = D[key];

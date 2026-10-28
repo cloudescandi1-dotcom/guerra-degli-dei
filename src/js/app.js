@@ -1326,6 +1326,10 @@
   Social.start(() => profile, save, {
     onStatus: (st) => { netDot(st); softClan(); },
     onPeers: softClan,
+    onImpostor: (id) => {
+      const f = profile.friends.find((x) => x.id === id);
+      toast(`⚠️ Qualcuno ha provato a fingersi ${f ? f.name : id}: bloccato`, 4000);
+    },
     onChat: (id, msg) => {
       Sound.play('msg');
       if (chatWith === id && openChat.redraw) { openChat.redraw(); return; }

@@ -382,6 +382,22 @@
     f.seen = info.seen || f.seen;
     return f;
   }
+  // Chiavi segrete delle amicizie: alla prima connessione ognuno manda all'altro una chiave
+  // tutta sua per quell'amicizia. Dalle volte dopo, chi si presenta con il codice di un amico
+  // ma senza la chiave giusta è un impostore e viene respinto.
+  function myFriendKey(p, id, make) {
+    const f = addFriend(p, { id });
+    if (!f) return '';
+    if (!f.myKey) f.myKey = make();
+    return f.myKey;
+  }
+  function checkFriendKey(p, id, key) {
+    const f = p.friends.find((x) => x.id === id);
+    key = typeof key === 'string' ? key.slice(0, 40) : '';
+    if (!f) return false;
+    if (!f.theirKey) { if (key) f.theirKey = key; return true; }   // prima volta: ci fidiamo e la ricordiamo
+    return key === f.theirKey;
+  }
   function removeFriend(p, id) {
     p.friends = p.friends.filter((f) => f.id !== id);
     delete p.chats[id];
@@ -487,7 +503,7 @@
     romeDay, msToRomeMidnight, shopOffers, buyOffer, buyGemItem, skipCost, skipChest,
     road, roadReady, roadPending, claimRoad,
     tourPrize, tourFree, tourStart, tourResult, tourClaim, tourDifficulty, TOUR_MAX_WINS, TOUR_MAX_LOSSES, TOUR_RETRY_GEMS, TOUR_LEVEL,
-    addFriend, removeFriend, addChat, createClan, mergeClan, cleanClan, canRequest, requestMax, creditDonations, randomId,
+    addFriend, removeFriend, myFriendKey, checkFriendKey, addChat, createClan, mergeClan, cleanClan, canRequest, requestMax, creditDonations, randomId,
     WIN_TROPHIES, LOSS_TROPHIES, REQUEST_EVERY,
   };
   if (isNode) module.exports = api;
