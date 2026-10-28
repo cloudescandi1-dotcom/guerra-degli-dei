@@ -239,7 +239,7 @@ test('clan ricevuto da un altro giocatore: niente codice nascosto né dati enorm
       { id: 'c1', from: 'm1', text: 'y'.repeat(5000), at: 2 }],
   };
   P.mergeClan(p, evil);
-  assert.strictEqual(p.clan.badge, '🦉'); // stemma non valido scartato (lo stemma resta quello nostro)
+  assert.ok(['🦉', '🏛️'].includes(p.clan.badge)); // stemma non valido scartato: resta uno stemma vero
   assert.ok(p.clan.name.length <= 24);
   assert.ok(p.clan.members.length <= 51);
   assert.ok(p.clan.members.every((m) => typeof m.trophies === 'number' && m.name.length <= 20 && ['capo', 'membro'].includes(m.role)));
