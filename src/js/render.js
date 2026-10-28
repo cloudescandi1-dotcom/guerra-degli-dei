@@ -10,6 +10,7 @@
   function create(canvas) {
     const ctx = canvas.getContext('2d');
     let S = 20, ox = 0, oy = 0, flip = false, arena = D.ARENAS[0], dpr = 1;
+    const FOOT = (SP && SP.FOOT) || 0.94;
     let bg = null;                     // terreno già disegnato (non cambia durante la partita)
     const facing = new Map();          // verso dove guarda ogni truppa (destra/sinistra)
 
@@ -60,57 +61,66 @@
     // Materiale delle gradinate e colore del pavimento di ogni arena
     const STONE = ['#a87a4a', '#b9a98a', '#c9a46a', '#8a8274', '#d9bf8f', '#3a2a30', '#f2ece0'];
     const PATHS = ['rgba(222,196,140,0.78)', 'rgba(232,222,200,0.75)', 'rgba(150,110,60,0.45)', 'rgba(240,226,180,0.8)', 'rgba(190,160,110,0.45)', 'rgba(120,90,100,0.6)', 'rgba(242,200,90,0.35)'];
-    const SKINS = ['#f2c69c', '#d9a077', '#a86b46', '#f7d7b8', '#8a5a3a'];
-    // Una persona del pubblico (testa e spalle); arm: braccia alzate
-    function fan(g, x, y, u, shirt, skin, arm) {
-      g.fillStyle = shirt;
-      g.beginPath(); g.ellipse(x, y, u * 0.2, u * 0.15, 0, Math.PI, 0); g.fill();
-      if (arm) { g.strokeStyle = skin; g.lineWidth = u * 0.07; g.beginPath(); g.moveTo(x - u * 0.16, y - u * 0.05); g.lineTo(x - u * 0.24, y - u * 0.32); g.moveTo(x + u * 0.16, y - u * 0.05); g.lineTo(x + u * 0.24, y - u * 0.32); g.stroke(); }
-      g.fillStyle = skin;
-      g.beginPath(); g.arc(x, y - u * 0.22, u * 0.11, 0, Math.PI * 2); g.fill();
+    // Il pubblico sono i personaggi del gioco, blu e rossi
+    const CROWD = ['oplita', 'arcieri', 'frombolieri', 'arpie', 'scheletri', 'legionari', 'centauro', 'minotauro', 'gladiatore',
+      'male', 'acheo', 'ciclope', 'sirene', 'satiro', 'medusa', 'pegaso', 'cerbero', 'idra', 'ercole'];
+    let crowdMissing = false;   // true se qualche disegno non era ancora pronto: il terreno verrà ridisegnato
+    const crowdReady = () => !SP || CROWD.every((k) => SP.image(k, 0) && SP.image(k, 1));
+    function member(g, x, foot, size, rnd, mirror) {
+      const key = CROWD[Math.floor(rnd() * CROWD.length)], team = rnd() < 0.5 ? 0 : 1;
+      const img = SP && SP.image(key, team);
+      if (!img) { crowdMissing = true; return; }
+      g.save(); g.translate(x, foot); if (mirror) g.scale(-1, 1);
+      g.drawImage(img, -size / 2, -size * FOOT, size, size);
+      g.restore();
     }
     function stands(g, c, idx, rnd) {
-      const tl = proj(0, 0), tr = proj(E.W, 0), lw = Math.max(1, S * 0.04);
+      const tl = proj(0, 0), lw = Math.max(1, S * 0.04);
       const stone = STONE[idx];
-      const shirts = ['#e0453a', '#3f7fe0', '#f2c24a', '#f6f1e7', '#4fa83a', '#a855f7', '#e8875a'];
-      // --- gradinate in fondo (dietro il campo avversario), a più file
+      // --- gradinate in fondo (dietro il campo avversario): prima le file lontane, poi le vicine
       const rows = 5, uTop = S * KT;
+      const list = [];
       let base = tl.y - S * 0.25;
-      g.fillStyle = 'rgba(0,0,0,0.3)'; g.fillRect(0, base - uTop * 0.2, c.width, uTop * 0.4);
       for (let r = 0; r < rows && base > -uTop; r++) {
-        const u = uTop * (1 - r * 0.08), h = u * 0.62;
-        // gradino
-        g.fillStyle = stone; g.fillRect(0, base - h, c.width, h);
-        g.fillStyle = 'rgba(0,0,0,0.22)'; g.fillRect(0, base - h * 0.25, c.width, h * 0.25);
-        g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = lw; g.beginPath(); g.moveTo(0, base - h); g.lineTo(c.width, base - h); g.stroke();
-        // pubblico seduto
-        for (let x = u * 0.3 + (r % 2) * u * 0.22; x < c.width; x += u * 0.44) {
-          if (rnd() < 0.12) continue;
-          fan(g, x, base - h * 0.35, u, shirts[Math.floor(rnd() * shirts.length)], SKINS[Math.floor(rnd() * SKINS.length)], rnd() < 0.18);
-        }
+        const u = uTop * (1 - r * 0.08), h = u * 0.72;
+        list.push({ base, u, h, r });
         base -= h;
       }
-      // muro con gli archi tra le gradinate e il campo
-      const wallH = S * KT * 0.55, wy = tl.y - S * 0.25;
-      g.fillStyle = stone; g.fillRect(0, wy, c.width, wallH * 0.0001);
-      // stendardi della squadra avversaria (in alto) appesi al muro
+      g.fillStyle = stone; g.fillRect(0, 0, c.width, tl.y);
+      for (const row of list.reverse()) {
+        const { base: b0, u, h, r } = row;
+        g.fillStyle = 'rgba(0,0,0,0.18)'; g.fillRect(0, b0 - h, c.width, h * 0.5);
+        // spettatori in piedi dietro il parapetto
+        for (let x = u * 0.35 + (r % 2) * u * 0.3; x < c.width + u * 0.3; x += u * 0.62) {
+          if (rnd() < 0.1) continue;
+          member(g, x + (rnd() - 0.5) * u * 0.15, b0 - h * 0.12, u * 1.05, rnd, rnd() < 0.5);
+        }
+        // parapetto di pietra davanti alla fila
+        g.fillStyle = stone; g.fillRect(0, b0 - h * 0.3, c.width, h * 0.3);
+        g.fillStyle = 'rgba(255,255,255,0.18)'; g.fillRect(0, b0 - h * 0.3, c.width, h * 0.06);
+        g.strokeStyle = 'rgba(0,0,0,0.4)'; g.lineWidth = lw; g.beginPath(); g.moveTo(0, b0 - h * 0.3); g.lineTo(c.width, b0 - h * 0.3); g.stroke();
+      }
+      // stendardi della squadra avversaria appesi al muro
+      const wy = tl.y - S * 0.25;
       for (let x = c.width * 0.12; x < c.width; x += c.width * 0.19) {
         g.fillStyle = '#e0453a'; g.strokeStyle = '#2b1d14'; g.lineWidth = lw;
         g.beginPath(); g.moveTo(x - S * 0.25, wy - S * 0.55); g.lineTo(x + S * 0.25, wy - S * 0.55); g.lineTo(x + S * 0.25, wy + S * 0.05); g.lineTo(x, wy - S * 0.12); g.lineTo(x - S * 0.25, wy + S * 0.05); g.closePath(); g.fill(); g.stroke();
         g.fillStyle = '#f2c24a'; g.beginPath(); g.arc(x, wy - S * 0.3, S * 0.08, 0, 7); g.fill();
       }
-      // --- tribune ai lati, lungo tutto il campo
+      // --- tribune ai lati, lungo tutto il campo (dal fondo verso chi guarda)
       for (const sideL of [true, false]) {
-        for (let yy = 0.2; yy < E.H; yy += 0.55) {
+        for (let yy = 0.2; yy < E.H; yy += 0.7) {
           const e = proj(sideL ? 0 : E.W, yy), u = S * e.k;
           const room = sideL ? e.x : c.width - e.x;
-          if (room < u * 0.25) continue;
+          if (room < u * 0.3) continue;
           const dir = sideL ? -1 : 1;
-          for (let k = 0; k < 4; k++) {
-            const x = e.x + dir * u * (0.35 + k * 0.42);
-            if (x < -u || x > c.width + u) break;
-            g.fillStyle = stone; g.fillRect(x - u * 0.23, e.y - u * (0.15 + k * 0.18), u * 0.46, u * 0.4);
-            if (rnd() < 0.85) fan(g, x, e.y - u * (0.12 + k * 0.18), u * 0.9, shirts[Math.floor(rnd() * shirts.length)], SKINS[Math.floor(rnd() * SKINS.length)], rnd() < 0.15);
+          for (let k = 3; k >= 0; k--) {
+            const x = e.x + dir * u * (0.45 + k * 0.55);
+            if (x < -u || x > c.width + u) continue;
+            const foot = e.y - u * k * 0.2;
+            g.fillStyle = stone; g.fillRect(x - u * 0.3, foot - u * 0.05, u * 0.6, u * 0.45);
+            if (rnd() < 0.85) member(g, x, foot + u * 0.05, u * 0.95, rnd, !sideL);
+            g.fillStyle = stone; g.fillRect(x - u * 0.3, foot - u * 0.02, u * 0.6, u * 0.18);
           }
         }
       }
@@ -401,7 +411,9 @@
     }
 
     function ground(state) {
-      if (!bg || bg.width !== canvas.width || bg.height !== canvas.height) bg = buildGround();
+      // se mancavano dei disegni del pubblico e adesso sono pronti, si ridisegna il terreno
+      if (bg && crowdMissing && crowdReady()) bg = null;
+      if (!bg || bg.width !== canvas.width || bg.height !== canvas.height) { crowdMissing = false; bg = buildGround(); }
       ctx.drawImage(bg, 0, 0);
       // onde che si muovono
       ctx.strokeStyle = 'rgba(255,255,255,0.45)';
@@ -450,7 +462,6 @@
     }
 
     // Disegna un'immagine coi piedi in (cx, footY); se non è ancora pronta usa l'emoji
-    const FOOT = (SP && SP.FOOT) || 0.94;
     function sprite(key, team, cx, footY, size, mirror, fallbackEmoji) {
       const img = SP && SP.image(key, team);
       if (img) {
@@ -706,19 +717,30 @@
     function placeZone(state, me, key) {
       const d = D.BY_KEY[key];
       if (!d || d.type === 'spell') return;
-      // Come una scacchiera: le caselle dove puoi mettere la truppa hanno il bordo chiaro,
-      // quelle vietate sono scurite di rosso
+      // Come una scacchiera: i colori vengono dal terreno dell'arena, così la griglia si "fonde" col campo.
+      // Le caselle vietate sono solo un po' più scure.
+      const g = gridColors();
       ctx.lineWidth = Math.max(1, S * 0.035);
       for (let y = 0; y < E.H; y++) {
         for (let x = 0; x < E.W; x++) {
           quad(ctx, x + 0.04, y + 0.04, x + 0.96, y + 0.96);
-          if (!E.canPlace(state, me, key, x + 0.5, y + 0.5)) { ctx.fillStyle = 'rgba(150,20,20,0.3)'; ctx.fill(); }
+          if (!E.canPlace(state, me, key, x + 0.5, y + 0.5)) { ctx.fillStyle = g.no; ctx.fill(); }
           else {
-            ctx.fillStyle = (x + y) % 2 ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.04)'; ctx.fill();
-            ctx.strokeStyle = 'rgba(255,255,255,0.45)'; ctx.stroke();
+            ctx.fillStyle = (x + y) % 2 ? g.a : g.b; ctx.fill();
+            ctx.strokeStyle = g.line; ctx.stroke();
           }
         }
       }
+    }
+    // Colori della griglia presi dal terreno dell'arena (chiaro o scuro)
+    function gridColors() {
+      const hex = arena.ground[0].replace('#', '');
+      const [r, gg, b] = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16));
+      const light = (r * 0.3 + gg * 0.59 + b * 0.11) > 150;
+      const mix = (k, a) => `rgba(${Math.round(r * k)},${Math.round(gg * k)},${Math.round(b * k)},${a})`;
+      return light
+        ? { a: mix(1.12, 0.35), b: mix(0.92, 0.25), line: mix(0.55, 0.55), no: mix(0.35, 0.35), hi: mix(1.25, 0.75), hiLine: mix(0.4, 0.9) }
+        : { a: mix(1.5, 0.3), b: mix(1.25, 0.2), line: mix(2.2, 0.5), no: 'rgba(0,0,0,0.35)', hi: mix(2.4, 0.6), hiLine: mix(3, 0.95) };
     }
 
     function ghost(state, me, key, gx, gy) {
@@ -729,8 +751,9 @@
       const ok = E.canPlace(state, me, key, x, y);
       if (d.type !== 'spell') {   // la casella scelta si illumina
         quad(ctx, x - 0.5, y - 0.5, x + 0.5, y + 0.5);
-        ctx.fillStyle = ok ? 'rgba(255,255,200,0.55)' : 'rgba(255,60,60,0.5)'; ctx.fill();
-        ctx.strokeStyle = ok ? '#fff' : '#ff6b6b'; ctx.lineWidth = Math.max(1.5, S * 0.07); ctx.stroke();
+        const g = gridColors();
+        ctx.fillStyle = ok ? g.hi : 'rgba(200,40,30,0.45)'; ctx.fill();
+        ctx.strokeStyle = ok ? g.hiLine : '#ff6b6b'; ctx.lineWidth = Math.max(1.5, S * 0.07); ctx.stroke();
       }
       const p = proj(x, y), u = S * p.k;
       const r = d.type === 'spell' ? d.radius : (D.BY_KEY[d.unit || key].radius || 0.5) + ((d.count || 1) > 1 ? 0.6 : 0);

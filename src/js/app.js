@@ -1091,6 +1091,8 @@
     else if (tab === 'negozio') renderShop();
   }, 1000);
 
+  // Prepara subito i disegni (personaggi, templi, pubblico) così in battaglia sono già pronti
+  Sprites.preload(Sprites.keys());
   render();
   if (!profile.seen.howto) { profile.seen.howto = true; save(); setTimeout(howTo, 400); }
 
