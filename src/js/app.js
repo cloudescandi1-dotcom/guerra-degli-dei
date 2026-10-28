@@ -357,7 +357,6 @@
   }
 
   // ---------------------------------------------------------------- Cammino degli Eroi
-  const roadViews = [];
   function openRoad() {
     $('#road').hidden = false;
     renderRoad(true);
@@ -366,10 +365,15 @@
   // Colori delle "piattaforme" dei premi in ogni arena (piano e bordo) e oggetti decorativi
   const SLAB = [['#d8c39a', '#9c8258'], ['#efe8d8', '#b7a98c'], ['#d6a56a', '#93622e'], ['#a9d8e6', '#5f98ad'],
     ['#ecd6a6', '#b4955c'], ['#7a5560', '#46293a'], ['#f6f1e4', '#c9b98f']];
-  const PROPS = ['lancia', 'vaso', 'fuoco', 'fulmine', 'balista'];
+  // Oggetti decorativi accanto ai premi: tutte le carte del gioco, in un ordine fisso mescolato,
+  // così due piattaforme vicine non hanno mai lo stesso disegno
+  const PROPS = D.CARDS.map((c) => c.key).sort((a, b) => ((a.length * 7 + a.charCodeAt(0)) % 11) - ((b.length * 7 + b.charCodeAt(0)) % 11) || (a < b ? -1 : 1));
   function renderRoad(scroll) {
     const cur = P.arena(profile), list = $('#road-list');
-    let html = '<div class="rwrap"><div class="rbar"><div class="rbar-fill"></div></div>';
+    // in cima: il monte Olimpo tra le nuvole, per le arene che arriveranno
+    let html = `<div class="rwrap"><div class="rbar"><div class="rbar-fill"></div></div>
+      <div class="rsummit"><img class="summit-art" alt="" src="${ArenaArt.summitUrl()}">
+        <div class="summit-ribbon"><b>Nuove arene</b><small>In arrivo a breve!</small></div></div>`;
     let n = 0;
     // dall'alto (Olimpo) al basso (Sparta): si sale verso gli dèi
     for (let i = D.ARENAS.length - 1; i >= 0; i--) {
@@ -381,14 +385,14 @@
         const title = r.kind === 'chest' ? D.CHESTS[r.chest].name : r.kind === 'gold' ? `${r.amount} monete` : `${r.amount} gemme`;
         const prize = `<button class="prize ${ready ? 'ready' : ''} ${got ? 'got' : ''}" type="button" title="${esc(title)}" ${ready ? `data-road="${i}:${r.t}"` : `data-info="${esc(title)}"`}>
           ${amount}${pic}${got ? '<i class="chk">✔</i>' : ''}${ready ? '<em class="tap">Ritira!</em>' : ''}</button>`;
-        const prop = `<span class="prop">${art(PROPS[(r.t / 50) % PROPS.length], 'prop-art')}</span>`;
+        const prop = `<span class="prop">${art(PROPS[(r.t / 50) % PROPS.length], 'prop-art')}</span>`;   // r.t/50 = numero della piattaforma
         const side = n++ % 2 === 0;
         html += `<div class="rrow" data-t="${r.t}"><span class="rt">${r.t}</span>
           <div class="slab" style="--s1:${SLAB[i][0]};--s2:${SLAB[i][1]}">${side ? prop : prize}<span class="carpet"></span>${side ? prize : prop}</div></div>`;
       }
       const cards = D.CARDS.filter((c) => c.arena === i).map((c) => `<span class="shield" style="--rc:${D.RARITY[c.rarity].color}">${art(c.key, 'shield-art')}</span>`).join('');
       html += `<div class="rarena ${i === cur ? 'current' : ''}">
-        <button class="diorama" type="button" data-detail="${i}" aria-label="Dettagli dell'arena ${i + 1}"><span class="dio-view" data-arena="${i}"></span></button>
+        <button class="diorama" type="button" data-detail="${i}" aria-label="Dettagli dell'arena ${i + 1}"><span class="dio-view"><img alt="" src="${ArenaArt.url(i, a)}"></span></button>
         <h3 class="rname">${esc(a.name)}</h3>
         <div class="rbanner-row" data-t="${a.trophies}"><span class="rt">${a.trophies}</span>
           <div class="rbanner"><span class="crownlv">${i + 1}</span><b>ARENA ${i + 1}</b><span class="rtro">🏆 ${a.trophies}</span></div></div>
@@ -397,21 +401,6 @@
     }
     html += `<div class="you-tag">🏆 ${profile.trophies}</div></div>`;
     list.innerHTML = html;
-    // plastici delle arene (canvas disegnati una volta e riusati)
-    for (const box of list.querySelectorAll('.dio-view')) {
-      const i = +box.dataset.arena;
-      if (!roadViews[i]) {
-        const cv = document.createElement('canvas');
-        roadViews[i] = { cv, r: Render.create(cv, { top: 3.2, bot: 1.6 }), drawn: false };
-      }
-      const v = roadViews[i];
-      box.appendChild(v.cv);
-      if (!v.drawn) {
-        v.drawn = true;
-        const st = Engine.createMatch({ decks: [D.START_DECK, D.START_DECK], seed: 1 });
-        requestAnimationFrame(() => { v.r.setArena(i); v.r.resize(); v.r.draw(st); setTimeout(() => v.r.draw(st), 1500); });
-      }
-    }
     for (const b of list.querySelectorAll('[data-road]')) b.onclick = () => {
       const [i, t] = b.dataset.road.split(':').map(Number);
       const r = P.claimRoad(profile, i, t);
@@ -875,16 +864,19 @@
   const canvas = $('#canvas');
   // Spazio da lasciare sopra il campo: la fascia dell'avversario in alto (più alta sugli iPhone con la tacca)
   const ROPTS = { topPx: 0 };
+  let B = null;
   const R = Render.create(canvas, ROPTS);
+  // Altezza della parte di schermo davvero visibile (senza le barre del browser):
+  // così le carte e l'ambrosia non finiscono mai sotto la barra di Safari
   function appHeight() {
-    const full = navigator.standalone && window.screen ? Math.max(window.screen.height, window.innerHeight) : window.innerHeight;
-    document.documentElement.style.setProperty('--app-h', full + 'px');
+    const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    document.documentElement.style.setProperty('--app-h', Math.round(h) + 'px');
+    if (B) fitCanvas();
   }
   appHeight();
   window.addEventListener('resize', appHeight);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', appHeight);
   window.addEventListener('orientationchange', () => setTimeout(appHeight, 300));
-  let B = null;
-
   function fitCanvas() {
     const f = $('#field').getBoundingClientRect();
     // Il canvas riempie tutta la zona: il campo in prospettiva sta al centro, ai lati cielo e cipressi

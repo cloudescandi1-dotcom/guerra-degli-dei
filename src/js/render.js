@@ -16,9 +16,12 @@
     let bg = null;                     // terreno già disegnato (non cambia durante la partita)
     const facing = new Map();          // verso dove guarda ogni truppa (destra/sinistra)
 
-    // Prospettiva: la parte lontana del campo è più stretta (KT) e tutto è un po' schiacciato (C)
-    const KT = 0.78, C = 0.86, AVG = (KT + 1) / 2;
-    const FIELD_H = E.H * C * AVG;   // altezza del campo sullo schermo, in "caselle vicine"
+    // Prospettiva: la parte lontana del campo è più stretta (KT) e tutto è un po' schiacciato (C).
+    // C cambia con lo schermo: il campo è largo quasi quanto il telefono (come in Clash)
+    // e, se manca altezza, viene schiacciato un po' di più invece di rimpicciolirlo.
+    const KT = 0.78, AVG = (KT + 1) / 2, C_MAX = 0.86, C_MIN = 0.62;
+    let C = C_MAX;
+    let FIELD_H = E.H * C * AVG;   // altezza del campo sullo schermo, in "caselle vicine"
 
     function resize() {
       dpr = Math.min(3, root.devicePixelRatio || 1);   // nitido anche sugli iPhone (3 pixel per punto)
@@ -29,7 +32,11 @@
       // Sopra il campo serve spazio per il tempio del Re nemico (TOP) e sotto per il bordo (BOT)
       const TOP = opts.top || 2.6, BOT = opts.bot || 0.6;
       const reserve = (opts.topPx || 0) * dpr;
-      S = Math.min(canvas.width / E.W, (canvas.height - reserve) / (FIELD_H + TOP + BOT));
+      const availH = canvas.height - reserve;
+      S = canvas.width / (E.W * 1.03);
+      C = Math.min(C_MAX, (availH / S - TOP - BOT) / (E.H * AVG));
+      if (C < C_MIN) { C = C_MIN; S = availH / (E.H * C * AVG + TOP + BOT); }
+      FIELD_H = E.H * C * AVG;
       ox = (canvas.width - S * E.W) / 2;
       // Il campo sta in basso (vicino alle carte); lo spazio che avanza in alto diventa cielo
       oy = canvas.height - S * FIELD_H - S * BOT;

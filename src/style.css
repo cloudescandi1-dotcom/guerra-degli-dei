@@ -31,6 +31,7 @@
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #4f82db; border-radius: 3px; }
 html, body { margin: 0; height: 100%; }
+html { background: #0b1a40; }   /* sotto le barre del telefono: stesso blu scuro della fascia delle carte */
 body {
   background-color: var(--bg);
   background-image:
@@ -392,8 +393,8 @@ img.chest-big { width: 8rem; height: 8rem; filter: drop-shadow(0 6px 8px #0008);
 .hand-cards .card.sel { transform: translateY(-10px) scale(1.04); box-shadow: 0 0 0 3px #fff inset, 0 0 16px #fff; }
 .hand-cards .card.poor { filter: grayscale(1) brightness(.5) contrast(.85); }
 .hand-cards .card .wait { position: absolute; left: 0; right: 0; bottom: 0; background: #00000055; border-radius: 0 0 7px 7px; z-index: 1; }
-.amb { position: relative; display: flex; align-items: center; gap: 8px; max-width: 560px; margin: 10px auto 12px; }
-.amb-max { position: absolute; left: 40px; bottom: -13px; font-family: var(--font); font-size: .62rem; color: #e8ecf6; text-shadow: var(--ol); }
+.amb { position: relative; display: flex; align-items: center; gap: 8px; max-width: 560px; margin: 8px auto 4px; }
+.amb-max { position: absolute; right: 6px; top: -14px; font-family: var(--font); font-size: .62rem; color: #e8ecf6; text-shadow: var(--ol); }
 .drop {
   width: 34px; height: 34px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); flex: none;
   background: radial-gradient(circle at 35% 35%, #ffb3ff, var(--amb) 60%, #8a1a98); border: 2px solid var(--frame); display: grid; place-items: center;
@@ -520,16 +521,20 @@ img.chest-big { width: 8rem; height: 8rem; filter: drop-shadow(0 6px 8px #0008);
 /* arene: plastico, nome, fascia blu, gemme e carte sbloccate */
 .rarena { position: relative; display: flex; flex-direction: column; align-items: center; padding: 26px 0 30px; }
 .diorama {
-  position: relative; width: 82%; aspect-ratio: 1 / 1.02; padding: 0; border: 0; border-radius: 14px; overflow: visible; background: none;
+  position: relative; width: 82%; aspect-ratio: 1 / .8; padding: 0; border: 0; border-radius: 14px; overflow: visible; background: none;
 }
-.dio-view { position: absolute; inset: 0 0 8% 0; border-radius: 14px 14px 6px 6px; overflow: hidden; border: 3px solid #1b1420; box-shadow: inset 0 0 0 2px #ffffff22; }
-.dio-view canvas { width: 100%; height: 100%; display: block; }
-.diorama::after {
-  content: ''; position: absolute; left: -3%; right: -3%; bottom: 0; height: 12%; border-radius: 0 0 16px 16px;
-  background: linear-gradient(90deg, #c9b4ff, #ffd6f2 35%, #ffffff 50%, #a8ecff 70%, #9fb4ff); border: 3px solid #1b1420; border-top: 0;
-  box-shadow: 0 10px 16px #0007;
+.dio-view { position: absolute; inset: 0 0 8% 0; display: grid; place-items: end center; }
+.dio-view img { width: 112%; display: block; filter: drop-shadow(0 8px 6px #0006); }
+.rarena.current .dio-view img { filter: drop-shadow(0 0 10px #ffe680) drop-shadow(0 8px 6px #0006); }
+/* cima del cammino: l'Olimpo e la fascia "Nuove arene" */
+.rsummit { position: relative; display: flex; flex-direction: column; align-items: center; padding: 10px 0 34px; }
+.summit-art { width: 86%; display: block; filter: drop-shadow(0 8px 8px #0006); }
+.summit-ribbon {
+  position: relative; margin-top: -18px; width: 92%; text-align: center; padding: 8px 10px 10px; border-radius: 10px;
+  background: linear-gradient(#3fa4ff, #1f74d6); border: 3px solid #0c3f86; box-shadow: 0 0 0 3px #ffcf33, 0 8px 0 #0006;
 }
-.rarena.current .dio-view { box-shadow: 0 0 0 3px #ffe680, 0 0 22px #ffd23a99; }
+.summit-ribbon b { display: block; font-family: var(--font); font-weight: 400; font-size: 1.6rem; text-shadow: var(--ol); }
+.summit-ribbon small { display: block; font-family: var(--font); font-size: 1.1rem; color: #ffe680; text-shadow: var(--ol); }
 .rname { margin: 18px 0 8px; font-size: 1.9rem; text-align: center; text-shadow: var(--ol); line-height: 1.05; }
 .rbanner-row { position: relative; width: 100%; display: flex; align-items: center; }
 .rbanner-row .rt { top: 50%; transform: translateY(-50%); }
