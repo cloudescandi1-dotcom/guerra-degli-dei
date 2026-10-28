@@ -72,7 +72,8 @@
     const fill = o.skin || 'url(#sk)';
     let m = `<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" ${S()}/>` +
       `<path d="M${x - r * 0.6} ${y - r * 0.55} Q${x - r * 0.2} ${y - r * 0.85} ${x + r * 0.15} ${y - r * 0.8}" fill="none" stroke="#fff" stroke-width="1.6" opacity=".45" stroke-linecap="round"/>` +
-      eyes(x, y + 1, o.iris) + brows(x, y - 2.6, 5, o.mood === 'angry') + cheeks(x, y + 5.5, 7.5);
+      (o.sleep ? `<path d="M${x - 8} ${y + 1} Q${x - 5} ${y + 3.4} ${x - 2} ${y + 1} M${x + 2} ${y + 1} Q${x + 5} ${y + 3.4} ${x + 8} ${y + 1}" fill="none" stroke="${O}" stroke-width="1.6" stroke-linecap="round"/>` : eyes(x, y + 1, o.iris)) +
+      brows(x, y - 2.6, 5, o.mood === 'angry') + cheeks(x, y + 5.5, 7.5);
     if (o.mood === 'grin') m += `<path d="M${x - 3.5} ${y + 7} Q${x} ${y + 10} ${x + 3.5} ${y + 7} Z" fill="#7a2a20" ${S(1.2)}/><path d="M${x - 2.6} ${y + 7.4} H${x + 2.6}" stroke="#fff" stroke-width="1"/>`;
     else if (o.mood === 'angry') m += `<path d="M${x - 3} ${y + 8.5} Q${x} ${y + 7} ${x + 3} ${y + 8.5}" fill="none" stroke="${O}" stroke-width="1.4" stroke-linecap="round"/>`;
     else m += `<path d="M${x - 2.6} ${y + 7.2} Q${x} ${y + 9} ${x + 2.6} ${y + 7.2}" fill="none" stroke="${O}" stroke-width="1.3" stroke-linecap="round"/>`;
@@ -669,6 +670,61 @@
         ? `<path d="M36 2 L40 -7 L45 0 L50 -8 L55 0 L60 -7 L64 2 Z" fill="url(#gold)" ${S(1.4)}/><circle cx="50" cy="-2" r="1.6" fill="#c0392b"/>`
         : `<path d="M47 7 L50 -1 L53 7 Z" fill="url(#gold)" ${S(1.2)}/>`);
   }
+  // ---------- guardiani dei templi (stanno sul gradino davanti alle colonne) ----------
+  // Sacerdotessa arciera: difende i templi laterali
+  D.sacerdotessa = (T) =>
+    // mantello dietro
+    `<path d="M36 46 Q26 70 30 93 L70 93 Q74 70 64 46 Z" fill="url(#tm)" ${S()}/>` +
+    // veste lunga bianca con l'orlo a greca
+    `<path d="M37 47 Q50 42 63 47 L67 92 Q50 96 33 92 Z" fill="url(#wht)" ${S()}/>` +
+    `<path d="M44 52 Q46 72 43 91 M56 52 Q54 72 57 91 M50 60 V93" fill="none" stroke="#c9c2d6" stroke-width="1.3"/>` +
+    `<path d="M34 85 Q50 89 66 85 L67 92 Q50 96 33 92 Z" fill="url(#tmv)" ${S(1.4)}/>` + meander(36, 87, 28, '#fdf6e3', 2.6) +
+    `<path d="M38 60 Q50 63 62 60" fill="none" stroke="${O}" stroke-width="5"/><path d="M38 60 Q50 63 62 60" fill="none" stroke="url(#gold)" stroke-width="3"/>` +
+    `<path d="M38 47 L62 61" stroke="url(#tmv)" stroke-width="4.5"/>` +
+    // arco tenuto davanti, a sinistra
+    `<path d="M27 24 Q15 34 18 50 Q14 64 18 76 Q16 84 27 90" fill="none" stroke="${O}" stroke-width="5.6" stroke-linecap="round"/>` +
+    `<path d="M27 24 Q15 34 18 50 Q14 64 18 76 Q16 84 27 90" fill="none" stroke="url(#gold)" stroke-width="3.4" stroke-linecap="round"/>` +
+    `<path d="M27 24 L27 90" stroke="#f3f0e8" stroke-width="1"/>` +
+    limb('M38 51 Q30 56 21 57', '#f0b98c') + hand(20, 57) +
+    // freccia pronta nell'altra mano
+    limb('M62 51 Q70 58 66 66', '#f0b98c') + `<path d="M66 66 L82 40" stroke="#7a4520" stroke-width="1.8"/><path d="M80 37 L85 35 L83 41 Z" fill="url(#st)" ${S(1)}/>` + hand(66, 66) +
+    // capelli raccolti e diadema d'oro
+    `<path d="M36 36 Q30 52 38 56 L40 40 Z M64 36 Q70 52 62 56 L60 40 Z" fill="#5a3218" ${S(1.4)}/>` +
+    head(50, 33, 14) +
+    `<path d="M35 33 Q33 15 50 14 Q67 15 65 33 Q60 23 50 23 Q40 23 35 33 Z" fill="#5a3218" ${S()}/>` +
+    `<circle cx="50" cy="12" r="6.5" fill="#5a3218" ${S(1.6)}/><path d="M46 10 Q50 7 54 10" fill="none" stroke="#8a5530" stroke-width="1.3"/>` +
+    `<path d="M36 24 Q50 17 64 24" fill="none" stroke="${O}" stroke-width="5" stroke-linecap="round"/><path d="M36 24 Q50 17 64 24" fill="none" stroke="url(#gold)" stroke-width="3" stroke-linecap="round"/>` +
+    `<circle cx="50" cy="19.5" r="2.2" fill="${T.c}" ${S(1)}/>`;
+
+  // Il Re (basileus): difende il tempio grande; mentre dorme ha gli occhi chiusi
+  const basileus = (T, sleep) =>
+    `<path d="M33 46 Q24 70 28 93 L72 93 Q76 70 67 46 Z" fill="url(#tm)" ${S()}/>` +
+    `<path d="M36 48 Q50 43 64 48 L68 92 Q50 96 32 92 Z" fill="url(#tmv)" ${S()}/>` +
+    `<path d="M44 49 L56 49 L58 93 L42 93 Z" fill="url(#wht)" ${S(1.6)}/>` +
+    `<path d="M44 49 L42 93 M56 49 L58 93" stroke="url(#gold)" stroke-width="2.4"/>` +
+    `<path d="M33 84 Q50 89 67 84" fill="none" stroke="url(#gold)" stroke-width="3"/>` +
+    `<path d="M37 61 Q50 64 63 61" fill="none" stroke="${O}" stroke-width="5.5"/><path d="M37 61 Q50 64 63 61" fill="none" stroke="url(#gold)" stroke-width="3.5"/>` +
+    `<circle cx="50" cy="62.5" r="3" fill="url(#gold)" ${S(1.2)}/>` +
+    // spalline d'oro
+    `<path d="M32 49 Q36 43 44 46 L42 53 Q36 54 32 49 Z M68 49 Q64 43 56 46 L58 53 Q64 54 68 49 Z" fill="url(#gold)" ${S(1.4)}/>` +
+    // scettro con l'aquila
+    `<path d="M78 22 V92" stroke="${O}" stroke-width="5.2" stroke-linecap="round"/><path d="M78 22 V92" stroke="#e2a83f" stroke-width="3.2" stroke-linecap="round"/><path d="M77 24 V90" stroke="#fff0a8" stroke-width="1" opacity=".8"/>` +
+    `<path d="M70 18 Q74 12 78 16 Q82 12 86 18 Q82 17 78 21 Q74 17 70 18 Z" fill="url(#gold)" ${S(1.3)}/><circle cx="78" cy="15" r="3" fill="url(#gold)" ${S(1.2)}/>` +
+    limb('M64 51 Q72 56 77 60', '#f0b98c') + hand(78, 60) +
+    limb('M37 51 Q32 60 40 64', '#f0b98c') + hand(41, 64) +
+    head(50, 31, 14, { sleep }) +
+    // capelli e barba bianchi, baffi
+    `<path d="M36 30 Q34 16 50 15 Q66 16 64 30 Q60 22 50 22 Q40 22 36 30 Z" fill="url(#wht)" ${S(1.6)}/>` +
+    `<path d="M37 33 Q36 52 50 57 Q64 52 63 33 Q60 41 50 41 Q40 41 37 33 Z" fill="url(#wht)" ${S(1.8)}/>` +
+    `<path d="M43 46 Q46 51 50 52 M57 46 Q54 51 50 52 M47 43 V50 M53 43 V50" fill="none" stroke="#c9c2d6" stroke-width="1.1"/>` +
+    `<path d="M42 39 Q46 36 50 38.5 Q54 36 58 39 Q54 41.5 50 40 Q46 41.5 42 39 Z" fill="#fff" ${S(1.2)}/>` +
+    // corona d'oro con l'alloro
+    `<path d="M36 23 L38 10 L44 17 L50 6 L56 17 L62 10 L64 23 Q50 19 36 23 Z" fill="url(#gold)" ${S(1.6)}/>` +
+    `<circle cx="50" cy="15" r="2" fill="#c0392b"/><circle cx="41" cy="18.5" r="1.4" fill="${T.c}"/><circle cx="59" cy="18.5" r="1.4" fill="${T.c}"/>` +
+    `<path d="M33 27 q3 -4 6 -2 M67 27 q-3 -4 -6 -2" fill="none" stroke="#4f9a3f" stroke-width="2.6" stroke-linecap="round"/>`;
+  D.basileus = (T) => basileus(T, false);
+  D.basileus_dorme = (T) => basileus(T, true);
+
   D.princess = (T) => temple(T, false);
   D.king = (T) => temple(T, true);
   D.rovine = () =>

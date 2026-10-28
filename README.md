@@ -8,7 +8,8 @@ con personaggi, nomi e grafica originali.
 
 **Gioca online:** https://cloudescandi1-dotcom.github.io/guerra-degli-dei/
 
-## Stato (27/10/2026)
+## Stato (28/10/2026)
+- ✅ Versione 1.5: **guardiani dei templi** (sacerdotessa arciera sui templi laterali, il Re sul tempio grande che dorme finché non lo attacchi), pubblico fino in cima all'arena, avversario in alto con scudo del livello
 - ✅ Versione 1.1: aggiunti **Negozio** (offerte del giorno e gemme), baule del giorno e schede delle arene
 - ✅ 22 test automatici superati (motore di gioco, computer, progressione, negozio, clan)
 - ✅ Versione 1.4: estetica in stile giochi di carte per telefono, scheda **Eventi** con **Torneo degli Dèi** e Allenamento, **Cammino degli Eroi** (strada dei trofei con premi e arene)

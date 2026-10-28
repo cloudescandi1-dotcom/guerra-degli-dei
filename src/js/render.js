@@ -80,11 +80,11 @@
       const tl = proj(0, 0), lw = Math.max(1, S * 0.04);
       const stone = STONE[idx];
       // --- gradinate in fondo (dietro il campo avversario): prima le file lontane, poi le vicine
-      const rows = 5, uTop = S * KT;
+      const rows = 30, uTop = S * KT;
       const list = [];
       let base = tl.y - S * 0.25;
-      for (let r = 0; r < rows && base > -uTop; r++) {
-        const u = uTop * (1 - r * 0.08), h = u * 0.72;
+      for (let r = 0; r < rows && base > -uTop * 0.2; r++) {
+        const u = uTop * Math.max(0.6, 1 - r * 0.06), h = u * 0.72;
         list.push({ base, u, h, r });
         base -= h;
       }
@@ -493,6 +493,10 @@
       shadow(p.x, foot - R * 0.05, R * 1.45, R * 0.42, 0.3);
       if (e.flash > 0) ctx.filter = 'brightness(1.5)';
       sprite(e.tower, side(e.owner), p.x, foot, size, false, '🏛️');
+      // il guardiano sta sul gradino, davanti alle colonne
+      const king = e.tower === 'king';
+      const guard = king ? (e.active ? 'basileus' : 'basileus_dorme') : 'sacerdotessa';
+      sprite(guard, side(e.owner), p.x, foot - size * 0.19, size * (king ? 0.6 : 0.62), false, null);
       ctx.filter = 'none';
       if (e.tower === 'king' && !e.active) {
         ctx.font = `bold ${Math.round(u * 0.6)}px "Trebuchet MS", sans-serif`;

@@ -351,10 +351,18 @@ img.chest-big { width: 8rem; height: 8rem; filter: drop-shadow(0 6px 8px #0008);
 
 /* ---------- Battaglia ---------- */
 #battle { background: #0b1a40; }
+/* Avversario in alto, come in Clash: fascia rossa che sfuma sopra il campo */
+
 .hud-top {
-  display: flex; align-items: center; gap: 8px; padding: calc(5px + var(--safe-t)) 8px 5px;
-  background: linear-gradient(#7a1a14, #4d0f0b); box-shadow: 0 3px 0 #2a0806;
+  position: absolute; left: 0; right: 0; top: 0; z-index: 3;
+  display: flex; align-items: center; gap: 8px; padding: calc(6px + var(--safe-t)) 10px 22px;
+  background: linear-gradient(#8e1d16f2, #6a130ecc 55%, transparent); pointer-events: none;
 }
+.hud-top button { pointer-events: auto; }
+.lvl-shield.red { background: linear-gradient(#ff8a7a, #c22a1f); width: 34px; height: 38px; }
+.lvl-shield.red b { font-size: 1.05rem; }
+.foe-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.1; }
+.foe-txt small { font-family: var(--font); font-size: .8rem; color: #ffd1c9; text-shadow: var(--ol); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hud-top .foe { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; }
 .hud-top .foe b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: var(--font); font-weight: 400; text-shadow: var(--ol); font-size: 1.1rem; }
 .crowns { padding: 2px 8px; border-radius: 10px; white-space: nowrap; text-shadow: var(--ol); }

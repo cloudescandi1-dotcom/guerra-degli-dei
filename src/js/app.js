@@ -298,7 +298,8 @@
     for (const k of foeDeck) foeLv[k] = Math.max(1, Math.min(D.MAX_LEVEL, avg + (level === 'difficile' && mode === 'ladder' ? 0 : 0)));
     startBattle({
       mode, me: 0, role: 'local', arena: a,
-      foeName: FOE_NAMES[Math.floor(Math.random() * FOE_NAMES.length)] + ' 🤖',
+      foeName: FOE_NAMES[Math.floor(Math.random() * FOE_NAMES.length)], foeLevel: avg,
+      foeSub: mode === 'tour' ? 'Torneo degli Dèi' : mode === 'ladder' ? 'Arena ' + (a + 1) + ' · ' + D.ARENAS[a].name : 'Allenamento',
       bot: Bot.createBot(level, Math.floor(Math.random() * 1e9)),
       match: { decks: [profile.deck.slice(), foeDeck], levels: [myLv, foeLv], towerLevels: [avg, avg], seed: Math.floor(Math.random() * 1e9) },
     });
@@ -813,7 +814,7 @@
         Social.send(id, { t: 'start', seed, arena, names: [profile.name, name] });
         closeModal();
         startBattle({
-          mode: 'friend', role: 'host', me: 0, friendId: id, arena, foeName: name,
+          mode: 'friend', role: 'host', me: 0, friendId: id, arena, foeName: name, foeSub: 'Amichevole',
           match: { decks: [profile.deck.slice(), deck], levels: [friendLevels(profile.deck), friendLevels(deck)], towerLevels: [7, 7], seed },
         });
         break;
@@ -822,7 +823,7 @@
         if (awaitingStart !== id) return;
         awaitingStart = null;
         closeModal();
-        startBattle({ mode: 'friend', role: 'guest', me: 1, friendId: id, arena: msg.arena | 0, foeName: name });
+        startBattle({ mode: 'friend', role: 'guest', me: 1, friendId: id, arena: msg.arena | 0, foeName: name, foeSub: 'Amichevole' });
         break;
       case 'snap':
         if (B && B.cfg.role === 'guest' && B.cfg.friendId === id && msg.s) guestSnap(msg.s);
@@ -867,6 +868,8 @@
     $('#home').hidden = true;
     $('#battle').hidden = false;
     $('#foe-name').textContent = cfg.foeName;
+    $('#foe-level').textContent = cfg.foeLevel || 7;
+    $('#foe-sub').textContent = cfg.foeSub || '';
     $('#emote-bar').hidden = true;
     $('#btn-emote').hidden = cfg.mode !== 'friend';
     R.setArena(cfg.arena || 0);
