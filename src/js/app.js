@@ -873,7 +873,16 @@
 
   // ---------------------------------------------------------------- battaglia
   const canvas = $('#canvas');
-  const R = Render.create(canvas);
+  // Spazio da lasciare sopra il campo: la fascia dell'avversario in alto (più alta sugli iPhone con la tacca)
+  const ROPTS = { topPx: 0 };
+  const R = Render.create(canvas, ROPTS);
+  function appHeight() {
+    const full = navigator.standalone && window.screen ? Math.max(window.screen.height, window.innerHeight) : window.innerHeight;
+    document.documentElement.style.setProperty('--app-h', full + 'px');
+  }
+  appHeight();
+  window.addEventListener('resize', appHeight);
+  window.addEventListener('orientationchange', () => setTimeout(appHeight, 300));
   let B = null;
 
   function fitCanvas() {
@@ -881,6 +890,8 @@
     // Il canvas riempie tutta la zona: il campo in prospettiva sta al centro, ai lati cielo e cipressi
     canvas.style.width = Math.floor(f.width) + 'px';
     canvas.style.height = Math.floor(f.height) + 'px';
+    const hud = document.querySelector('.hud-top').getBoundingClientRect();
+    ROPTS.topPx = Math.max(0, hud.bottom - f.top - 10);
     R.resize();
     $('#crown-side').style.top = R.riverY() + 'px';
   }
@@ -1022,7 +1033,7 @@
       // il campo trema, compaiono le corone di chi ha abbattuto il tempio e una corona vola verso il contatore a destra
       const field = $('#field');
       field.classList.remove('shake'); void field.offsetWidth; field.classList.add('shake');
-      $('#crown-side').hidden = false;
+      showCrownSide();
       const foeScored = fresh.some((r) => r.owner === B.me);
       crownBanner(foeScored, v.crowns[foeScored ? 1 - B.me : B.me]);
       for (const r of fresh) crownFly(r, r.owner === B.me ? '#foe-crowns' : '#my-crowns');
@@ -1033,7 +1044,14 @@
   }
 
   // Scritta con le corone a centro campo (nella metà di chi ha fatto corona), poi sparisce
-  let crownTimer = null;
+  let crownTimer = null, sideTimer = null;
+  // Contatore delle corone sul lato: compare quando cade un tempio e sparisce dopo qualche secondo
+  function showCrownSide() {
+    const el = $('#crown-side');
+    el.hidden = false;
+    clearTimeout(sideTimer);
+    sideTimer = setTimeout(() => { el.hidden = true; }, 4500);
+  }
   function crownBanner(foe, n) {
     const el = $('#crown-banner');
     let crowns = '';
@@ -1111,7 +1129,6 @@
     } else if (!cd.hidden) { cd.hidden = true; cd.dataset.n = ''; }
     $('#foe-crowns').textContent = v.crowns[1 - me];
     $('#my-crowns').textContent = v.crowns[me];
-    if (v.crowns[0] + v.crowns[1] > 0) $('#crown-side').hidden = false;
     $('#amb-num').dataset.n = Math.floor(pl.amb);
     $('#amb-fill').style.width = (pl.amb / E.AMB_MAX) * 100 + '%';
     const key = pl.hand.join() + '|' + pl.queue[0];
@@ -1189,7 +1206,7 @@
   $('#btn-emote').onclick = () => {
     const bar = $('#emote-bar');
     if (!bar.hidden) { bar.hidden = true; $('#btn-emote').textContent = '💬'; return; }
-    bar.innerHTML = `<div class="em-row">${EMOTES.map((x) => `<button type="button" class="em">${x}</button>`).join('')}</div>
+    bar.innerHTML = `<div class="emo-row">${EMOTES.map((x) => `<button type="button" class="emo">${x}</button>`).join('')}</div>
       <div class="ph-row">${PHRASES.map((x) => `<button type="button" class="ph">${x}</button>`).join('')}</div>`;
     bar.hidden = false;
     $('#btn-emote').textContent = '⛔';

@@ -758,7 +758,9 @@
   // Le immagini vengono "fotografate" una volta in un canvas: così il filtro di luce non
   // viene ricalcolato a ogni disegno e il gioco resta veloce anche sui telefoni.
   const images = {};
-  const SIZE = 192;
+  // risoluzione delle "foto": più alta per i templi, che sono grandi sullo schermo
+  const BIG = { king: 1, princess: 1, rovine: 1 };
+  const sizeFor = (key) => (BIG[key] ? 512 : 320);
   function image(key, team) {
     if (typeof Image === 'undefined') return null;
     const id = key + ':' + (team || 0);
@@ -770,8 +772,11 @@
       rec.img.onload = () => {
         try {
           const c = document.createElement('canvas');
-          c.width = SIZE; c.height = SIZE;
-          c.getContext('2d').drawImage(rec.img, 0, 0, SIZE, SIZE);
+          const n = sizeFor(key);
+          c.width = n; c.height = n;
+          const g = c.getContext('2d');
+          g.imageSmoothingQuality = 'high';
+          g.drawImage(rec.img, 0, 0, n, n);
           rec.canvas = c;
         } catch (e) { rec.canvas = rec.img; }
       };

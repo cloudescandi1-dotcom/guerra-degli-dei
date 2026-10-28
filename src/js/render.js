@@ -21,13 +21,15 @@
     const FIELD_H = E.H * C * AVG;   // altezza del campo sullo schermo, in "caselle vicine"
 
     function resize() {
-      dpr = Math.min(2, root.devicePixelRatio || 1);
+      dpr = Math.min(3, root.devicePixelRatio || 1);   // nitido anche sugli iPhone (3 pixel per punto)
       const r = canvas.getBoundingClientRect();
       canvas.width = Math.round(r.width * dpr);
       canvas.height = Math.round(r.height * dpr);
+      ctx.imageSmoothingQuality = 'high';   // personaggi rimpiccioliti senza sgranature
       // Sopra il campo serve spazio per il tempio del Re nemico (TOP) e sotto per il bordo (BOT)
       const TOP = opts.top || 2.6, BOT = opts.bot || 0.6;
-      S = Math.min(canvas.width / E.W, canvas.height / (FIELD_H + TOP + BOT));
+      const reserve = (opts.topPx || 0) * dpr;
+      S = Math.min(canvas.width / E.W, (canvas.height - reserve) / (FIELD_H + TOP + BOT));
       ox = (canvas.width - S * E.W) / 2;
       // Il campo sta in basso (vicino alle carte); lo spazio che avanza in alto diventa cielo
       oy = canvas.height - S * FIELD_H - S * BOT;
@@ -134,13 +136,15 @@
     // ---------------------------------------------------------------- pavimento di ogni arena
     function floor(g, idx, rnd) {
       const lw = Math.max(1, S * 0.03);
-      // base a scacchi leggeri con i colori dell'arena
+      // base dell'arena con scacchi appena accennati (quasi invisibili)
+      g.fillStyle = arena.ground[0];
+      quad(g, 0, 0, E.W, E.H); g.fill();
+      g.globalAlpha = 0.3;
+      g.fillStyle = arena.ground[1];
       for (let y = 0; y < E.H; y++) {
-        for (let x = 0; x < E.W; x++) {
-          g.fillStyle = arena.ground[(x + y) % 2];
-          quad(g, x, y, x + 1.02, y + 1.02); g.fill();
-        }
+        for (let x = (y % 2); x < E.W; x += 2) { quad(g, x, y, x + 1, y + 1); g.fill(); }
       }
+      g.globalAlpha = 1;
       const line = (x0, y0, x1, y1) => { const a = proj(x0, y0), b = proj(x1, y1); g.beginPath(); g.moveTo(a.x, a.y); g.lineTo(b.x, b.y); g.stroke(); };
       const dot = (x, y, r, col) => { const q = proj(x, y); g.fillStyle = col; g.beginPath(); g.ellipse(q.x, q.y, r * S * q.k, r * S * q.k * 0.7, 0, 0, 7); g.fill(); };
       switch (idx) {
@@ -776,7 +780,6 @@
           if (!E.canPlace(state, me, key, x + 0.5, y + 0.5)) { ctx.fillStyle = 'rgba(232,48,72,0.38)'; ctx.fill(); }
           else {
             ctx.fillStyle = (x + y) % 2 ? g.a : g.b; ctx.fill();
-            ctx.strokeStyle = g.line; ctx.stroke();
           }
         }
       }
