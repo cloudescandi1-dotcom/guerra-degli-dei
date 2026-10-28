@@ -35,7 +35,7 @@
     const rng = makeRng(opts.seed || 1);
     const s = {
       t: 0, over: false, winner: null, crowns: [0, 0],
-      duration: opts.duration || 180, overtime: opts.overtime || 60, inOvertime: false,
+      duration: opts.duration || 180, overtime: opts.overtime || 120, inOvertime: false,
       players: [], ents: [], shots: [], spells: [], fx: [], ruins: [], events: [],
       nextId: 1, rng,
     };
@@ -410,8 +410,9 @@
     if (s.over) return;
     dt = dt || TICK;
     s.t += dt;
-    const doubleAmb = s.t >= s.duration - 60;
-    for (const pl of s.players) pl.amb = Math.min(AMB_MAX, pl.amb + AMB_RATE * (doubleAmb ? 2 : 1) * dt);
+    // ultimo minuto e inizio dei supplementari: ambrosia doppia; quando mancano 1:30 alla fine dei supplementari: tripla
+    const mult = s.inOvertime && s.t >= s.duration + s.overtime - 90 ? 3 : s.t >= s.duration - 60 ? 2 : 1;
+    for (const pl of s.players) pl.amb = Math.min(AMB_MAX, pl.amb + AMB_RATE * mult * dt);
 
     for (const e of s.ents) if (e.hp > 0) updateEnt(s, e, dt);
     updateShots(s, dt);

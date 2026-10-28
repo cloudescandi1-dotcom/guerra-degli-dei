@@ -375,8 +375,7 @@ img.chest-big { width: 8rem; height: 8rem; filter: drop-shadow(0 6px 8px #0008);
   background: linear-gradient(90deg, transparent, #0b1a40dd 18%, #0b1a40dd 82%, transparent); padding: 10px; pointer-events: none;
   color: #fff; text-shadow: var(--ol); animation: pop .25s;
 }
-.emote-bar { position: absolute; right: 8px; top: 8px; display: flex; gap: 6px; background: #0b1a40ee; border: 2px solid var(--frame); padding: 6px; border-radius: 12px; z-index: 5; }
-.emote-bar button { font-size: 1.6rem; background: none; border: 0; width: 42px; height: 42px; }
+
 .emote-bubble { position: absolute; left: 50%; transform: translateX(-50%); font-size: 2.6rem; background: #fff; border: 3px solid var(--frame); border-radius: 20px; padding: 2px 12px; animation: pop .2s; pointer-events: none; z-index: 5; }
 .foe-bubble { top: 6%; }
 .me-bubble { bottom: 6%; }
@@ -413,7 +412,7 @@ img.chest-big { width: 8rem; height: 8rem; filter: drop-shadow(0 6px 8px #0008);
 .clock-box b { font-family: var(--font); font-weight: 400; font-size: 1.55rem; line-height: 1; color: #fff; text-shadow: var(--ol); }
 .clock-box.over b { color: #ff9a8a; }
 .x2 { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: radial-gradient(circle at 35% 35%, #ffb3ff, var(--amb) 60%, #8a1a98); border: 2px solid var(--frame); font-family: var(--font); font-size: 0; }
-.x2::after { content: 'x2'; transform: rotate(45deg); font-size: 1.15rem; text-shadow: var(--ol); color: #fff; }
+.x2::after { content: attr(data-x); transform: rotate(45deg); font-size: 1.15rem; text-shadow: var(--ol); color: #fff; }
 /* Corone sul bordo destro */
 .crown-side { position: absolute; right: 4px; transform: translateY(-50%); display: flex; flex-direction: column; gap: 70px; z-index: 3; pointer-events: none; }
 .cs { display: flex; flex-direction: column; align-items: center; gap: 2px; }
@@ -594,3 +593,25 @@ img.chest-big { width: 8rem; height: 8rem; filter: drop-shadow(0 6px 8px #0008);
 .banner.big { background: none; top: 46%; display: flex; align-items: center; justify-content: center; gap: 6px; }
 .banner.big b { font-size: 5rem; line-height: .9; color: #ff6ef0; text-shadow: 0 5px 0 #4a0f52, 3px 3px 0 #1a1030, -3px 3px 0 #1a1030, 3px -3px 0 #1a1030, -3px -3px 0 #1a1030; }
 .banner.big span { text-align: left; font-size: 1.9rem; line-height: 1; }
+
+/* Supplementari e ultimi secondi: orologio rosso */
+.clock-box.over { background: #b3121ee6; border-color: #ff6b6b; }
+.clock-box.over small { color: #ffd23a; }
+.clock-box.over b { color: #fff; }
+.clock-box.last b { color: #ff3b3b; }
+/* Pannello emoticon e frasi: copre le carte */
+.hud-bottom { position: relative; }
+.emote-panel { position: absolute; left: 66px; right: 8px; bottom: calc(8px + var(--safe-b)); top: -124px; z-index: 6; display: flex; flex-direction: column; gap: 8px; }
+.em-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.em { height: 56px; font-size: 2.1rem; background: #fff; border: 3px solid var(--frame); border-radius: 12px; box-shadow: 0 3px 0 #0b1b42; }
+.ph-row { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; align-content: center; padding: 6px; background: linear-gradient(#2a5fc8, #1a3f8f); border-radius: 12px; }
+.ph { min-height: 40px; background: #fff; border: 3px solid var(--frame); border-radius: 12px; font-family: var(--font); font-size: .82rem; color: #1a1030; box-shadow: 0 3px 0 #0b1b42; }
+.emote-bubble { font-size: 1.6rem; font-family: var(--font); color: #1a1030; max-width: 80%; text-align: center; }
+/* Fine partita: VS con le corone */
+.end-vs { position: absolute; inset: 0; z-index: 7; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: #0b1a4066; animation: pop .3s; pointer-events: none; }
+.end-vs b { font-family: var(--font); font-weight: 400; font-size: 2.4rem; color: #fff; text-shadow: var(--ol); }
+.vs-row { display: flex; gap: 10px; padding: 10px 18px; border-radius: 14px; border: 3px solid var(--frame); }
+.vs-row.foe { background: linear-gradient(#c23a4e, #7a1424); }
+.vs-row.me { background: linear-gradient(#3f8ff0, #1a4fa8); }
+.vs-row span { font-size: 3rem; filter: grayscale(1) brightness(.3); }
+.vs-row span.on { filter: drop-shadow(0 4px 0 #0008); animation: pop .4s; }

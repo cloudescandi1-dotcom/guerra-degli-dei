@@ -18,7 +18,8 @@
   }
   const fmtHour = (t) => new Date(t).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
   const FOE_NAMES = ['Leonida', 'Achille', 'Ettore', 'Aiace', 'Penelope', 'Ulisse', 'Atalanta', 'Pericle', 'Cassandra', 'Teseo', 'Ippolita', 'Spartaco', 'Giulia', 'Cornelia', 'Scipione'];
-  const EMOTES = ['😀', '😂', '😡', '👍', '😱'];
+  const EMOTES = ['😀', '😂', '😡', '👍', '😱', '😴', '😭', '🤩'];
+  const PHRASES = ['Buona fortuna!', 'Bella giocata!', 'Wow!', 'Grazie!', 'Bella partita!', 'Ops'];
   const BADGES = ['🏛️', '⚡', '🔱', '🦉', '🐺', '🐉', '🛡️', '🦅', '🌿', '☀️', '🌊', '🔥'];
 
   // ---------------------------------------------------------------- finestre e avvisi
@@ -860,7 +861,7 @@
         if (B && B.cfg.role === 'host' && B.cfg.friendId === id && Number.isInteger(msg.slot) && isFinite(msg.x) && isFinite(msg.y)) B.remote.push(msg);
         break;
       case 'emote':
-        if (B && B.cfg.friendId === id && EMOTES.includes(msg.e)) bubble('#emote-foe', msg.e);
+        if (B && B.cfg.friendId === id && (EMOTES.includes(msg.e) || PHRASES.includes(msg.e))) bubble('#emote-foe', msg.e);
         break;
       case 'gone':
         if (outgoing === id) { outgoing = null; closeModal(); }
@@ -899,6 +900,7 @@
     $('#foe-level').textContent = cfg.foeLevel || 7;
     $('#foe-sub').textContent = cfg.foeSub || '';
     $('#emote-bar').hidden = true;
+    $('#end-vs').hidden = true;
     $('#btn-emote').style.visibility = cfg.mode === 'friend' ? 'visible' : 'hidden';
     $('#crown-side').hidden = true;
     $('#crown-banner').hidden = true;
@@ -987,7 +989,7 @@
       const lv = dragKey ? (B.cfg.match && B.cfg.match.levels ? B.cfg.match.levels[B.me][dragKey] : null) || (profile.cards[dragKey] && profile.cards[dragKey].level) || 1 : 1;
       R.draw(v, { me: B.me, dragKey, gx: B.gx, gy: B.gy, level: lv, amb: pl.amb, name: dragKey ? D.BY_KEY[dragKey].name : '' });
       hud(v);
-      if (v.over && !B.ended) { B.ended = true; setTimeout(() => endBattle(v), 1400); }
+      if (v.over && !B.ended) { B.ended = true; showVs(v); setTimeout(() => endBattle(v), 2600); }
     } else {
       R.draw(null);
     }
@@ -1035,6 +1037,15 @@
     bannerTimer = setTimeout(() => { el.hidden = true; el.classList.remove('big'); }, 2200);
   }
 
+  // Fine partita: corone dei due giocatori una contro l'altra, prima della schermata del risultato
+  function showVs(v) {
+    const row = (n, cls) => [0, 1, 2].map((i) => `<span class="${i < n ? 'on ' + cls : ''}">👑</span>`).join('');
+    const el = $('#end-vs');
+    el.innerHTML = `<div class="vs-row foe">${row(v.crowns[1 - B.me], 'red')}</div><b>VS</b><div class="vs-row me">${row(v.crowns[B.me], 'blue')}</div>`;
+    el.hidden = false;
+    $('#emote-bar').hidden = true;
+  }
+
   function crownFly(ruin, target) {
     const field = $('#field'), fr = field.getBoundingClientRect();
     const cv = canvas.getBoundingClientRect();
@@ -1062,9 +1073,13 @@
     const me = B.me, pl = v.players[me];
     const left = v.inOvertime ? Math.max(0, v.duration + v.overtime - v.t) : Math.max(0, v.duration - v.t);
     $('#clock').textContent = fmtClock(left);
-    $('#clock-label').textContent = v.inOvertime ? 'Supplementari:' : 'Termina tra:';
+    $('#clock-label').textContent = v.inOvertime ? 'Supplem.' : 'Termina tra:';
     $('#clock-box').classList.toggle('over', v.inOvertime);
+    $('#clock-box').classList.toggle('last', !v.inOvertime && left <= 10);
     $('#x2').hidden = !(v.t >= v.duration - 60);
+    const triple = v.inOvertime && v.t >= v.duration + v.overtime - 90;
+    $('#x2').dataset.x = triple ? 'x3' : 'x2';
+    if (triple && !B.tripleShown) { B.tripleShown = true; banner('💧 Ambrosia ×3!'); }
     // Conto alla rovescia grande negli ultimi 10 secondi
     const cd = $('#countdown');
     const n = Math.ceil(left);
@@ -1154,12 +1169,17 @@
   });
   window.addEventListener('pointercancel', () => { if (B) { B.drag = null; } });
 
+  // Pannello delle emoticon e delle frasi (al posto delle carte, come in Clash)
   $('#btn-emote').onclick = () => {
     const bar = $('#emote-bar');
-    bar.innerHTML = EMOTES.map((x) => `<button type="button">${x}</button>`).join('');
-    bar.hidden = !bar.hidden;
+    if (!bar.hidden) { bar.hidden = true; $('#btn-emote').textContent = '💬'; return; }
+    bar.innerHTML = `<div class="em-row">${EMOTES.map((x) => `<button type="button" class="em">${x}</button>`).join('')}</div>
+      <div class="ph-row">${PHRASES.map((x) => `<button type="button" class="ph">${x}</button>`).join('')}</div>`;
+    bar.hidden = false;
+    $('#btn-emote').textContent = '⛔';
     for (const b of bar.querySelectorAll('button')) b.onclick = () => {
       bar.hidden = true;
+      $('#btn-emote').textContent = '💬';
       bubble('#emote-me', b.textContent);
       if (B && B.cfg.friendId) Social.send(B.cfg.friendId, { t: 'emote', e: b.textContent });
     };
@@ -1248,7 +1268,7 @@
       <p><b>Ambrosia 💧:</b> ogni carta costa ambrosia, che si ricarica da sola (fino a 10). Nell'ultimo minuto si ricarica il doppio più veloce.</p>
       <p><b>Giocare una carta:</b> trascinala sul campo, oppure toccala e poi tocca il punto del campo. Le truppe si mettono solo nella tua metà; gli incantesimi ovunque.</p>
       <p><b>Le truppe</b> camminano da sole e attaccano il nemico più vicino; chi cammina passa dai ponti, chi vola no.</p>
-      <p><b>Dopo 3 minuti</b> vince chi ha più corone. Se siete pari si va ai supplementari: chi abbatte il primo tempio vince.</p>
+      <p><b>Dopo 3 minuti</b> vince chi ha più corone. Se siete pari si va ai 2 minuti di supplementari: chi abbatte il primo tempio vince. Quando mancano 1:30 l'ambrosia diventa ×3.</p>
       <p><b>Fuori dalla battaglia:</b> vinci coppe per salire di arena, apri i bauli per trovare carte, potenziale nella scheda Carte e costruisci il tuo mazzo da 8.</p>
       <p><b>Amici e clan:</b> condividi il tuo codice amico. Con gli amici online puoi chattare e sfidarli; nel clan potete chiedere e donarvi carte.</p>`);
   }

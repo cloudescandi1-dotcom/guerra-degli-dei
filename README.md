@@ -9,6 +9,7 @@ con personaggi, nomi e grafica originali.
 **Gioca online:** https://cloudescandi1-dotcom.github.io/guerra-degli-dei/
 
 ## Stato (28/10/2026)
+- ✅ Versione 1.8: supplementari di 2 minuti con orologio rosso e ambrosia ×3 quando mancano 1:30, pannello emoticon con frasi ("Buona fortuna!", "Bella giocata!"…), schermata finale VS con le corone
 - ✅ Versione 1.7: battaglia come in Clash: tempo in alto a destra ("Termina tra"), corone sul bordo destro che compaiono alla prima corona, scritta "Nemico"/"Tu" con le corone, "60 secondi restanti" e x2, metà avversaria rossa quando trascini, nome e livello della carta, livelli su torri e truppe, "Succ.:" e "Massimo: 10"
 - ✅ Versione 1.6: **Cammino degli Eroi rifatto come il Cammino dei Trofei**: barra delle coppe a sinistra con l'etichetta, premi su piattaforme in rilievo con la spunta, arene come plastici con fascia blu e carte sbloccate, pulsante OK in basso
 - ✅ Versione 1.5: **guardiani dei templi** (sacerdotessa arciera sui templi laterali, il Re sul tempio grande che dorme finché non lo attacchi), pubblico fino in cima all'arena, avversario in alto con scudo del livello
@@ -20,7 +21,7 @@ con personaggi, nomi e grafica originali.
 - ✅ Diritti d'autore (tutti i diritti riservati) e informativa privacy
 
 ## Cosa sa fare
-- **Battaglia** di 3 minuti (+1 di supplementari): abbatti i templi nemici, ogni tempio laterale vale 👑,
+- **Battaglia** di 3 minuti (+2 di supplementari, con ambrosia ×3 quando ne mancano 1:30): abbatti i templi nemici, ogni tempio laterale vale 👑,
   il Tempio del Re vale la vittoria. Ultimo minuto con ambrosia doppia.
 - **24 carte**: truppe, costruzioni e incantesimi, di rarità comune, rara, epica e leggendaria
 - **7 arene**: Sparta, Labirinto di Creta, Mura di Troia, Isola dei Ciclopi, Colosseo, Inferi di Ade, Monte Olimpo
