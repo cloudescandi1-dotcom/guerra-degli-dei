@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Prova disegni 2D · Guerra degli Dèi</title>
+  <meta name="theme-color" content="#12295e">
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <style>
+    :root { color-scheme: dark; }
+    html, body { margin: 0; background: #12295e; font-family: "Nunito", system-ui, sans-serif; color: #fff; }
+    h1, h2 { font-family: "Lilita One", sans-serif; font-weight: 400; text-shadow: 0 2px 0 #0008; margin: 0; }
+    h1 { font-size: 1.5rem; text-align: center; padding: calc(14px + env(safe-area-inset-top)) 16px 4px; }
+    p.sub { text-align: center; margin: 0 16px 14px; opacity: .85; font-size: .95rem; }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 0 16px 40px; display: grid; gap: 14px; }
+    .card { background: linear-gradient(#2a5fc8, #1a3f8f); border: 3px solid #0d2150; border-radius: 16px; padding: 10px 12px 12px; }
+    .card h2 { font-size: 1.2rem; margin-bottom: 6px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .box { background: #0b1a4066; border-radius: 12px; padding: 6px; text-align: center; }
+    .box small { display: block; font-family: "Lilita One", sans-serif; font-size: .9rem; opacity: .9; }
+    .box img { width: 100%; max-width: 220px; aspect-ratio: 1; display: block; margin: 0 auto; }
+    .field { position: relative; height: 150px; border-radius: 12px; overflow: hidden; margin-top: 8px;
+      background: repeating-conic-gradient(#7dbb4f 0 25%, #74b347 0 50%) 0 0 / 36px 36px; }
+    .field img { position: absolute; bottom: 10px; width: 64px; height: 64px; filter: drop-shadow(0 4px 0 #0003); }
+    .field .lbl { position: absolute; top: 6px; font-family: "Lilita One", sans-serif; font-size: .85rem; text-shadow: 0 2px 0 #0008; }
+  </style>
+</head>
+<body>
+  <h1>Prova: nuovi disegni 2D</h1>
+  <p class="sub">A sinistra i disegni di adesso, a destra quelli nuovi. In fondo a ogni riquadro: come si vedono piccoli in battaglia.</p>
+  <div class="wrap" id="wrap"></div>
+  <script src="js/sprites.js"></script>
+  <script src="js/sprites-chibi.js"></script>
+  <script>
+    const NAMES = { oplita: 'Oplita', arcieri: 'Arciere', ciclope: 'Ciclope', minotauro: 'Minotauro' };
+    const wrap = document.getElementById('wrap');
+    for (const k of SpritesChibi.keys()) {
+      const old0 = Sprites.url(k, 0), old1 = Sprites.url(k, 1);
+      const new0 = SpritesChibi.url(k, Sprites.TEAMS[0]), new1 = SpritesChibi.url(k, Sprites.TEAMS[1]);
+      const c = document.createElement('div');
+      c.className = 'card';
+      c.innerHTML = `<h2>${NAMES[k] || k}</h2>
+        <div class="row"><div class="box"><small>Adesso</small><img alt="" src="${old0}"></div>
+        <div class="box"><small>Nuovo</small><img alt="" src="${new0}"></div></div>
+        <div class="field">
+          <span class="lbl" style="left:10px">Adesso</span><span class="lbl" style="left:54%">Nuovo</span>
+          <img alt="" src="${old0}" style="left:4%"><img alt="" src="${old1}" style="left:24%;transform:scaleX(-1)">
+          <img alt="" src="${new0}" style="left:54%"><img alt="" src="${new1}" style="left:74%;transform:scaleX(-1)">
+        </div>`;
+      wrap.appendChild(c);
+    }
+  </script>
+</body>
+</html>
