@@ -1,6 +1,6 @@
 // Service worker: salva i file del gioco nel dispositivo, così funziona anche offline.
 // Se aggiungi o rinomini file, aggiorna l'elenco e aumenta il numero di versione.
-const CACHE = 'guerra-dei-v20';
+const CACHE = 'guerra-dei-v21';
 
 const FILES = [
   './',
@@ -46,7 +46,8 @@ self.addEventListener('fetch', (e) => {
   // Prima la rete (così vedi sempre l'ultima versione) e aggiorna la copia salvata;
   // se sei offline usa la copia salvata.
   e.respondWith(
-    fetch(e.request)
+    // "no-cache": chiede sempre al sito se il file è cambiato, invece di usare la copia del browser
+    fetch(e.request, { cache: 'no-cache' })
       .then((res) => {
         if (res.ok) {
           const copy = res.clone();
