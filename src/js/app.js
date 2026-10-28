@@ -85,6 +85,7 @@
     else if (tab === 'carte') renderCards();
     else if (tab === 'clan') renderClan();
     else if (tab === 'negozio') renderShop();
+    else if (tab === 'eventi') renderEvents();
   }
 
   // ---------------------------------------------------------------- scheda Negozio
@@ -173,10 +174,9 @@
           <p>🏆 ${profile.trophies}${next ? ' / ' + next.trophies : ''}</p>
           <div class="trophy-bar"><div style="width:${Math.max(0, Math.min(100, pct))}%"></div></div>
         </div>
-        <span class="arena-tap">Ricompense e arene ›</span>
+        <span class="arena-tap">Cammino degli Eroi ›</span>
       </div>
       <div class="battle-row">
-        <button id="go-train" class="btn side-btn" type="button"><span class="si">🎯</span>Allena</button>
         <button id="go-battle" class="btn gold battle-btn" type="button">Battaglia</button>
         <button id="go-friend" class="btn green side-btn" type="button"><span class="si">🤝</span>Amico</button>
       </div>
@@ -187,9 +187,8 @@
         <span class="btn small ${giftOk ? 'gold' : 'grey'}">${giftOk ? 'Apri' : '⏳'}</span>
       </button>`;
     homeArena(a);
-    $('#arena-open').onclick = () => { Sound.play('tap'); arenaDialog(a); };
+    $('#arena-open').onclick = () => { Sound.play('tap'); openRoad(); };
     $('#go-battle').onclick = () => startLadder();
-    $('#go-train').onclick = () => trainDialog();
     $('#go-friend').onclick = () => { tab = 'clan'; document.querySelector('[data-tab=clan]').click(); };
     $('#gift').onclick = () => {
       const r = P.openGift(profile, Date.now());
@@ -205,7 +204,7 @@
     if (!box) return;
     if (!home.canvas) {
       home.canvas = document.createElement('canvas');
-      home.r = Render.create(home.canvas, { top: 6.5, bot: 2.2 });
+      home.r = Render.create(home.canvas, { top: 5.4, bot: 1.6 });
       home.state = Engine.createMatch({ decks: [D.START_DECK, D.START_DECK], seed: 1 });
     }
     box.replaceWith(home.canvas);
@@ -273,20 +272,148 @@
     startVsBot('ladder', level);
   }
 
+  function startTour() {
+    if (!profile.tour || profile.tour.done) {
+      if (!P.tourStart(profile, Date.now())) { toast(`Servono 💎 ${P.TOUR_RETRY_GEMS} gemme per rientrare oggi`); return; }
+      save();
+    }
+    startVsBot('tour', P.tourDifficulty(profile.tour.wins));
+  }
+
   function startVsBot(mode, level) {
     const a = P.arena(profile);
     const pool = D.CARDS.filter((c) => c.arena <= a).map((c) => c.key);
     for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
     const foeDeck = pool.slice(0, 8);
-    const avg = Math.max(1, Math.round(P.avgLevel(profile)));
+    let avg = Math.max(1, Math.round(P.avgLevel(profile)));
+    // nel torneo tutte le carte sono allo stesso livello
+    const myLv = mode === 'tour' ? Object.fromEntries(profile.deck.map((k) => [k, P.TOUR_LEVEL])) : P.deckLevels(profile);
+    if (mode === 'tour') avg = P.TOUR_LEVEL;
     const foeLv = {};
     for (const k of foeDeck) foeLv[k] = Math.max(1, Math.min(D.MAX_LEVEL, avg + (level === 'difficile' && mode === 'ladder' ? 0 : 0)));
     startBattle({
       mode, me: 0, role: 'local', arena: a,
       foeName: FOE_NAMES[Math.floor(Math.random() * FOE_NAMES.length)] + ' 🤖',
       bot: Bot.createBot(level, Math.floor(Math.random() * 1e9)),
-      match: { decks: [profile.deck.slice(), foeDeck], levels: [P.deckLevels(profile), foeLv], towerLevels: [avg, avg], seed: Math.floor(Math.random() * 1e9) },
+      match: { decks: [profile.deck.slice(), foeDeck], levels: [myLv, foeLv], towerLevels: [avg, avg], seed: Math.floor(Math.random() * 1e9) },
     });
+  }
+
+  // ---------------------------------------------------------------- scheda Eventi
+  // Le 12 caselle delle vittorie del torneo e le 3 delle sconfitte
+  function tourTrack(t) {
+    t = t || { wins: 0, losses: 0 };
+    let w = '';
+    for (let i = 0; i < P.TOUR_MAX_WINS; i++) w += `<span class="tw ${i < t.wins ? 'on' : ''}">${i < t.wins ? '🏆' : i + 1}</span>`;
+    let l = '';
+    for (let i = 0; i < P.TOUR_MAX_LOSSES; i++) l += `<span class="tl ${i < t.losses ? 'on' : ''}">✕</span>`;
+    return `<div class="tour-wins">${w}</div><div class="tour-losses">${l}</div>`;
+  }
+  function renderEvents() {
+    const now = Date.now(), t = profile.tour;
+    const prize = P.tourPrize(t ? t.wins : 0);
+    const best = P.tourPrize(P.TOUR_MAX_WINS);
+    const prizeHtml = (pr) => `🪙 ${pr.gold}${pr.gems ? ` · 💎 ${pr.gems}` : ''}${pr.chest ? ` · ${D.CHESTS[pr.chest].name}` : ''}`;
+    let action;
+    if (t && t.done) action = `<button id="tour-claim" class="btn green full" type="button">Ritira i premi</button>`;
+    else if (t) action = `<div class="row"><button id="tour-play" class="btn gold" type="button">Gioca (${t.wins} vittorie)</button><button id="tour-claim" class="btn grey" type="button">Ritira ora</button></div>`;
+    else action = `<button id="tour-play" class="btn gold full" type="button">${P.tourFree(profile, now) ? 'Entra gratis' : `Entra per 💎 ${P.TOUR_RETRY_GEMS}`}</button>`;
+    $('#tab-eventi').innerHTML = `
+      <div class="event-card tour">
+        <div class="event-head"><span class="ev-ico">🏆</span><div><h3>Torneo degli Dèi</h3><small>Carte tutte al livello ${P.TOUR_LEVEL} · avversari sempre più forti</small></div></div>
+        ${tourTrack(t)}
+        <p class="ev-text">Vinci fino a <b>${P.TOUR_MAX_WINS}</b> battaglie prima di perderne <b>${P.TOUR_MAX_LOSSES}</b>. Più vinci, più ricchi sono i premi.</p>
+        <div class="ev-prize"><span>Premio adesso</span><b>${prizeHtml(prize)}</b></div>
+        <div class="ev-prize max"><span>Con 12 vittorie</span><b>${prizeHtml(best)}</b></div>
+        ${action}
+        <small class="ev-note">Un ingresso gratis al giorno (si rinnova a mezzanotte, ora di Roma).</small>
+      </div>
+      <div class="event-card train">
+        <div class="event-head"><span class="ev-ico">🎯</span><div><h3>Allenamento</h3><small>Prova i mazzi: niente coppe, niente rischi</small></div></div>
+        <div class="row">
+          <button class="btn green" data-l="facile" type="button">Facile</button>
+          <button class="btn" data-l="medio" type="button">Medio</button>
+          <button class="btn red" data-l="difficile" type="button">Difficile</button>
+        </div>
+      </div>`;
+    for (const b of document.querySelectorAll('#tab-eventi [data-l]')) b.onclick = () => startVsBot('train', b.dataset.l);
+    const play = $('#tour-play');
+    if (play) play.onclick = () => { startTour(); };
+    const claim = $('#tour-claim');
+    if (claim) claim.onclick = () => {
+      const r = P.tourClaim(profile, P.arena(profile));
+      save();
+      if (r.chest) showReward(Object.assign({}, r.chest, { gold: r.chest.gold + r.gold, gems: (r.chest.gems || 0) + r.gems }));
+      else { Sound.play('chest'); toast(`🪙 +${r.gold}${r.gems ? `  💎 +${r.gems}` : ''}`); }
+      render();
+    };
+  }
+
+  // ---------------------------------------------------------------- Cammino degli Eroi
+  const roadViews = [];
+  function openRoad() {
+    $('#road').hidden = false;
+    renderRoad(true);
+  }
+  $('#road-close').onclick = () => { $('#road').hidden = true; render(); };
+  function renderRoad(scroll) {
+    const cur = P.arena(profile), list = $('#road-list');
+    let html = '';
+    // dall'alto (Olimpo) al basso (Sparta): si sale verso gli dèi
+    for (let i = D.ARENAS.length - 1; i >= 0; i--) {
+      const a = D.ARENAS[i];
+      const steps = P.road(i).slice().reverse();
+      for (const r of steps) {
+        const got = profile.roadClaimed.includes(r.t), ready = P.roadReady(profile, r), reached = profile.best >= r.t;
+        const pic = r.kind === 'chest' ? chestArt(r.chest) : r.kind === 'gold' ? '<span class="big-ico">🪙</span>' : '<span class="big-ico">💎</span>';
+        const what = r.kind === 'chest' ? D.CHESTS[r.chest].name : r.kind === 'gold' ? `${r.amount} monete` : `${r.amount} gemme`;
+        html += `<div class="rnode ${reached ? 'reached' : ''} ${ready ? 'ready' : ''} ${got ? 'got' : ''}">
+          <span class="rt">🏆 ${r.t}</span><span class="rdot"></span>
+          <div class="rprize">${pic}<div><small>${what}</small>${got ? '<b class="ok">✔</b>' : ready ? `<button class="btn small gold" data-road="${i}:${r.t}" type="button">Ritira</button>` : reached ? '' : '<span class="lock">🔒</span>'}</div></div></div>`;
+        if (profile.trophies >= r.t && (steps.indexOf(r) === 0 || profile.trophies < steps[steps.indexOf(r) - 1].t) && i === cur) html += youMarker();
+      }
+      const cards = D.CARDS.filter((c) => c.arena === i).map((c) => art(c.key, 'mini')).join('');
+      html += `<div class="rgate ${i > cur ? 'locked' : ''} ${i === cur ? 'current' : ''}">
+        <div class="rgate-title"><b>Arena ${i + 1}</b><span>${esc(a.name)}</span></div>
+        <div class="rgate-view" data-arena="${i}"></div>
+        <div class="rgate-foot"><span class="rgate-t">🏆 ${a.trophies}</span><div class="rgate-cards">${cards}</div>
+          <button class="btn small" data-detail="${i}" type="button">Dettagli</button></div>
+        ${i > cur ? '<span class="rgate-lock">🔒</span>' : ''}
+      </div>`;
+      if (i === cur && !P.road(i).some((r) => profile.trophies >= r.t)) html += youMarker();
+    }
+    list.innerHTML = html;
+    // immagini delle arene (canvas disegnati una volta e riusati)
+    for (const box of list.querySelectorAll('.rgate-view')) {
+      const i = +box.dataset.arena;
+      if (!roadViews[i]) {
+        const cv = document.createElement('canvas');
+        roadViews[i] = { cv, r: Render.create(cv, { top: 5, bot: 0.8 }), drawn: false };
+      }
+      const v = roadViews[i];
+      box.appendChild(v.cv);
+      if (!v.drawn) {
+        v.drawn = true;
+        const st = Engine.createMatch({ decks: [D.START_DECK, D.START_DECK], seed: 1 });
+        requestAnimationFrame(() => { v.r.setArena(i); v.r.resize(); v.r.draw(st); setTimeout(() => v.r.draw(st), 1500); });
+      }
+    }
+    for (const b of list.querySelectorAll('[data-road]')) b.onclick = () => {
+      const [i, t] = b.dataset.road.split(':').map(Number);
+      const r = P.claimRoad(profile, i, t);
+      if (!r) return;
+      save();
+      if (r.cards) showReward(r); else { Sound.play('chest'); toast(r.gold ? `🪙 +${r.gold} monete` : `💎 +${r.gems} gemme`); }
+      renderRoad(false); renderTop();
+    };
+    for (const b of list.querySelectorAll('[data-detail]')) b.onclick = () => arenaDialog(+b.dataset.detail);
+    if (scroll) {
+      const me = list.querySelector('.you') || list.querySelector('.rgate.current');
+      if (me) requestAnimationFrame(() => me.scrollIntoView({ block: 'center' }));
+    }
+  }
+  function youMarker() {
+    return `<div class="you"><span class="lvl-shield"><b>${Math.max(1, Math.round(P.avgLevel(profile)))}</b></span><b>${esc(profile.name)}</b><span class="you-t">🏆 ${profile.trophies}</span></div>`;
   }
 
   // ---------------------------------------------------------------- scheda Carte
@@ -988,6 +1115,10 @@
         extra += `<div class="box center"><div style="font-size:3rem">${a.icon}</div><b>Nuova arena: ${esc(a.name)}!</b>
           <p>Carte sbloccate: ${out.newCards.map((k) => esc(D.BY_KEY[k].name)).join(', ')}</p></div>`;
       }
+    } else if (cfg.mode === 'tour') {
+      const t = P.tourResult(profile, res === 'win' ? 0 : res === 'lose' ? 1 : -1);
+      extra += `<div class="tour-mini">${tourTrack(t)}</div><p class="center">Vittorie <b>${t.wins}</b>/${P.TOUR_MAX_WINS} · Sconfitte <b>${t.losses}</b>/${P.TOUR_MAX_LOSSES}</p>`;
+      if (t.done) extra += '<p class="center"><b>Torneo finito!</b> Ritira i premi nella scheda Eventi.</p>';
     } else if (cfg.mode === 'friend') {
       const f = profile.friends.find((x) => x.id === cfg.friendId);
       if (f) { if (res === 'win') f.wins = (f.wins || 0) + 1; else if (res === 'lose') f.losses = (f.losses || 0) + 1; }

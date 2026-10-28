@@ -207,3 +207,24 @@ test('cammino dei trofei: premi ogni 50 coppe, si ritirano una volta sola', () =
   assert.ok(P.claimRoad(p, 0, 100).cards, 'baule');
   assert.strictEqual(P.roadPending(p), 0);
 });
+
+test('torneo: gratis una volta al giorno, finisce a 3 sconfitte o 12 vittorie, premi crescenti', () => {
+  const p = P.fresh();
+  const t0 = Date.UTC(2026, 9, 28, 10, 0, 0);
+  assert.ok(P.tourStart(p, t0));
+  assert.strictEqual(p.gems, 50, 'la prima volta è gratis');
+  P.tourResult(p, 0); P.tourResult(p, 0); P.tourResult(p, 1); P.tourResult(p, 1); P.tourResult(p, 0); P.tourResult(p, 1);
+  assert.ok(p.tour.done);
+  assert.strictEqual(p.tour.wins, 3);
+  const r = P.tourClaim(p, 0);
+  assert.strictEqual(r.wins, 3);
+  assert.ok(r.chest && r.gold > 0);
+  assert.strictEqual(p.tour, null);
+  assert.ok(P.tourStart(p, t0 + 3600e3));
+  assert.strictEqual(p.gems, 50 + (r.chest.gems || 0) - P.TOUR_RETRY_GEMS, 'il secondo nello stesso giorno costa gemme');
+  for (let i = 0; i < 12; i++) P.tourResult(p, 0);
+  assert.ok(p.tour.done && p.tour.wins === 12);
+  assert.ok(P.tourPrize(12).gold > P.tourPrize(3).gold);
+  assert.strictEqual(P.tourDifficulty(0), 'facile');
+  assert.strictEqual(P.tourDifficulty(10), 'difficile');
+});

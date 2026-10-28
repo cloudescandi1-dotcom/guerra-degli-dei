@@ -111,12 +111,15 @@
       }
       // --- tribune ai lati, lungo tutto il campo (dal fondo verso chi guarda)
       for (const sideL of [true, false]) {
-        for (let yy = 0.2; yy < E.H; yy += 0.7) {
-          const e = proj(sideL ? 0 : E.W, yy), u = S * e.k;
+        for (let yy = -1.2; yy < E.H; yy += 0.7) {
+          const e = proj(sideL ? 0 : E.W, Math.max(0, yy)), u = S * e.k;
+          if (yy < 0) e.y += yy * S * KT * 0.8;
           const room = sideL ? e.x : c.width - e.x;
           if (room < u * 0.3) continue;
           const dir = sideL ? -1 : 1;
-          for (let k = 3; k >= 0; k--) {
+          // gradinate fino al bordo dello schermo (niente spazi vuoti negli angoli)
+          const cols = Math.min(14, Math.ceil(room / (u * 0.55)) + 1);
+          for (let k = cols - 1; k >= 0; k--) {
             const x = e.x + dir * u * (0.45 + k * 0.55);
             if (x < -u || x > c.width + u) continue;
             const foot = e.y - u * k * 0.2;

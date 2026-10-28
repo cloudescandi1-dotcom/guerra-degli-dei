@@ -11,6 +11,7 @@ con personaggi, nomi e grafica originali.
 ## Stato (27/10/2026)
 - ✅ Versione 1.1: aggiunti **Negozio** (offerte del giorno e gemme), baule del giorno e schede delle arene
 - ✅ 22 test automatici superati (motore di gioco, computer, progressione, negozio, clan)
+- ✅ Versione 1.4: estetica in stile giochi di carte per telefono, scheda **Eventi** con **Torneo degli Dèi** e Allenamento, **Cammino degli Eroi** (strada dei trofei con premi e arene)
 - ✅ Versione 1.3: ogni arena è un **anfiteatro con il pubblico** e un terreno diverso; corone e tempo sul fiume, conto alla rovescia finale, crollo dei templi ben visibile, **cammino dei trofei** con ricompense, bauli ridisegnati
 - ✅ Versione 1.2: **nuova grafica** con aspetto 3D (personaggi disegnati con luci e ombre) e campo in prospettiva
 - ✅ Diritti d'autore (tutti i diritti riservati) e informativa privacy

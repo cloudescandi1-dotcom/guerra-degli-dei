@@ -24,7 +24,7 @@
       giftDay: '', shopDay: '', shopBought: [],
       cards, deck: D.START_DECK.slice(),
       chests: [{ type: 'legno', arena: 0, unlockAt: null }, null, null, null],
-      chestIndex: 0, arenaStats: {}, roadClaimed: [],
+      chestIndex: 0, arenaStats: {}, roadClaimed: [], tour: null, tourDay: '',
       friends: [], chats: {}, clan: null, lastRequest: 0, credited: [],
       sound: true, seen: {},
     };
@@ -330,6 +330,46 @@
     return openContents(p, r.chest, arenaIdx, rnd);
   }
 
+  // ---- Torneo: si gioca finché non si perde 3 volte o si vince 12 volte ----
+  const TOUR_MAX_WINS = 12, TOUR_MAX_LOSSES = 3, TOUR_RETRY_GEMS = 10, TOUR_LEVEL = 7;
+  function tourPrize(wins) {
+    return {
+      gold: 30 + wins * 45,
+      gems: wins >= 6 ? wins * 2 : 0,
+      chest: wins >= 12 ? 'magico' : wins >= 9 ? 'magico' : wins >= 6 ? 'oro' : wins >= 3 ? 'argento' : null,
+    };
+  }
+  const tourFree = (p, now) => p.tourDay !== romeDay(now);
+  // Entra nel torneo: gratis una volta al giorno, poi costa gemme
+  function tourStart(p, now) {
+    if (p.tour && !p.tour.done) return true;
+    if (tourFree(p, now)) p.tourDay = romeDay(now);
+    else if ((p.gems || 0) >= TOUR_RETRY_GEMS) p.gems -= TOUR_RETRY_GEMS;
+    else return false;
+    p.tour = { wins: 0, losses: 0, done: false };
+    return true;
+  }
+  function tourResult(p, winner) {
+    const t = p.tour;
+    if (!t || t.done) return null;
+    if (winner === 0) t.wins++; else if (winner === 1) t.losses++;
+    if (t.wins >= TOUR_MAX_WINS || t.losses >= TOUR_MAX_LOSSES) t.done = true;
+    return t;
+  }
+  // Ritira i premi e chiude il torneo (si può anche ritirare prima della fine)
+  function tourClaim(p, arenaIdx, rnd) {
+    const t = p.tour;
+    if (!t) return null;
+    const prize = tourPrize(t.wins);
+    p.tour = null;
+    p.gold += prize.gold;
+    p.gems = (p.gems || 0) + prize.gems;
+    const out = { wins: t.wins, gold: prize.gold, gems: prize.gems, chest: null };
+    if (prize.chest) out.chest = openContents(p, prize.chest, arenaIdx, rnd);
+    return out;
+  }
+  const tourDifficulty = (wins) => (wins < 3 ? 'facile' : wins < 7 ? 'medio' : 'difficile');
+
   // ---- Amici e clan (i dati: la parte "online" è in social.js) ----
   function addFriend(p, info) {
     if (!info || !info.id || info.id === p.id) return null;
@@ -415,6 +455,7 @@
     applyResult, chestState, startUnlock, openChest, rollCards, addCards, giftReady, openGift, unlockArenaCards,
     romeDay, msToRomeMidnight, shopOffers, buyOffer, buyGemItem, skipCost, skipChest,
     road, roadReady, roadPending, claimRoad,
+    tourPrize, tourFree, tourStart, tourResult, tourClaim, tourDifficulty, TOUR_MAX_WINS, TOUR_MAX_LOSSES, TOUR_RETRY_GEMS, TOUR_LEVEL,
     addFriend, removeFriend, addChat, createClan, mergeClan, canRequest, requestMax, creditDonations, randomId,
     WIN_TROPHIES, LOSS_TROPHIES, REQUEST_EVERY,
   };

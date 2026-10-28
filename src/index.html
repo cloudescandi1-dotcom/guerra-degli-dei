@@ -38,6 +38,7 @@
       <div id="tab-carte" class="tab"></div>
       <div id="tab-battaglia" class="tab active"></div>
       <div id="tab-clan" class="tab"></div>
+      <div id="tab-eventi" class="tab"></div>
     </main>
 
     <nav class="tabbar">
@@ -45,6 +46,7 @@
       <button data-tab="carte" type="button"><span class="ti"><svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="tb-st" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#9aa6b5"/></linearGradient><linearGradient id="tb-gd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe680"/><stop offset="1" stop-color="#e5a21c"/></linearGradient></defs><rect x="8" y="10" width="20" height="28" rx="3" fill="#8b5cf6" stroke="#0f1b3a" stroke-width="2.4" transform="rotate(-12 18 24)"/><rect x="18" y="8" width="22" height="30" rx="3" fill="#3f8ff0" stroke="#0f1b3a" stroke-width="2.4" transform="rotate(8 29 23)"/><circle cx="29" cy="20" r="5" fill="url(#tb-gd)" stroke="#0f1b3a" stroke-width="1.8" transform="rotate(8 29 23)"/></svg></span><em>Carte</em></button>
       <button data-tab="battaglia" type="button" class="active"><span class="ti"><svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="tb-st" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#9aa6b5"/></linearGradient><linearGradient id="tb-gd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe680"/><stop offset="1" stop-color="#e5a21c"/></linearGradient></defs><path d="M10 8 L34 34 M38 8 L14 34" stroke="#0f1b3a" stroke-width="7" stroke-linecap="round"/><path d="M10 8 L34 34 M38 8 L14 34" stroke="url(#tb-st)" stroke-width="4" stroke-linecap="round"/><path d="M28 36 L36 28 M20 36 L12 28" stroke="#0f1b3a" stroke-width="7" stroke-linecap="round"/><path d="M28 36 L36 28 M20 36 L12 28" stroke="url(#tb-gd)" stroke-width="4" stroke-linecap="round"/><circle cx="38" cy="38" r="3.6" fill="url(#tb-gd)" stroke="#0f1b3a" stroke-width="1.8"/><circle cx="10" cy="38" r="3.6" fill="url(#tb-gd)" stroke="#0f1b3a" stroke-width="1.8"/></svg></span><em>Battaglia</em></button>
       <button data-tab="clan" type="button"><span class="ti"><svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="tb-st" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#9aa6b5"/></linearGradient><linearGradient id="tb-gd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe680"/><stop offset="1" stop-color="#e5a21c"/></linearGradient></defs><path d="M24 5 L40 11 V24 Q40 37 24 44 Q8 37 8 24 V11 Z" fill="url(#tb-gd)" stroke="#0f1b3a" stroke-width="2.4" stroke-linejoin="round"/><path d="M24 10 L35 14 V24 Q35 33 24 39 Q13 33 13 24 V14 Z" fill="#c0392b"/><path d="M24 14 L27 22 H35 L28.5 27 L31 35 L24 30 L17 35 L19.5 27 L13 22 H21 Z" fill="#fff" stroke="#0f1b3a" stroke-width="1.2"/></svg></span><em>Clan</em><i id="clan-badge" class="badge" hidden></i></button>
+      <button data-tab="eventi" type="button"><span class="ti"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 6 H34 V16 Q34 28 24 30 Q14 28 14 16 Z" fill="url(#tb-gd)" stroke="#0f1b3a" stroke-width="2.4" stroke-linejoin="round"/><path d="M14 10 H7 Q7 20 15 21 M34 10 H41 Q41 20 33 21" fill="none" stroke="#0f1b3a" stroke-width="2.4"/><rect x="21" y="30" width="6" height="6" fill="url(#tb-gd)" stroke="#0f1b3a" stroke-width="2"/><rect x="14" y="36" width="20" height="6" rx="2" fill="#c0392b" stroke="#0f1b3a" stroke-width="2.4"/><path d="M24 11 l2 4 4 .5 -3 3 .8 4 -3.8 -2 -3.8 2 .8 -4 -3 -3 4 -.5 Z" fill="#fff"/></svg></span><em>Eventi</em></button>
     </nav>
   </section>
 
@@ -78,6 +80,12 @@
         <div class="amb-bar"><div id="amb-fill"></div><div class="ticks"></div></div>
       </div>
     </div>
+  </section>
+
+  <!-- Cammino degli Eroi (ricompense delle coppe e arene) -->
+  <section id="road" class="screen road-screen" hidden>
+    <div class="road-head"><h3>Cammino degli Eroi</h3><button id="road-close" class="close-x" type="button" aria-label="Chiudi">✕</button></div>
+    <div id="road-list" class="road-list"></div>
   </section>
 
   <!-- Finestra generica (contenuto creato dal codice) -->
