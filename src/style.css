@@ -382,16 +382,19 @@ img.chest-big { width: 8rem; height: 8rem; filter: drop-shadow(0 6px 8px #0008);
 .me-bubble { bottom: 6%; }
 .hud-bottom { background: linear-gradient(#173375, #0b1a40); padding: 8px 8px calc(8px + var(--safe-b)); box-shadow: 0 -3px 0 #0b1b42; }
 .hand { display: flex; gap: 8px; align-items: flex-end; max-width: 560px; margin: 0 auto; }
-.next { width: 50px; text-align: center; flex: none; }
-.next small { font-family: var(--font); font-size: .7rem; text-shadow: var(--ol); }
+.next { width: 52px; text-align: center; flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.next small { font-family: var(--font); font-size: .8rem; text-shadow: var(--ol); }
+.next .mini-card { width: 40px; }
+.emote-btn { width: 46px; height: 40px; border-radius: 12px; border: 2px solid var(--frame); background: #fff; font-size: 1.4rem; display: grid; place-items: center; box-shadow: 0 3px 0 #0b1b42; }
 .mini-card { aspect-ratio: .8; border-radius: 8px; background: linear-gradient(#5d8be0, #2a4f9c); border: 2px solid var(--frame); display: grid; place-items: center; font-size: 1.5rem; overflow: hidden; }
 .mini-card img.art { width: 100%; height: 100%; object-fit: contain; }
 .hand-cards { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .hand-cards .card { touch-action: none; transition: transform .1s; }
 .hand-cards .card.sel { transform: translateY(-10px) scale(1.04); box-shadow: 0 0 0 3px #fff inset, 0 0 16px #fff; }
-.hand-cards .card.poor { filter: grayscale(.8) brightness(.7); }
-.hand-cards .card .wait { position: absolute; left: 0; right: 0; bottom: 0; background: #0009; border-radius: 0 0 7px 7px; z-index: 1; }
-.amb { display: flex; align-items: center; gap: 8px; max-width: 560px; margin: 10px auto 0; }
+.hand-cards .card.poor { filter: grayscale(1) brightness(.95); }
+.hand-cards .card .wait { position: absolute; left: 0; right: 0; bottom: 0; background: #ffffff26; border-radius: 0 0 7px 7px; z-index: 1; }
+.amb { position: relative; display: flex; align-items: center; gap: 8px; max-width: 560px; margin: 10px auto 12px; }
+.amb-max { position: absolute; left: 40px; bottom: -13px; font-family: var(--font); font-size: .62rem; color: #e8ecf6; text-shadow: var(--ol); }
 .drop {
   width: 34px; height: 34px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); flex: none;
   background: radial-gradient(circle at 35% 35%, #ffb3ff, var(--amb) 60%, #8a1a98); border: 2px solid var(--frame); display: grid; place-items: center;
@@ -403,16 +406,30 @@ img.chest-big { width: 8rem; height: 8rem; filter: drop-shadow(0 6px 8px #0008);
 .amb-bar .ticks { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 2px), #0b1a40 calc(10% - 2px) 10%); }
 
 /* Corone e tempo sul fiume, semitrasparenti */
-.river-hud { position: absolute; left: 50%; transform: translate(-50%, -50%); top: 50%; display: flex; align-items: center; gap: 6px; pointer-events: none; z-index: 3; opacity: .8; }
-.river-hud .clock { background: rgba(11, 26, 64, .55); border: 2px solid rgba(13, 33, 80, .7); color: #fff; backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
-.river-hud .clock small { color: var(--muted); font-weight: 800; }
-.river-hud .clock b { font-size: 1.25rem; text-shadow: var(--ol); }
-.river-hud .clock.double small { color: #ffb3ff; }
-.river-hud .clock.over b { color: #ff9a8a; }
-.river-hud .crowns { border: 2px solid rgba(13, 33, 80, .7); color: #fff; font-size: 1rem; }
-.river-hud .crowns.red { background: rgba(220, 50, 40, .6); }
-.river-hud .crowns.blue { background: rgba(40, 100, 220, .6); }
-.river-hud .crowns.bump { animation: bump .5s; }
+/* Tempo in alto a destra, come in Clash */
+.clock-col { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; margin-left: auto; }
+.clock-box { min-width: 96px; padding: 3px 10px 4px; text-align: center; background: #0a0f1ee6; border: 2px solid #2a3350; border-radius: 8px; }
+.clock-box small { display: block; font-family: var(--font); font-size: .72rem; color: #e8ecf6; text-shadow: var(--ol); }
+.clock-box b { font-family: var(--font); font-weight: 400; font-size: 1.55rem; line-height: 1; color: #fff; text-shadow: var(--ol); }
+.clock-box.over b { color: #ff9a8a; }
+.x2 { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); background: radial-gradient(circle at 35% 35%, #ffb3ff, var(--amb) 60%, #8a1a98); border: 2px solid var(--frame); font-family: var(--font); font-size: 0; }
+.x2::after { content: 'x2'; transform: rotate(45deg); font-size: 1.15rem; text-shadow: var(--ol); color: #fff; }
+/* Corone sul bordo destro */
+.crown-side { position: absolute; right: 4px; transform: translateY(-50%); display: flex; flex-direction: column; gap: 70px; z-index: 3; pointer-events: none; }
+.cs { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.cs b { display: grid; place-items: center; width: 30px; height: 36px; border-radius: 6px; background: #1a1030e6; border: 2px solid #2a3350; font-family: var(--font); font-weight: 400; font-size: 1.4rem; text-shadow: var(--ol); }
+.cs.red b { color: #ff5a6e; } .cs.blue b { color: #6fc4ff; }
+.cs .cr { font-size: 1.8rem; filter: drop-shadow(0 2px 0 #0008); }
+.cs.red .cr { filter: drop-shadow(0 2px 0 #0008) hue-rotate(-30deg) saturate(1.4); }
+.cs.bump, .cs b.bump { animation: bump .5s; }
+.crown-banner { position: absolute; left: 50%; transform: translate(-50%, -50%); z-index: 4; pointer-events: none; text-align: center; animation: pop .25s; }
+.crown-banner.foe { top: 37%; } .crown-banner.me { top: 63%; }
+.crown-banner b { display: block; font-family: var(--font); font-weight: 400; font-size: 2rem; text-shadow: var(--ol); }
+.crown-banner.foe b { color: #ff7a8e; } .crown-banner.me b { color: #7fd0ff; }
+.crown-banner div { display: flex; gap: 8px; padding: 6px 14px; border-radius: 6px; }
+.crown-banner.foe div { background: #c0304a55; } .crown-banner.me div { background: #2f6fd055; }
+.crown-banner span { font-size: 2.3rem; filter: grayscale(1) brightness(.35); }
+.crown-banner span.on { filter: drop-shadow(0 3px 0 #0008); }
 @keyframes bump { 40% { transform: scale(1.6); } }
 .countdown {
   position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%);
@@ -572,3 +589,8 @@ img.chest-big { width: 8rem; height: 8rem; filter: drop-shadow(0 6px 8px #0008);
 .cover-chars .cc1 { width: 33%; bottom: -4%; }
 .arena-cover { -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 96%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 96%, transparent 100%); }
 .arena-cover .arena-tap { bottom: 5%; }
+
+/* "60 secondi restanti" grande, come in Clash */
+.banner.big { background: none; top: 46%; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.banner.big b { font-size: 5rem; line-height: .9; color: #ff6ef0; text-shadow: 0 5px 0 #4a0f52, 3px 3px 0 #1a1030, -3px 3px 0 #1a1030, 3px -3px 0 #1a1030, -3px -3px 0 #1a1030; }
+.banner.big span { text-align: left; font-size: 1.9rem; line-height: 1; }

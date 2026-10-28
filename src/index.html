@@ -53,16 +53,19 @@
   <section id="battle" class="screen" hidden>
     <div class="hud-top">
       <div class="foe"><span class="lvl-shield red"><b id="foe-level">1</b></span><span class="foe-txt"><b id="foe-name">Avversario</b><small id="foe-sub"></small></span></div>
-      <button id="btn-emote" class="icon-btn small" type="button" title="Emoticon">😀</button>
+      <div class="clock-col">
+        <div id="clock-box" class="clock-box"><small id="clock-label">Termina tra:</small><b id="clock">3:00</b></div>
+        <span id="x2" class="x2" hidden>x2</span>
+      </div>
     </div>
     <div class="field" id="field">
       <canvas id="canvas"></canvas>
-      <!-- Corone e tempo al centro, sopra il fiume -->
-      <div id="river-hud" class="river-hud">
-        <span id="foe-crowns" class="crowns red">👑 0</span>
-        <div class="clock"><small id="clock-label">Tempo</small><b id="clock">3:00</b></div>
-        <span id="my-crowns" class="crowns blue">👑 0</span>
+      <!-- Corone sul bordo destro: compaiono alla prima corona, come in Clash -->
+      <div id="crown-side" class="crown-side" hidden>
+        <div class="cs red"><b id="foe-crowns">0</b><span class="cr">👑</span></div>
+        <div class="cs blue"><span class="cr">👑</span><b id="my-crowns">0</b></div>
       </div>
+      <div id="crown-banner" class="crown-banner" hidden></div>
       <div id="countdown" class="countdown" hidden></div>
       <div id="banner" class="banner" hidden></div>
       <div id="emote-bar" class="emote-bar" hidden></div>
@@ -71,11 +74,11 @@
     </div>
     <div class="hud-bottom">
       <div class="hand">
-        <div class="next"><small>Prossima</small><div id="next-card" class="mini-card"></div></div>
+        <div class="next"><button id="btn-emote" class="emote-btn" type="button" title="Emoticon">💬</button><small>Succ.:</small><div id="next-card" class="mini-card"></div></div>
         <div id="hand" class="hand-cards"></div>
       </div>
       <div class="amb">
-        <span class="drop" id="amb-num">5</span>
+        <span class="drop" id="amb-num">5</span><small class="amb-max">Massimo: 10</small>
         <div class="amb-bar"><div id="amb-fill"></div><div class="ticks"></div></div>
       </div>
     </div>

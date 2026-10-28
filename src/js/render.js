@@ -437,7 +437,8 @@
     }
 
     // ---------------------------------------------------------------- pezzi
-    function bar(x, y, w, e, showNum, k) {
+    const overlay = [];
+    function bar(x, y, w, e, showNum, k, lvl) {
       k = k || 1;
       const h = Math.max(4, S * 0.24 * k);
       ctx.fillStyle = 'rgba(30,20,10,0.75)';
@@ -457,7 +458,8 @@
         ctx.strokeText(Math.ceil(e.hp), tx, ty);
         ctx.fillStyle = e.hp / e.max < 0.3 ? '#ffb4a8' : '#ffffff';
         ctx.fillText(Math.ceil(e.hp), tx, ty);
-      }
+        if (lvl) levelBadge(tx - ctx.measureText(String(Math.ceil(e.hp))).width - 3, ty, fs * 1.05, lvl, e.owner);
+      } else if (lvl) levelBadge(x - w / 2 - 2, y + h / 2, Math.max(10, h * 1.9), lvl, e.owner);
     }
 
     function stars(x, y, size) {
@@ -505,7 +507,8 @@
         ctx.fillStyle = '#fff'; ctx.fillText('z z', p.x + R * 1.1, foot - size * 0.9);
       }
       if (e.stun > 0) stars(p.x, foot - size * 0.95, R * 0.6);
-      bar(p.x, foot + u * 0.12, R * 1.7, e, true, p.k);
+      if (e.tower !== 'king' || e.hp < e.max) overlay.push(() => bar(p.x, foot + u * 0.12, R * 1.7, e, true, p.k, e.level));
+      else overlay.push(() => levelBadge(p.x + u * 0.42, foot + u * 0.5, Math.max(12, S * 0.55 * p.k), e.level || 1, e.owner));
     }
 
     function ruin(r) {
@@ -561,7 +564,7 @@
         ctx.strokeStyle = '#fff'; ctx.lineWidth = Math.max(1.5, u * 0.07);
         ctx.beginPath(); ctx.arc(p.x, foot - lift - size * 0.45, size * 0.55, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - Math.min(1, e.deploy))); ctx.stroke();
       }
-      if (e.hp < e.max) bar(p.x, top - u * 0.1, Math.max(u * 0.9, R * 1.8), e, false, p.k);
+      if (e.hp < e.max) overlay.push(() => bar(p.x, top - u * 0.1, Math.max(u * 0.9, R * 1.8), e, false, p.k, e.level));
     }
 
     function building(e) {
@@ -575,7 +578,7 @@
       ctx.filter = 'none';
       ctx.globalAlpha = 1;
       if (e.stun > 0) stars(p.x, foot - R * 2.8, R * 0.8);
-      bar(p.x, foot - R * 3.1, R * 1.8, e, false, p.k);
+      overlay.push(() => bar(p.x, foot - R * 3.1, R * 1.8, e, false, p.k, e.level));
     }
 
     // Proiettili: frecce, pietre, dardi, note, sguardi, fiamme (volano un po' sopra il terreno)
@@ -733,7 +736,7 @@
       for (let y = 0; y < E.H; y++) {
         for (let x = 0; x < E.W; x++) {
           quad(ctx, x + 0.04, y + 0.04, x + 0.96, y + 0.96);
-          if (!E.canPlace(state, me, key, x + 0.5, y + 0.5)) { ctx.fillStyle = g.no; ctx.fill(); }
+          if (!E.canPlace(state, me, key, x + 0.5, y + 0.5)) { ctx.fillStyle = 'rgba(232,48,72,0.38)'; ctx.fill(); }
           else {
             ctx.fillStyle = (x + y) % 2 ? g.a : g.b; ctx.fill();
             ctx.strokeStyle = g.line; ctx.stroke();
@@ -787,11 +790,41 @@
       for (const e of list) {
         if (e.cat === 'tower') temple(e); else if (e.cat === 'building') building(e); else unit(e, t);
       }
+      // barre della vita e livelli sopra a tutto (non vengono coperte dai templi davanti)
+      for (const f of overlay.splice(0)) f();
       if (facing.size > 400) { const alive = new Set(state.ents.map((e) => e.id)); for (const id of facing.keys()) if (!alive.has(id)) facing.delete(id); }
       lastShot.length = Math.min(lastShot.length, state.shots.length);
       state.shots.forEach(shot);
       for (const f of state.fx) effect(f, t);
-      if (ui && ui.dragKey && ui.gx != null) ghost(state, ui.me, ui.dragKey, ui.gx, ui.gy);
+      if (ui && ui.dragKey && ui.gx != null) { ghost(state, ui.me, ui.dragKey, ui.gx, ui.gy); cardLabel(ui); }
+    }
+
+    // Sopra la carta che stai mettendo: nome, livello e (se manca ambrosia) quanta ne hai
+    function outlined(text, x, y, size, color) {
+      ctx.font = `900 ${Math.round(size)}px "Lilita One", "Trebuchet MS", sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+      ctx.lineWidth = Math.max(3, size * 0.22); ctx.strokeStyle = '#1a1030'; ctx.strokeText(text, x, y);
+      ctx.fillStyle = color; ctx.fillText(text, x, y);
+    }
+    function cardLabel(ui) {
+      const d = D.BY_KEY[ui.dragKey];
+      if (!d) return;
+      let x = ui.gx, y = ui.gy;
+      if (d.type !== 'spell') { x = Math.floor(x) + 0.5; y = Math.floor(y) + 0.5; }
+      const p = proj(x, y), u = S * p.k;
+      const top = p.y - u * 2.6;
+      const cx = Math.min(canvas.width - u * 3, Math.max(u * 3, p.x));
+      outlined(d.name, cx, top, u * 0.95, '#ffffff');
+      outlined('liv. ' + (ui.level || 1), cx, top + u * 0.9, u * 0.7, '#ffffff');
+      if (ui.amb != null && ui.amb < d.cost) outlined(Math.floor(ui.amb) + '/' + d.cost + ' 💧', cx, top - u * 1, u * 0.85, '#ff6ef0');
+    }
+    // Scudetto con il livello (rosso o blu), a sinistra delle barre della vita
+    function levelBadge(x, y, h, lvl, owner) {
+      const w = h * 1.05;
+      ctx.fillStyle = TEAM[side(owner)];
+      ctx.strokeStyle = '#1a1030'; ctx.lineWidth = Math.max(1.5, h * 0.12);
+      ctx.beginPath(); (ctx.roundRect ? ctx.roundRect(x - w, y - h / 2, w, h, h * 0.2) : ctx.rect(x - w, y - h / 2, w, h)); ctx.fill(); ctx.stroke();
+      outlined(String(lvl), x - w / 2, y + h * 0.04, h * 0.8, '#ffffff');
     }
 
     return {

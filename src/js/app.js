@@ -881,7 +881,7 @@
     canvas.style.width = Math.floor(f.width) + 'px';
     canvas.style.height = Math.floor(f.height) + 'px';
     R.resize();
-    $('#river-hud').style.top = R.riverY() + 'px';
+    $('#crown-side').style.top = R.riverY() + 'px';
   }
   window.addEventListener('resize', () => { if (B) fitCanvas(); });
 
@@ -899,7 +899,10 @@
     $('#foe-level').textContent = cfg.foeLevel || 7;
     $('#foe-sub').textContent = cfg.foeSub || '';
     $('#emote-bar').hidden = true;
-    $('#btn-emote').hidden = cfg.mode !== 'friend';
+    $('#btn-emote').style.visibility = cfg.mode === 'friend' ? 'visible' : 'hidden';
+    $('#crown-side').hidden = true;
+    $('#crown-banner').hidden = true;
+    $('#x2').hidden = true;
     R.setArena(cfg.arena || 0);
     R.setFlip(cfg.me === 1);
     fitCanvas();
@@ -939,6 +942,7 @@
   function banner(text) {
     const b = $('#banner');
     b.textContent = text;
+    b.classList.remove('big');
     b.hidden = false;
     clearTimeout(bannerTimer);
     bannerTimer = setTimeout(() => { b.hidden = true; }, 1600);
@@ -978,8 +982,10 @@
     const v = B.view;
     if (v) {
       events(v);
-      const hand = v.players[B.me].hand;
-      R.draw(v, { me: B.me, dragKey: B.selected >= 0 ? hand[B.selected] : null, gx: B.gx, gy: B.gy });
+      const pl = v.players[B.me], hand = pl.hand;
+      const dragKey = B.selected >= 0 ? hand[B.selected] : null;
+      const lv = dragKey ? (B.cfg.match && B.cfg.match.levels ? B.cfg.match.levels[B.me][dragKey] : null) || (profile.cards[dragKey] && profile.cards[dragKey].level) || 1 : 1;
+      R.draw(v, { me: B.me, dragKey, gx: B.gx, gy: B.gy, level: lv, amb: pl.amb, name: dragKey ? D.BY_KEY[dragKey].name : '' });
       hud(v);
       if (v.over && !B.ended) { B.ended = true; setTimeout(() => endBattle(v), 1400); }
     } else {
@@ -995,15 +1001,38 @@
       B.ruins = v.ruins.length;
       Sound.play('tower');
       if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
-      banner(fresh.some((r) => r.owner === B.me) ? '💥 Hai perso un tempio!' : '👑 Tempio abbattuto!');
-      // il campo trema e la corona vola verso il contatore di chi ha abbattuto il tempio
+      // il campo trema, compaiono le corone di chi ha abbattuto il tempio e una corona vola verso il contatore a destra
       const field = $('#field');
       field.classList.remove('shake'); void field.offsetWidth; field.classList.add('shake');
+      $('#crown-side').hidden = false;
+      const foeScored = fresh.some((r) => r.owner === B.me);
+      crownBanner(foeScored, v.crowns[foeScored ? 1 - B.me : B.me]);
       for (const r of fresh) crownFly(r, r.owner === B.me ? '#foe-crowns' : '#my-crowns');
     }
-    if (!B.doubleShown && !v.inOvertime && v.t >= v.duration - 60) { B.doubleShown = true; banner('💧 Ambrosia doppia!'); }
+    if (!B.doubleShown && !v.inOvertime && v.t >= v.duration - 60) { B.doubleShown = true; bigBanner('<b>60</b><span>secondi<br>restanti</span>'); }
     if (!B.otShown && v.inOvertime) { B.otShown = true; banner('⏱️ Supplementari: chi abbatte un tempio vince!'); }
     if (B.state) B.state.events.length = 0;
+  }
+
+  // Scritta con le corone a centro campo (nella metà di chi ha fatto corona), poi sparisce
+  let crownTimer = null;
+  function crownBanner(foe, n) {
+    const el = $('#crown-banner');
+    let crowns = '';
+    for (let i = 0; i < 3; i++) crowns += `<span class="${i < n ? 'on' : ''}">👑</span>`;
+    el.className = 'crown-banner ' + (foe ? 'foe' : 'me');
+    el.innerHTML = `<b>${foe ? 'Nemico' : 'Tu'}</b><div>${crowns}</div>`;
+    el.hidden = false;
+    clearTimeout(crownTimer);
+    crownTimer = setTimeout(() => { el.hidden = true; }, 2400);
+  }
+  function bigBanner(html) {
+    const el = $('#banner');
+    el.innerHTML = html;
+    el.classList.add('big');
+    el.hidden = false;
+    clearTimeout(bannerTimer);
+    bannerTimer = setTimeout(() => { el.hidden = true; el.classList.remove('big'); }, 2200);
   }
 
   function crownFly(ruin, target) {
@@ -1033,9 +1062,9 @@
     const me = B.me, pl = v.players[me];
     const left = v.inOvertime ? Math.max(0, v.duration + v.overtime - v.t) : Math.max(0, v.duration - v.t);
     $('#clock').textContent = fmtClock(left);
-    $('#clock-label').textContent = v.inOvertime ? 'Supplementari' : v.t >= v.duration - 60 ? 'Ambrosia ×2' : 'Tempo';
-    $('.clock').classList.toggle('double', v.t >= v.duration - 60);
-    $('.clock').classList.toggle('over', v.inOvertime);
+    $('#clock-label').textContent = v.inOvertime ? 'Supplementari:' : 'Termina tra:';
+    $('#clock-box').classList.toggle('over', v.inOvertime);
+    $('#x2').hidden = !(v.t >= v.duration - 60);
     // Conto alla rovescia grande negli ultimi 10 secondi
     const cd = $('#countdown');
     const n = Math.ceil(left);
@@ -1049,8 +1078,9 @@
         Sound.play('tick');
       }
     } else if (!cd.hidden) { cd.hidden = true; cd.dataset.n = ''; }
-    $('#foe-crowns').textContent = '👑 ' + v.crowns[1 - me];
-    $('#my-crowns').textContent = '👑 ' + v.crowns[me];
+    $('#foe-crowns').textContent = v.crowns[1 - me];
+    $('#my-crowns').textContent = v.crowns[me];
+    if (v.crowns[0] + v.crowns[1] > 0) $('#crown-side').hidden = false;
     $('#amb-num').dataset.n = Math.floor(pl.amb);
     $('#amb-fill').style.width = (pl.amb / E.AMB_MAX) * 100 + '%';
     const key = pl.hand.join() + '|' + pl.queue[0];

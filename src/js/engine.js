@@ -63,7 +63,7 @@
       id: s.nextId++, cat: 'tower', tower: kind, owner, key: kind, x, y, r: d.radius,
       hp: Math.round(d.hp * m), max: Math.round(d.hp * m), dmg: Math.round(d.dmg * m),
       hitSpeed: d.hitSpeed, range: d.range, hitsAir: true, shot: d.shot,
-      active: kind !== 'king', cooldown: 0, stun: 0, flash: 0,
+      active: kind !== 'king', cooldown: 0, stun: 0, flash: 0, level: lvl,
     });
   }
 
@@ -447,7 +447,7 @@
       t: r1(s.t), over: s.over, winner: s.winner, crowns: s.crowns, inOvertime: s.inOvertime, duration: s.duration, overtime: s.overtime,
       players: s.players.map((p) => ({ amb: r1(p.amb), hand: p.hand, queue: [p.queue[0]] })),
       ents: s.ents.map((e) => [e.id, e.key, e.owner, r1(e.x), r1(e.y), Math.round(e.hp), e.max, e.cat === 'tower' ? (e.tower === 'king' ? 2 : 1) : 0,
-        r1(e.deploy > 0 ? e.deploy : 0), e.stun > 0 ? 1 : 0, e.flash > 0 ? 1 : 0, e.heads || 1, e.charging ? 1 : 0, r1(e.r)]),
+        r1(e.deploy > 0 ? e.deploy : 0), e.stun > 0 ? 1 : 0, e.flash > 0 ? 1 : 0, e.heads || 1, e.charging ? 1 : 0, r1(e.r), e.level || 1, e.active === false ? 0 : 1]),
       shots: s.shots.map((sh) => [r1(sh.x), r1(sh.y), sh.owner, sh.shot]),
       fx: s.fx.map((f) => Object.assign({}, f)),
       ruins: s.ruins,
@@ -464,7 +464,7 @@
         id: a[0], key: a[1], owner: a[2], x: a[3], y: a[4], hp: a[5], max: a[6],
         cat: a[7] ? 'tower' : (D.BY_KEY[a[1]] && D.BY_KEY[a[1]].type === 'building' ? 'building' : 'unit'),
         tower: a[7] === 2 ? 'king' : a[7] === 1 ? 'princess' : undefined,
-        deploy: a[8], stun: a[9], flash: a[10] ? 0.1 : 0, heads: a[11], charging: !!a[12], r: a[13],
+        deploy: a[8], stun: a[9], flash: a[10] ? 0.1 : 0, heads: a[11], charging: !!a[12], r: a[13], level: a[14] || 1, active: a[15] !== 0,
         flying: !!(D.BY_KEY[a[1]] && D.BY_KEY[a[1]].flying),
       })),
     };
