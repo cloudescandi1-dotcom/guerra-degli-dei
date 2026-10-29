@@ -33,6 +33,9 @@
 html, body { margin: 0; height: 100%; }
 html { background: #0b1a40; }   /* sotto le barre del telefono: stesso blu scuro della fascia delle carte */
 body {
+  /* alto quanto lo schermo vero: le schermate stanno dentro body e non sono "fissate" alla finestra,
+     perché da app installata sull'iPhone iOS taglia gli elementi fissati prima del fondo */
+  position: relative; height: var(--app-h, 100%);
   background-color: var(--bg);
   background-image:
     repeating-linear-gradient(45deg, rgba(255,255,255,.035) 0 18px, transparent 18px 36px),
@@ -57,7 +60,7 @@ h2 {
 h2::after { content: ''; flex: 1; height: 3px; border-radius: 2px; background: linear-gradient(90deg, #ffffff55, transparent); }
 h2 small { color: var(--muted); font-family: var(--body); font-weight: 800; text-shadow: none; font-size: .78rem; }
 
-.screen { position: fixed; left: 0; right: 0; top: 0; height: var(--app-h, 100%); display: flex; flex-direction: column; }
+.screen { position: absolute; left: 0; right: 0; top: 0; height: var(--app-h, 100%); display: flex; flex-direction: column; }
 
 /* ---------- Barra in alto ---------- */
 .top {
@@ -318,9 +321,9 @@ img.chest-big { width: 8rem; height: 8rem; filter: drop-shadow(0 6px 8px #0008);
 .gem-item small { display: block; color: var(--muted); }
 
 /* ---------- Finestre ---------- */
-.modal { position: fixed; inset: 0; background: #000a; display: grid; place-items: center; z-index: 50; padding: 14px; animation: fade .15s; }
+.modal { position: absolute; inset: 0; background: #000a; display: grid; place-items: center; z-index: 50; padding: 14px; animation: fade .15s; }
 .sheet {
-  position: relative; width: min(440px, 100%); max-height: calc(100dvh - 28px); overflow-y: auto;
+  position: relative; width: min(440px, 100%); max-height: calc(var(--app-h, 100dvh) - 28px); overflow-y: auto;
   background: linear-gradient(#2e5cb8, #1f428f); border: 3px solid var(--frame); border-radius: 16px; padding: 0 14px 14px;
   box-shadow: inset 0 3px 0 #ffffff33, 0 6px 0 #0b1b42; animation: pop .18s;
 }
@@ -345,7 +348,7 @@ img.chest-big { width: 8rem; height: 8rem; filter: drop-shadow(0 6px 8px #0008);
 .result-crowns { text-align: center; font-size: 2rem; letter-spacing: 6px; }
 .center { text-align: center; }
 .toast {
-  position: fixed; left: 50%; bottom: calc(96px + var(--safe-b)); transform: translateX(-50%);
+  position: absolute; left: 50%; bottom: calc(96px + var(--safe-b)); transform: translateX(-50%);
   background: #0b1a40ee; border: 2px solid var(--frame); border-radius: 12px; padding: 10px 16px; z-index: 60; max-width: 90vw; text-align: center;
   font-family: var(--font); text-shadow: var(--ol); animation: pop .15s;
 }
