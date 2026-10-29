@@ -869,8 +869,16 @@
   const R = Render.create(canvas, ROPTS);
   // Altezza della parte di schermo davvero visibile (senza le barre del browser):
   // così le carte e l'ambrosia non finiscono mai sotto la barra di Safari
+  // Da app installata sull'iPhone il gioco occupa tutto lo schermo, ma iOS a volte dice un'altezza
+  // più corta (senza la fascia dell'orologio) e in basso restava una striscia vuota:
+  // lì si usa l'altezza vera dello schermo (tranne quando è aperta la tastiera)
+  const installed = window.navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
   function appHeight() {
-    const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    let h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    if (installed && screen.width && screen.height) {
+      const full = innerWidth > innerHeight ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height);
+      if (h > full * 0.85) h = full;
+    }
     document.documentElement.style.setProperty('--app-h', Math.round(h) + 'px');
     if (B) fitCanvas();
   }

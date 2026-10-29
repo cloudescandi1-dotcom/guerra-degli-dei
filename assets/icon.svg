@@ -4,6 +4,8 @@
     <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe082"/><stop offset="1" stop-color="#d49a1c"/></linearGradient>
   </defs>
   <rect width="512" height="512" fill="url(#bg)"/>
+  <!-- Tempio e fulmine: centrati (il disegno va da y 122 a 448, il centro è 285) e un po' rimpiccioliti -->
+  <g transform="translate(256 256) scale(0.86) translate(-256 -285)">
   <!-- Tempio -->
   <polygon points="96,212 256,122 416,212" fill="url(#gold)"/>
   <rect x="104" y="212" width="304" height="26" fill="#f3ead2"/>
@@ -15,4 +17,5 @@
   <rect x="80" y="422" width="352" height="26" fill="#ddd2b6"/>
   <!-- Fulmine di Zeus -->
   <polygon points="276,150 214,300 256,300 230,410 314,252 268,252 300,150" fill="#ffe14d" stroke="#b37400" stroke-width="8" stroke-linejoin="round"/>
+  </g>
 </svg>

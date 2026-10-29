@@ -78,7 +78,7 @@ h2 small { color: var(--muted); font-family: var(--body); font-weight: 800; text
 .pname { display: flex; flex-direction: column; min-width: 0; }
 .pname b { font-size: 1rem; text-shadow: var(--ol); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 30vw; }
 .pname .tro { font-family: var(--font); color: var(--gold); text-shadow: var(--ol); font-size: .95rem; }
-.top-right { display: flex; align-items: center; gap: 6px; }
+.top-right { display: flex; align-items: center; gap: 16px; }   /* spazio per il + e l'icona accanto */
 .res {
   position: relative; display: flex; align-items: center; gap: 4px; height: 30px;
   background: #0b1a40; border: 2px solid #050d24; border-radius: 8px; padding: 0 22px 0 26px; min-width: 64px;
