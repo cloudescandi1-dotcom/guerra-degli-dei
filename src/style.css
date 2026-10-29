@@ -60,11 +60,13 @@ h2 {
 h2::after { content: ''; flex: 1; height: 3px; border-radius: 2px; background: linear-gradient(90deg, #ffffff55, transparent); }
 h2 small { color: var(--muted); font-family: var(--body); font-weight: 800; text-shadow: none; font-size: .78rem; }
 
-/* iOS 26 sfoca la parte alta delle app installate, tranne quando in cima c'è una fascia fissa
-   di un solo colore: eccola, dietro l'orologio, dello stesso blu dell'inizio della barra in alto */
-html.installata body::before {
-  content: ''; position: fixed; left: 0; right: 0; top: 0; height: max(var(--safe-t), 12px);
-  background: #173375; z-index: 40; pointer-events: none;
+/* iOS 26 sfoca la parte alta delle app installate. Non lo fa se, toccando appena sotto il bordo alto,
+   trova un elemento VERO, fisso, largo quanto lo schermo e di un solo colore (alto più di 10px):
+   è questa fascia dietro l'orologio. Deve poter essere "toccata": niente pointer-events: none. */
+.edge-top { display: none; }
+html.installata .edge-top {
+  display: block; position: fixed; left: 0; right: 0; top: 0; height: max(var(--safe-t), 12px);
+  background-color: #173375; z-index: 40;
 }
 .screen { position: absolute; left: 0; right: 0; top: 0; height: var(--app-h, 100%); display: flex; flex-direction: column; }
 
