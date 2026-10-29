@@ -623,3 +623,6 @@ img.chest-big { width: 8rem; height: 8rem; filter: drop-shadow(0 6px 8px #0008);
 /* finestra Account: campi email e password (16px: su iPhone niente zoom quando li tocchi) */
 .acct-form { display: grid; gap: 8px; margin: 8px 0; }
 .acct-form input { width: 100%; box-sizing: border-box; padding: 10px 12px; border-radius: 10px; border: 2px solid var(--frame); font: inherit; font-size: 16px; color: #1a1030; background: #fff; }
+/* pulsante "Continua con Google": bianco con la G colorata, come chiede Google */
+.btn.google { background: #fff; color: #1f1f1f; text-shadow: none; box-shadow: 0 4px 0 #b9c1d1; border-color: #dadce0; }
+.g-logo { display: inline-block; font-family: Arial, sans-serif; font-weight: 700; background: conic-gradient(from -45deg, #ea4335 0 25%, #4285f4 0 50%, #34a853 0 75%, #fbbc05 0); -webkit-background-clip: text; background-clip: text; color: transparent; margin-right: 6px; }

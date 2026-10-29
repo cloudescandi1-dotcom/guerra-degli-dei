@@ -1319,6 +1319,7 @@
         <button id="reg" class="btn full gold" type="button" style="width:100%">Crea account</button>
         <button id="log" class="btn full" type="button" style="width:100%">Ho già un account: accedi</button>
       </div>
+      <button id="ggl" class="btn full google" type="button" style="width:100%"><span class="g-logo">G</span> Continua con Google</button>
       <p class="muted">Usiamo l'email solo per l'accesso e per recuperare l'account. Niente pubblicità.</p>`);
     const val = () => ({ email: body.querySelector('#em').value.trim(), password: body.querySelector('#pw').value });
     const okForm = ({ email, password }) => {
@@ -1333,6 +1334,17 @@
       if (err) { toast(err, 4000); return; }
       modal(`<h3>📧 Controlla la posta</h3><p>Ti abbiamo mandato un'email a <b>${esc(v.email)}</b>. Apri il link per confermare l'account
         (se non la trovi guarda nello spam). Intanto puoi continuare a giocare.</p>`);
+    };
+    body.querySelector('#ggl').onclick = () => {
+      const b2 = modal(`<h3>Continuare con Google?</h3><p>Se con questo account Google hai già giocato, i progressi di <b>questo telefono</b> (🏆 ${profile.trophies})
+        verranno sostituiti da quelli dell'account. Se è la prima volta, l'account Google terrà i progressi di adesso.</p>
+        <div class="row"><button id="no" class="btn grey" type="button">Annulla</button><button id="yes" class="btn gold" type="button">Continua</button></div>`);
+      b2.querySelector('#no').onclick = account;
+      b2.querySelector('#yes').onclick = async () => {
+        Cloud.saveNow(profile);
+        const err = await Cloud.loginGoogle();
+        if (err) { toast(err, 4000); account(); }
+      };
     };
     body.querySelector('#log').onclick = () => {
       const v = val();
@@ -1351,6 +1363,7 @@
   // Quando cambia chi è collegato: carica i progressi dell'account oppure salva online quelli del telefono
   async function onAccount(me, event, changed) {
     if (!me || !changed) return;
+    if (Cloud.comingBack()) pendingLogin = true;   // tornati dalla pagina di Google
     const row = await Cloud.load();
     const cloud = row && P.restore(row.dati);
     if (cloud && (pendingLogin || !me.guest)) {

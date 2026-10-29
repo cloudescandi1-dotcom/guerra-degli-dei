@@ -67,6 +67,13 @@
     const r2 = await sb.auth.updateUser({ password });
     return r2.error ? italiano(r2.error) : null;
   }
+  // Accesso con Google: si apre la pagina di Google e poi si torna al gioco già collegati
+  async function loginGoogle() {
+    if (!sb) return 'Non collegato: riprova tra poco';
+    try { localStorage.setItem('account-in-arrivo', '1'); } catch (e) { /* pazienza */ }
+    const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.href.split('?')[0].split('#')[0] } });
+    return error ? italiano(error) : null;
+  }
   async function login(email, password) {
     if (!sb) return 'Non collegato: riprova tra poco';
     const { error } = await sb.auth.signInWithPassword({ email, password });
@@ -100,6 +107,7 @@
     if (/anonymous sign-ins are disabled/i.test(m)) return 'L\'accesso da ospite non è ancora attivo';
     if (/invalid email|unable to validate email/i.test(m)) return 'Email non valida';
     if (/fetch|network/i.test(m)) return 'Niente connessione a internet';
+    if (/provider is not enabled|unsupported provider/i.test(m)) return "L'accesso con Google non è ancora attivo";
     return 'Errore: ' + m.slice(0, 120);
   }
 
@@ -127,5 +135,10 @@
     } catch (e) { return false; }
   }
 
-  root.Cloud = { start, save, saveNow, load, register, login, logout, remove, info, ready, broadcast };
+  // Siamo appena tornati dalla pagina di Google? (allora i progressi dell'account vanno caricati)
+  function comingBack() {
+    try { const v = localStorage.getItem('account-in-arrivo'); localStorage.removeItem('account-in-arrivo'); return v === '1'; } catch (e) { return false; }
+  }
+
+  root.Cloud = { start, save, saveNow, load, register, login, loginGoogle, comingBack, logout, remove, info, ready, broadcast };
 })(typeof self !== 'undefined' ? self : this);
