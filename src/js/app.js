@@ -873,6 +873,8 @@
   // più corta (senza la fascia dell'orologio) e in basso restava una striscia vuota:
   // lì si usa l'altezza vera dello schermo (tranne quando è aperta la tastiera)
   const installed = window.navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  // da app installata: fascia in tinta unita dietro l'orologio (vedi style.css)
+  if (installed) document.documentElement.classList.add('installata');
   function appHeight() {
     let h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     if (installed && screen.width && screen.height) {

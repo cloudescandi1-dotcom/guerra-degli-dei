@@ -60,6 +60,12 @@ h2 {
 h2::after { content: ''; flex: 1; height: 3px; border-radius: 2px; background: linear-gradient(90deg, #ffffff55, transparent); }
 h2 small { color: var(--muted); font-family: var(--body); font-weight: 800; text-shadow: none; font-size: .78rem; }
 
+/* iOS 26 sfoca la parte alta delle app installate, tranne quando in cima c'è una fascia fissa
+   di un solo colore: eccola, dietro l'orologio, dello stesso blu dell'inizio della barra in alto */
+html.installata body::before {
+  content: ''; position: fixed; left: 0; right: 0; top: 0; height: max(var(--safe-t), 12px);
+  background: #173375; z-index: 40; pointer-events: none;
+}
 .screen { position: absolute; left: 0; right: 0; top: 0; height: var(--app-h, 100%); display: flex; flex-direction: column; }
 
 /* ---------- Barra in alto ---------- */
@@ -111,7 +117,7 @@ h2 small { color: var(--muted); font-family: var(--body); font-weight: 800; text
   display: flex; align-items: stretch;
   background: linear-gradient(#173375, #0e2253);
   box-shadow: 0 -3px 0 #0b1b42;
-  padding: 4px 4px calc(4px + var(--safe-b));
+  padding: 4px 4px max(6px, calc(var(--safe-b) - 16px));   /* i pulsanti possono avvicinarsi alla lineetta dell'iPhone */
   gap: 4px;
 }
 .tabbar button {
