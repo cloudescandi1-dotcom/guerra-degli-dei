@@ -9,6 +9,8 @@
   const KEY = 'sb_publishable_HnOulQ5E1wXOxoyY1B_SZw_Eedb2xy8';
 
   let sb = null, user = null, cb = {}, timer = null, lastSent = '';
+  // chi aspetta che l'accesso sia pronto (per esempio amici e clan)
+  let waiting = [];
 
   function start(game, callbacks) {
     cb = callbacks || {};
@@ -20,6 +22,7 @@
     sb.auth.onAuthStateChange((event, session) => {
       const was = user && user.id;
       user = session ? session.user : null;
+      if (user && session) { sb.realtime.setAuth(session.access_token); const w = waiting; waiting = []; w.forEach((f) => f()); }
       cb.onUser && cb.onUser(info(), event, was !== (user && user.id));
     });
     ensure();
@@ -100,5 +103,29 @@
     return 'Errore: ' + m.slice(0, 120);
   }
 
-  root.Cloud = { start, save, saveNow, load, register, login, logout, remove, info };
+  // Aspetta che ci sia un accesso (anche da ospite); poi restituisce il collegamento a Supabase
+  function ready() {
+    if (!sb) return Promise.resolve(null);
+    if (user) return Promise.resolve(sb);
+    return new Promise((res) => waiting.push(() => res(sb)));
+  }
+
+  // Manda un messaggio su un canale privato senza entrarci (per esempio "bussare" alla casella di un amico).
+  // Il server lo consegna solo se le regole del database lo permettono.
+  async function broadcast(topic, event, payload) {
+    if (!sb) return false;
+    const { data } = await sb.auth.getSession();
+    const t = data && data.session && data.session.access_token;
+    if (!t) return false;
+    try {
+      const r = await fetch(URL + '/realtime/v1/api/broadcast', {
+        method: 'POST',
+        headers: { apikey: KEY, Authorization: 'Bearer ' + t, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [{ topic, event, payload, private: true }] }),
+      });
+      return r.ok;
+    } catch (e) { return false; }
+  }
+
+  root.Cloud = { start, save, saveNow, load, register, login, logout, remove, info, ready, broadcast };
 })(typeof self !== 'undefined' ? self : this);

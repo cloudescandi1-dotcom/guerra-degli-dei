@@ -32,12 +32,12 @@ opporti al loro uso, scrivendo tramite la pagina GitHub del progetto. Puoi anche
 al Garante per la protezione dei dati personali (www.garanteprivacy.it).
 
 ## Quando giochi con amici e clan
-Per collegare i telefoni tra loro il gioco usa la tecnologia WebRTC tramite il servizio
-pubblico gratuito **PeerJS** (server 0.peerjs.com). Mentre il gioco è aperto e online:
-- il servizio PeerJS riceve il tuo **codice amico** (6 caratteri casuali) e il tuo
-  **indirizzo IP**, solo per mettere in contatto i dispositivi;
+Chat, clan e sfide passano dai server di **Supabase** (gli stessi degli account, in Europa),
+su canali che possono usare solo i due giocatori coinvolti. Mentre il gioco è aperto e online:
+- Supabase conserva il tuo **codice amico** (6 caratteri casuali) collegato al tuo account,
+  così nessun altro può usarlo; i messaggi passano dai suoi server ma **non** vengono archiviati lì;
 - gli amici e i membri del clan con cui ti colleghi ricevono il tuo **nome nel gioco**,
-  le **coppe**, i **messaggi** che scrivi e, per come funziona WebRTC, il tuo **indirizzo IP**;
+  le **coppe** e i **messaggi** che scrivi. Il tuo **indirizzo IP non viene mostrato** agli altri giocatori;
 - i messaggi del clan vengono salvati sui dispositivi dei membri del clan.
 
 Se non vuoi condividere nulla, non aggiungere amici e non entrare in un clan:

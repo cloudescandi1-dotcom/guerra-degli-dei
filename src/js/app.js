@@ -1296,7 +1296,7 @@
       body.querySelector('#out').onclick = async () => {
         await Cloud.logout();
         // i progressi restano nell'account; su questo telefono si riparte da capo finché non rientri
-        profile = P.fresh(); P.save(profile, store); closeModal(); render(); toast('Sei uscito: i tuoi progressi restano nell\'account');
+        profile = P.fresh(); P.save(profile, store); Social.restart(); closeModal(); render(); toast('Sei uscito: i tuoi progressi restano nell\'account');
       };
       body.querySelector('#del').onclick = () => {
         const b2 = modal(`<h3>Eliminare l'account?</h3><p>Verranno cancellati per sempre l'account e i progressi salvati online. Non si può annullare.</p>
@@ -1305,7 +1305,7 @@
         b2.querySelector('#yes').onclick = async () => {
           const err = await Cloud.remove();
           if (err) { toast(err, 3500); return; }
-          profile = P.fresh(); P.save(profile, store); closeModal(); render(); toast('Account eliminato');
+          profile = P.fresh(); P.save(profile, store); Social.restart(); closeModal(); render(); toast('Account eliminato');
         };
       };
       return;
@@ -1354,7 +1354,7 @@
     const row = await Cloud.load();
     const cloud = row && P.restore(row.dati);
     if (cloud && (pendingLogin || !me.guest)) {
-      profile = cloud; P.save(profile, store); render();
+      profile = cloud; P.save(profile, store); Social.restart(); render();
       if (pendingLogin) toast('Bentornato! Progressi dell\'account caricati');
     } else {
       Cloud.saveNow(profile);
@@ -1368,12 +1368,12 @@
     modal(`<h3>🔒 Privacy e diritti</h3>
       <p><b>© 2026 ${COPYRIGHT}. Tutti i diritti riservati.</b> Guerra degli Dèi, i suoi disegni, i nomi e i testi delle carte e il codice
       sono opere originali di proprietà esclusiva del titolare: è vietato copiarli, ripubblicarli o usarli altrove senza permesso scritto.
-      Le librerie PeerJS e supabase-js (licenza MIT) appartengono ai loro autori.</p>
+      La libreria supabase-js (licenza MIT) appartiene ai suoi autori.</p>
       <p><b>Privacy in breve:</b> niente pubblicità, cookie o statistiche. I tuoi progressi sono salvati su questo dispositivo e online
       nel tuo account (servizio <b>Supabase</b>, dati in Europa). Entri come ospite senza dati personali; l'email serve solo se crei un account
       (dai 14 anni in su). Puoi eliminare l'account e i progressi online da 👤 Account.</p>
-      <p><b>Amici e clan:</b> per collegare i telefoni si usa il servizio gratuito PeerJS, che vede il tuo codice amico e il tuo indirizzo IP.
-      Gli amici e i membri del clan con cui ti colleghi vedono il tuo nome nel gioco, le coppe, i messaggi e il tuo indirizzo IP.
+      <p><b>Amici e clan:</b> chat, clan e sfide passano da Supabase su canali che possono usare solo i giocatori coinvolti.
+      Gli amici e i membri del clan vedono il tuo nome nel gioco, le coppe e i messaggi; il tuo indirizzo IP non viene mostrato.
       Se non vuoi, non aggiungere amici: il resto del gioco funziona lo stesso.</p>
       <p><b>Consiglio:</b> in chat non scrivere il tuo nome vero, l'indirizzo o altri dati personali.</p>
       <p class="muted">Il sito è ospitato da GitHub Pages, che può registrare dati tecnici delle visite. Per cancellare i dati sul telefono, cancella i dati del sito dal browser.</p>`);
@@ -1415,6 +1415,11 @@
   Social.start(() => profile, save, {
     onStatus: (st) => { netDot(st); softClan(); },
     onPeers: softClan,
+    // il nostro codice amico risulta già di un altro account: ne prendiamo uno nuovo
+    onCodeTaken: () => {
+      profile.id = P.randomId(6); save(); render(); Social.restart();
+      toast('Il tuo codice amico è cambiato: ora è ' + profile.id, 4000);
+    },
     onImpostor: (id) => {
       const f = profile.friends.find((x) => x.id === id);
       toast(`⚠️ Qualcuno ha provato a fingersi ${f ? f.name : id}: bloccato`, 4000);

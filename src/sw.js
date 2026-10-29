@@ -1,6 +1,6 @@
 // Service worker: salva i file del gioco nel dispositivo, così funziona anche offline.
 // Se aggiungi o rinomini file, aggiorna l'elenco e aumenta il numero di versione.
-const CACHE = 'guerra-dei-v26';
+const CACHE = 'guerra-dei-v27';
 
 const FILES = [
   './',
@@ -21,7 +21,6 @@ const FILES = [
   'js/sprites.js',
   'js/render.js',
   'js/sound.js',
-  'js/peerjs.min.js',
   'js/social.js',
   'js/supabase.js',
   'js/cloud.js',

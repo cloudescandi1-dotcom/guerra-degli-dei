@@ -15,6 +15,7 @@ con personaggi, nomi e grafica originali.
 - ✅ Versione 1.12: **tutti i personaggi, i templi e i re ridisegnati** nello stile nuovo, con ombre morbide e un filo di luce sul bordo per dare volume; quando si girano non diventano più sottili come un foglio; zona vietata rossa senza quadretti e scacchi del campo quasi invisibili; una carta lasciata in un punto vietato torna in mano
 - ✅ Versione 1.13: **bauli ridisegnati** nello stile nuovo; **sicurezza**: ogni amicizia ha una chiave segreta, così chi usa il codice di un amico per fingersi lui viene respinto (e compare un avviso)
 - ✅ Versione 1.14: **account con Supabase**: si entra subito come ospite e i progressi si salvano anche online; da ⚙️ → 👤 Account si può creare un account (email e password), accedere da un altro telefono, uscire o eliminare l'account. Le tabelle e le regole di sicurezza del database sono in `supabase/` (da incollare nell'SQL Editor di Supabase). Informativa privacy aggiornata
+- ✅ Versione 1.15: **amici, clan e sfide tramite Supabase** (niente più PeerJS): ogni codice amico è registrato a un solo account, ogni coppia di giocatori ha un canale privato, per aggiungere un amico si "bussa" alla sua casella. Nessuno vede l'indirizzo IP degli altri e nessuno può fingersi un altro giocatore (regole in `supabase/03-amici-e-clan.sql`)
 - ✅ Versione 1.8: supplementari di 2 minuti con orologio rosso e ambrosia ×3 quando mancano 1:30, pannello emoticon con frasi ("Buona fortuna!", "Bella giocata!"…), schermata finale VS con le corone
 - ✅ Versione 1.7: battaglia come in Clash: tempo in alto a destra ("Termina tra"), corone sul bordo destro che compaiono alla prima corona, scritta "Nemico"/"Tu" con le corone, "60 secondi restanti" e x2, metà avversaria rossa quando trascini, nome e livello della carta, livelli su torri e truppe, "Succ.:" e "Massimo: 10"
 - ✅ Versione 1.6: **Cammino degli Eroi rifatto come il Cammino dei Trofei**: barra delle coppe a sinistra con l'etichetta, premi su piattaforme in rilievo con la spunta, arene come plastici con fascia blu e carte sbloccate, pulsante OK in basso
@@ -42,9 +43,10 @@ con personaggi, nomi e grafica originali.
 - **Clan**: nome e stemma, chat, richiesta e donazione di carte
 - Funziona offline (tranne amici e clan) e si installa sulla schermata Home
 
-## Come funzionano amici e clan (senza server)
-I telefoni si collegano **direttamente tra loro** (tecnologia WebRTC, libreria PeerJS gratuita).
-Serve solo un piccolo servizio pubblico di PeerJS per "presentarsi". Conseguenze:
+## Come funzionano amici e clan
+Passano da **Supabase**: ogni codice amico è registrato a un solo account e ogni coppia di giocatori
+ha un canale privato che possono usare solo loro due (regole in `supabase/03-amici-e-clan.sql`).
+Nessuno vede l'indirizzo IP degli altri e nessuno può fingersi un altro giocatore. Conseguenze:
 - si chatta e si sfida solo chi è online in quel momento;
 - i messaggi del clan vengono copiati da ogni membro: chi era offline li riceve
   appena si collega con qualcuno del clan.
@@ -72,7 +74,7 @@ npm test
 | `src/js/render.js` | **Disegno** del campo di battaglia in prospettiva |
 | `src/js/sound.js` | Effetti sonori |
 | `src/js/app.js` | **Interfaccia**: menu, schede, battaglia, finestre |
-| `src/js/peerjs.min.js` | Libreria PeerJS 1.5.4 (licenza MIT) |
+| `src/js/supabase.js` | Libreria supabase-js 2.45.4 (licenza MIT) per account, salvataggi, amici e clan |
 | `tests/` | Test automatici |
 | `tools/` | Server di prova e generatore di icone |
 
@@ -80,6 +82,6 @@ npm test
 - Il gioco e tutti i suoi contenuti originali (codice, disegni, nomi e testi delle carte) sono di
   **proprietà esclusiva** del titolare: **tutti i diritti riservati**. Il codice è visibile su GitHub
   ma questo non dà a nessuno il permesso di copiarlo o riusarlo. Dettagli in [LICENSE](LICENSE).
-- Unico componente di terzi: PeerJS (licenza MIT), vedi [docs/licenze-terze-parti.md](docs/licenze-terze-parti.md).
+- Componente di terzi: supabase-js (licenza MIT), vedi [docs/licenze-terze-parti.md](docs/licenze-terze-parti.md).
 - Privacy: niente account, cookie, pubblicità o statistiche; i dati restano sul dispositivo.
   Dettagli in [docs/privacy.md](docs/privacy.md) e nel gioco (Impostazioni → Privacy e diritti).

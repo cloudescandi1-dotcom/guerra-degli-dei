@@ -16,8 +16,6 @@ Senza il permesso scritto del titolare è vietato:
 È consentito soltanto giocare al gioco tramite il sito ufficiale per uso personale.
 
 Componenti di terze parti (non coperti da questa dichiarazione, restano dei loro autori):
-- PeerJS 1.5.4 (src/js/peerjs.min.js), licenza MIT, Copyright (c) 2015 Michelle Bu e
-  Eric Zhang. Il testo della licenza MIT è in docs/licenze-terze-parti.md.
 - supabase-js 2.45.4 (src/js/supabase.js), licenza MIT, Copyright (c) 2020 Supabase.
   Il testo della licenza MIT è in docs/licenze-terze-parti.md.
 
