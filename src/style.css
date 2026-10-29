@@ -69,6 +69,10 @@ html.installata .edge-top {
   background-color: #173375; z-index: 40;
 }
 .screen { position: absolute; left: 0; right: 0; top: 0; height: var(--app-h, 100%); display: flex; flex-direction: column; }
+/* Su schermi larghi (iPad girato, PC) il gioco sta in una colonna verticale al centro, come Clash Royale su iPad:
+   larga circa 2/3 dell'altezza (al massimo 560px, come un telefono grande); sui telefoni la colonna è più larga dello schermo, quindi lo riempie tutto */
+.screen { margin: 0 auto; max-width: max(360px, min(560px, calc(var(--app-h, 100vh) * .66))); }
+@media (min-aspect-ratio: 3/4) { .screen { box-shadow: 0 0 0 3px #0b1b42, 0 0 40px #000a; } }
 
 /* ---------- Barra in alto ---------- */
 .top {
@@ -576,7 +580,7 @@ img.chest-big { width: 8rem; height: 8rem; filter: drop-shadow(0 6px 8px #0008);
 
 /* ---------- Copertina dell'arena nella schermata principale ---------- */
 .arena-cover {
-  position: relative; margin: 4px -12px 0; height: 44vh; min-height: 250px; max-height: 430px; overflow: hidden; cursor: pointer;
+  position: relative; margin: 4px -12px 0; height: 44vh; container-type: size; min-height: 250px; max-height: 430px; overflow: hidden; cursor: pointer;
   background: linear-gradient(var(--g1), var(--g2) 62%, var(--fl) 62.1%, #0003 100%), var(--fl);
   -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 88%, transparent 100%);
   mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 88%, transparent 100%);
@@ -596,12 +600,12 @@ img.chest-big { width: 8rem; height: 8rem; filter: drop-shadow(0 6px 8px #0008);
 .arena-cover .arena-tap { z-index: 3; bottom: 14%; }
 .arena-cover .road-badge { z-index: 4; top: 12%; }
 .arena-cover.c5 .cover-floor { box-shadow: 0 -6px 30px #ff6a1a88; }
-.cover-temple { width: 46%; max-width: 220px; bottom: 30%; }
+.cover-temple { width: min(46%, 44cqh); max-width: 220px; bottom: 30%; }   /* sugli schermi bassi si rimpicciolisce: non tocca il titolo */
 .arena-cover .arena-tag { top: 9%; }
 .arena-cover .arena-tap { bottom: 3%; }
 .cover-chars { bottom: 12%; height: 36%; }
-.cover-chars .cc { width: 30%; }
-.cover-chars .cc1 { width: 33%; bottom: -4%; }
+.cover-chars .cc { width: min(30%, 40cqh); }
+.cover-chars .cc1 { width: min(33%, 44cqh); bottom: -4%; }
 .arena-cover { -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 96%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, #000 14%, #000 96%, transparent 100%); }
 .arena-cover .arena-tap { bottom: 5%; }
 
@@ -637,3 +641,15 @@ img.chest-big { width: 8rem; height: 8rem; filter: drop-shadow(0 6px 8px #0008);
 /* pulsante "Continua con Google": bianco con la G colorata, come chiede Google */
 .btn.google { background: #fff; color: #1f1f1f; text-shadow: none; box-shadow: 0 4px 0 #b9c1d1; border-color: #dadce0; }
 .g-logo { display: inline-block; font-family: Arial, sans-serif; font-weight: 700; background: conic-gradient(from -45deg, #ea4335 0 25%, #4285f4 0 50%, #34a853 0 75%, #fbbc05 0); -webkit-background-clip: text; background-clip: text; color: transparent; margin-right: 6px; }
+
+/* ---------- Telefono girato in orizzontale: avviso per tenerlo in verticale ---------- */
+.rotate-hint { display: none; }
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  .rotate-hint {
+    display: grid; place-items: center; position: absolute; inset: 0; z-index: 200; text-align: center;
+    background: radial-gradient(ellipse at 50% 30%, #2f5fc4, #0b1a40 75%);
+  }
+  .rotate-hint span { display: block; font-size: 3.4rem; animation: ruota 1.6s ease-in-out infinite; }
+  .rotate-hint b { display: block; margin-top: 10px; font-family: var(--font); font-size: 1.5rem; text-shadow: var(--ol); }
+}
+@keyframes ruota { 0%, 30% { transform: rotate(-90deg); } 60%, 100% { transform: rotate(0deg); } }
