@@ -84,5 +84,7 @@ npm test
   **proprietà esclusiva** del titolare: **tutti i diritti riservati**. Il codice è visibile su GitHub
   ma questo non dà a nessuno il permesso di copiarlo o riusarlo. Dettagli in [LICENSE](LICENSE).
 - Componente di terzi: supabase-js (licenza MIT), vedi [docs/licenze-terze-parti.md](docs/licenze-terze-parti.md).
-- Privacy: niente account, cookie, pubblicità o statistiche; i dati restano sul dispositivo.
-  Dettagli in [docs/privacy.md](docs/privacy.md) e nel gioco (Impostazioni → Privacy e diritti).
+- Privacy: niente cookie, pubblicità o statistiche; account e salvataggi online su Supabase (Europa).
+  Dettagli in [docs/privacy.md](docs/privacy.md), nel gioco (Impostazioni → Privacy e diritti) e nella
+  pagina pubblica per i due giochi con i termini di servizio:
+  https://cloudescandi1-dotcom.github.io/guerra-degli-dei/privacy.html (è il link che chiede Google).
