@@ -1390,6 +1390,8 @@
       <p><b>Privacy in breve:</b> niente pubblicità, cookie o statistiche. I tuoi progressi sono salvati su questo dispositivo e online
       nel tuo account (servizio <b>Supabase</b>, dati in Europa). Entri come ospite senza dati personali; l'email serve solo se crei un account
       (dai 14 anni in su). Puoi eliminare l'account e i progressi online da 👤 Account.</p>
+      <p><b>Controllo anti-robot:</b> quando entri, Cloudflare Turnstile verifica (di solito senza farti fare niente) che tu sia una persona.
+      Per farlo riceve dati tecnici del dispositivo e del browser, come l'indirizzo IP, e li usa solo per questo controllo.</p>
       <p><b>Amici e clan:</b> chat, clan e sfide passano da Supabase su canali che possono usare solo i giocatori coinvolti.
       Gli amici e i membri del clan vedono il tuo nome nel gioco, le coppe e i messaggi; il tuo indirizzo IP non viene mostrato.
       Se non vuoi, non aggiungere amici: il resto del gioco funziona lo stesso.</p>

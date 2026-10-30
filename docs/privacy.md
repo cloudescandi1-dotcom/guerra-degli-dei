@@ -31,6 +31,13 @@ Informativa di Supabase: https://supabase.com/privacy
 opporti al loro uso, scrivendo tramite la pagina GitHub del progetto. Puoi anche rivolgerti
 al Garante per la protezione dei dati personali (www.garanteprivacy.it).
 
+## Controllo anti-robot
+Quando entri (anche da ospite) o accedi con email e password, **Cloudflare Turnstile** (Cloudflare Inc.)
+verifica, di solito senza farti fare niente, che tu sia una persona e non un programma che crea account finti.
+Per farlo riceve dati tecnici del dispositivo e del browser, come l'indirizzo IP, e li usa solo per questo
+controllo (base giuridica: il legittimo interesse a proteggere il servizio dagli abusi).
+Informativa: https://www.cloudflare.com/turnstile-privacy-policy/
+
 ## Quando giochi con amici e clan
 Chat, clan e sfide passano dai server di **Supabase** (gli stessi degli account, in Europa),
 su canali che possono usare solo i due giocatori coinvolti. Mentre il gioco è aperto e online:

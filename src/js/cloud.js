@@ -28,11 +28,16 @@
     ensure();
   }
 
+  // Il captcha (vedi captcha.js): un "biglietto" che dimostra che è una persona a entrare
+  const captcha = () => (root.Captcha ? root.Captcha.token() : Promise.resolve(undefined));
+
   // Se non c'è nessuno collegato, entra come ospite
   async function ensure() {
     const { data } = await sb.auth.getSession();
     if (data && data.session) return;
-    const r = await sb.auth.signInAnonymously();
+    let captchaToken;
+    try { captchaToken = await captcha(); } catch (e) { cb.onError && cb.onError(italiano(e)); return; }
+    const r = await sb.auth.signInAnonymously({ options: { captchaToken } });
     if (r.error) cb.onError && cb.onError(italiano(r.error));
   }
 
@@ -76,7 +81,9 @@
   }
   async function login(email, password) {
     if (!sb) return 'Non collegato: riprova tra poco';
-    const { error } = await sb.auth.signInWithPassword({ email, password });
+    let captchaToken;
+    try { captchaToken = await captcha(); } catch (e) { return italiano(e); }
+    const { error } = await sb.auth.signInWithPassword({ email, password, options: { captchaToken } });
     return error ? italiano(error) : null;
   }
   // Cancella l'account e tutti i suoi salvataggi online
@@ -106,6 +113,7 @@
     if (/rate limit|too many/i.test(m)) return 'Troppi tentativi: riprova tra qualche minuto';
     if (/anonymous sign-ins are disabled/i.test(m)) return 'L\'accesso da ospite non è ancora attivo';
     if (/invalid email|unable to validate email/i.test(m)) return 'Email non valida';
+    if (/captcha/i.test(m)) return 'Controllo anti-robot non superato: riprova';
     if (/fetch|network/i.test(m)) return 'Niente connessione a internet';
     if (/provider is not enabled|unsupported provider/i.test(m)) return "L'accesso con Google non è ancora attivo";
     return 'Errore: ' + m.slice(0, 120);
