@@ -1,0 +1,638 @@
+// Il profilo del giocatore: coppe, monete, carte, mazzo, bauli, amici e clan.
+// Viene salvato nel dispositivo (localStorage).
+(function (root) {
+  'use strict';
+  const isNode = typeof module !== 'undefined' && module.exports;
+  const D = isNode ? require('./cards.js') : root.GameData;
+
+  const KEY = 'guerra-dei-profilo-v1';
+  const WIN_TROPHIES = 30, LOSS_TROPHIES = 20;
+
+  const randomId = (n) => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let s = '';
+    for (let i = 0; i < n; i++) s += chars[Math.floor(Math.random() * chars.length)];
+    return s;
+  };
+
+  function fresh() {
+    const cards = {};
+    for (const c of D.CARDS) if (c.arena === 0) cards[c.key] = { level: 1, count: 0 };
+    return {
+      id: randomId(6), name: 'Eroe' + Math.floor(100 + Math.random() * 900),
+      trophies: 0, best: 0, gold: 100, gems: 50, wins: 0, losses: 0, draws: 0,
+      giftDay: '', shopDay: '', shopBought: [],
+      cards, deck: D.START_DECK.slice(),
+      chests: [{ type: 'legno', arena: 0, unlockAt: null }, null, null, null],
+      chestIndex: 0, arenaStats: {}, roadClaimed: [], tour: null, tourDay: '', missioni: null,
+      friends: [], chats: {}, clan: null, lastRequest: 0, credited: [],
+      sound: true, seen: {},
+    };
+  }
+
+  function load(storage) {
+    try {
+      const raw = storage && storage.getItem(KEY);
+      if (raw) {
+        const p = Object.assign(fresh(), JSON.parse(raw));
+        // Se in un aggiornamento sono comparse nuove carte di arene già raggiunte, aggiungile
+        unlockArenaCards(p);
+        return p;
+      }
+    } catch (e) { /* profilo rovinato: si riparte */ }
+    return fresh();
+  }
+
+  // Profilo ricostruito dai dati salvati online (stesse regole del caricamento dal telefono)
+  function restore(data) {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+    const p = Object.assign(fresh(), data);
+    unlockArenaCards(p);
+    return p;
+  }
+  function save(p, storage) {
+    try { storage && storage.setItem(KEY, JSON.stringify(p)); } catch (e) { /* spazio pieno o modalità privata */ }
+  }
+
+  const arena = (p) => D.arenaFor(p.best);
+
+  // Le carte delle arene raggiunte entrano nella collezione
+  function unlockArenaCards(p) {
+    const found = [];
+    for (const c of D.CARDS) {
+      if (c.arena <= arena(p) && !p.cards[c.key]) { p.cards[c.key] = { level: 1, count: 0 }; found.push(c.key); }
+    }
+    return found;
+  }
+
+  function avgLevel(p) {
+    return p.deck.reduce((a, k) => a + (p.cards[k] ? p.cards[k].level : 1), 0) / p.deck.length;
+  }
+  const deckLevels = (p) => {
+    const lv = {};
+    for (const k of p.deck) lv[k] = p.cards[k] ? p.cards[k].level : 1;
+    return lv;
+  };
+
+  // Copie necessarie e costo in monete per il prossimo livello (null = già al massimo)
+  function upgradeInfo(p, key) {
+    const c = p.cards[key];
+    if (!c || c.level >= D.MAX_LEVEL) return null;
+    const r = D.RARITY[D.BY_KEY[key].rarity];
+    return { copies: r.copies[c.level - 1], gold: D.UPGRADE_GOLD[c.level - 1] };
+  }
+  function canUpgrade(p, key) {
+    const u = upgradeInfo(p, key);
+    return !!u && p.cards[key].count >= u.copies && p.gold >= u.gold;
+  }
+  function upgrade(p, key) {
+    if (!canUpgrade(p, key)) return false;
+    const u = upgradeInfo(p, key);
+    p.cards[key].count -= u.copies;
+    p.gold -= u.gold;
+    p.cards[key].level++;
+    return true;
+  }
+
+  function setDeckCard(p, slot, key) {
+    if (!p.cards[key] || slot < 0 || slot > 7) return false;
+    const other = p.deck.indexOf(key);
+    if (other >= 0) p.deck[other] = p.deck[slot];   // se era già nel mazzo, scambia
+    p.deck[slot] = key;
+    return true;
+  }
+
+  // Esito di una partita in classifica: coppe, statistiche e (se c'è posto) un baule
+  function applyResult(p, winner, crowns) {
+    const before = arena(p);
+    const out = { trophies: 0, chest: null, gold: 0, newArena: null, newCards: [] };
+    // Vittorie, sconfitte e bauli contati arena per arena
+    const st = p.arenaStats[before] || (p.arenaStats[before] = { w: 0, l: 0, d: 0, chests: 0 });
+    if (winner === 0) st.w++; else if (winner === 1) st.l++; else st.d++;
+    if (winner === 0) {
+      p.wins++;
+      out.trophies = WIN_TROPHIES;
+      out.gold = 5 + 5 * crowns;
+      p.gold += out.gold;
+      const slot = p.chests.findIndex((c) => !c);
+      if (slot >= 0) {
+        const type = D.CHEST_CYCLE[p.chestIndex % D.CHEST_CYCLE.length];
+        p.chestIndex++;
+        p.chests[slot] = { type, arena: arena(p), unlockAt: null };
+        out.chest = type;
+        st.chests++;
+      } else out.chestsFull = true;
+    } else if (winner === 1) {
+      p.losses++;
+      // Non si scende sotto la soglia dell'arena raggiunta
+      const floor = D.ARENAS[D.arenaFor(p.trophies)].trophies;
+      out.trophies = -Math.min(LOSS_TROPHIES, p.trophies - floor);
+    } else p.draws++;
+    p.trophies += out.trophies;
+    p.best = Math.max(p.best, p.trophies);
+    if (arena(p) > before) {
+      out.newArena = arena(p);
+      out.newCards = unlockArenaCards(p);
+    }
+    return out;
+  }
+
+  // ---- Bauli ----
+  function chestState(chest, now) {
+    if (!chest) return 'vuoto';
+    if (chest.unlockAt == null) return 'chiuso';
+    return now >= chest.unlockAt ? 'pronto' : 'in apertura';
+  }
+  function startUnlock(p, slot, now) {
+    if (p.chests.some((c) => c && c.unlockAt != null && now < c.unlockAt)) return false;   // uno alla volta
+    const c = p.chests[slot];
+    if (!c || c.unlockAt != null) return false;
+    c.unlockAt = now + D.CHESTS[c.type].time * 1000;
+    return true;
+  }
+
+  // Estrae carte a caso tra quelle sbloccate, rispettando le rarità
+  function rollCards(p, type, arenaIdx, rnd) {
+    rnd = rnd || Math.random;
+    const info = D.CHESTS[type];
+    const pool = D.CARDS.filter((c) => c.arena <= arenaIdx);
+    const byRarity = (r) => pool.filter((c) => c.rarity === r);
+    const order = ['comune', 'rara', 'epica', 'leggendaria'];
+    const total = Math.round(info.cards * (1 + arenaIdx * 0.25));
+    const result = {};
+    // Le carte arrivano in 1-4 "mucchietti"
+    const stacks = Math.min(4, Math.max(1, Math.ceil(total / 8)));
+    let left = total;
+    for (let i = 0; i < stacks; i++) {
+      let rarity = 'comune';
+      const x = rnd() * 100;
+      if (x < 1) rarity = 'leggendaria'; else if (x < 6) rarity = 'epica'; else if (x < 28) rarity = 'rara';
+      if (i === 0 && info.minRarity && order.indexOf(rarity) < order.indexOf(info.minRarity)) rarity = info.minRarity;
+      while (!byRarity(rarity).length) rarity = order[order.indexOf(rarity) - 1];
+      const list = byRarity(rarity);
+      const card = list[Math.floor(rnd() * list.length)];
+      // Le carte rare valgono di più: se ne trovano meno
+      const share = i === stacks - 1 ? left : Math.ceil(left / (stacks - i));
+      const n = Math.max(1, Math.round(share / ({ comune: 1, rara: 3, epica: 10, leggendaria: 30 })[rarity]));
+      left -= share;
+      result[card.key] = (result[card.key] || 0) + n;
+    }
+    return result;
+  }
+
+  function addCards(p, cards) {
+    for (const [key, n] of Object.entries(cards)) {
+      if (!Object.prototype.hasOwnProperty.call(D.BY_KEY, key)) continue; // solo carte vere
+      if (!p.cards[key]) p.cards[key] = { level: 1, count: 0 };
+      p.cards[key].count += n;
+    }
+  }
+
+  function openChest(p, slot, now, rnd) {
+    const c = p.chests[slot];
+    if (chestState(c, now) !== 'pronto') return null;
+    p.chests[slot] = null;
+    return openContents(p, c.type, c.arena, rnd);
+  }
+  function openContents(p, type, arenaIdx, rnd) {
+    rnd = rnd || Math.random;
+    const info = D.CHESTS[type];
+    const gold = Math.round((info.gold[0] + rnd() * (info.gold[1] - info.gold[0])) * (1 + arenaIdx * 0.3));
+    // Le gemme non ci sono sempre: dipende dal tipo di baule
+    const gems = info.gems && rnd() < info.gemChance ? info.gems[0] + Math.floor(rnd() * (info.gems[1] - info.gems[0] + 1)) : 0;
+    const cards = rollCards(p, type, arenaIdx, rnd);
+    p.gold += gold;
+    p.gems = (p.gems || 0) + gems;
+    addCards(p, cards);
+    return { type, gold, gems, cards };
+  }
+
+  // ---- Il "giorno" del gioco: cambia a mezzanotte, ora di Roma ----
+  function romeParts(now) {
+    const parts = {};
+    const fmt = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Rome', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
+    for (const x of fmt.formatToParts(new Date(now))) parts[x.type] = x.value;
+    return parts;
+  }
+  function romeDay(now) {
+    const r = romeParts(now);
+    return `${r.year}-${r.month}-${r.day}`;
+  }
+  // Millisecondi che mancano alla prossima mezzanotte di Roma
+  function msToRomeMidnight(now) {
+    const r = romeParts(now);
+    const passed = ((+r.hour * 60 + +r.minute) * 60 + +r.second) * 1000 + (now % 1000);
+    return 24 * 3600 * 1000 - passed;
+  }
+
+  // Baule del giorno: uno al giorno
+  const giftReady = (p, now) => p.giftDay !== romeDay(now);
+  function openGift(p, now, rnd) {
+    if (!giftReady(p, now)) return null;
+    p.giftDay = romeDay(now);
+    return openContents(p, 'dono', arena(p), rnd);
+  }
+
+  // ---- Negozio ----
+  // Numero "casuale" fisso per un certo testo: così le offerte sono le stesse per tutto il giorno
+  function seedOf(text) {
+    let h = 2166136261;
+    for (let i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+  }
+  function seeded(seed) {
+    let a = seed;
+    return () => {
+      a = (a + 0x6D2B79F5) >>> 0;
+      let t = Math.imul(a ^ (a >>> 15), a | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  // Le 6 carte in vendita oggi (solo carte già trovate)
+  function shopOffers(p, now) {
+    const day = romeDay(now);
+    // Non cambia il profilo: se è un altro giorno, gli acquisti di ieri non contano
+    const comprate = p.shopDay === day ? p.shopBought : [];
+    // Il seme lo sceglie il server (shopSeed): così telefono e server vedono le stesse offerte
+    // anche se il codice amico cambia. Senza (profilo mai passato al server) si usa il codice.
+    const seme = Number.isInteger(p.shopSeed) ? String(p.shopSeed) : p.id;
+    const rnd = seeded(seedOf(day + seme));
+    const owned = D.CARDS.filter((c) => p.cards[c.key]);
+    const wanted = ['comune', 'comune', 'rara', 'rara', 'epica', 'leggendaria'];
+    const used = new Set();
+    const offers = [];
+    for (const want of wanted) {
+      const order = ['leggendaria', 'epica', 'rara', 'comune'];
+      let list = [];
+      for (let i = order.indexOf(want); i < order.length && !list.length; i++) {
+        list = owned.filter((c) => c.rarity === order[i] && !used.has(c.key));
+      }
+      if (!list.length) list = owned.filter((c) => !used.has(c.key));
+      if (!list.length) break;
+      const card = list[Math.floor(rnd() * list.length)];
+      used.add(card.key);
+      const s = D.SHOP_CARD[card.rarity];
+      offers.push({ key: card.key, n: s.n, price: s.price, cur: s.cur, bought: comprate.includes(card.key) });
+    }
+    return offers;
+  }
+  function buyOffer(p, key, now) {
+    const o = shopOffers(p, now).find((x) => x.key === key);
+    if (!o || o.bought) return false;
+    if (o.cur === 'gold' ? p.gold < o.price : p.gems < o.price) return false;
+    // nuovo giorno: si riparte con la lista degli acquisti vuota
+    const day = romeDay(now);
+    if (p.shopDay !== day) { p.shopDay = day; p.shopBought = []; }
+    if (o.cur === 'gold') p.gold -= o.price; else p.gems -= o.price;
+    addCards(p, { [key]: o.n });
+    p.shopBought.push(key);
+    return true;
+  }
+  function buyGemItem(p, id, rnd) {
+    const it = D.GEM_SHOP.find((x) => x.id === id);
+    if (!it || (p.gems || 0) < it.price) return null;
+    p.gems -= it.price;
+    if (it.kind === 'gold') { p.gold += it.amount; return { gold: it.amount }; }
+    return openContents(p, it.chest, arena(p), rnd);
+  }
+  // Aprire subito un baule chiuso o in apertura: 1 gemma per ogni minuto che manca
+  function skipCost(chest, now) {
+    if (!chest) return 0;
+    const left = chest.unlockAt == null ? D.CHESTS[chest.type].time * 1000 : chest.unlockAt - now;
+    return Math.max(1, Math.ceil(left / 60000));
+  }
+  function skipChest(p, slot, now, rnd) {
+    const c = p.chests[slot];
+    if (!c || chestState(c, now) === 'pronto') return null;
+    const cost = skipCost(c, now);
+    if ((p.gems || 0) < cost) return null;
+    p.gems -= cost;
+    p.chests[slot] = null;
+    return openContents(p, c.type, c.arena, rnd);
+  }
+
+  // ---- Cammino dei trofei: un premio ogni 50 coppe, dentro ogni arena ----
+  // Restituisce i premi dell'arena i: [{ t: coppe, kind: 'gold'|'gems'|'chest', amount|chest }]
+  function road(i) {
+    const from = D.ARENAS[i].trophies;
+    const to = i + 1 < D.ARENAS.length ? D.ARENAS[i + 1].trophies : from + 400;
+    const list = [];
+    let n = 0;
+    for (let t = from + 50; t < to || (i + 1 === D.ARENAS.length && t <= to); t += 50, n++) {
+      const step = n % 4;
+      if (step === 0) list.push({ t, kind: 'gold', amount: 50 + i * 40 + n * 10 });
+      else if (step === 1) list.push({ t, kind: 'chest', chest: i >= 4 ? 'oro' : 'argento' });
+      else if (step === 2) list.push({ t, kind: 'gems', amount: 10 + i * 4 });
+      else list.push({ t, kind: 'chest', chest: i >= 3 ? 'magico' : 'oro' });
+    }
+    // L'ultimo premio di ogni arena è sempre un baule speciale
+    if (list.length) list[list.length - 1] = { t: list[list.length - 1].t, kind: 'chest', chest: i >= 2 ? 'magico' : 'oro' };
+    return list;
+  }
+  const roadReady = (p, r) => p.best >= r.t && !p.roadClaimed.includes(r.t);
+  function roadPending(p) {
+    let n = 0;
+    for (let i = 0; i < D.ARENAS.length; i++) for (const r of road(i)) if (roadReady(p, r)) n++;
+    return n;
+  }
+  function claimRoad(p, arenaIdx, t, rnd) {
+    const r = road(arenaIdx).find((x) => x.t === t);
+    if (!r || !roadReady(p, r)) return null;
+    p.roadClaimed.push(t);
+    if (r.kind === 'gold') { p.gold += r.amount; return { gold: r.amount }; }
+    if (r.kind === 'gems') { p.gems = (p.gems || 0) + r.amount; return { gems: r.amount }; }
+    return openContents(p, r.chest, arenaIdx, rnd);
+  }
+
+  // ---- Torneo: si gioca finché non si perde 3 volte o si vince 12 volte ----
+  const TOUR_MAX_WINS = 12, TOUR_MAX_LOSSES = 3, TOUR_RETRY_GEMS = 10, TOUR_LEVEL = 7;
+  function tourPrize(wins) {
+    return {
+      gold: 30 + wins * 45,
+      gems: wins >= 6 ? wins * 2 : 0,
+      chest: wins >= 12 ? 'magico' : wins >= 9 ? 'magico' : wins >= 6 ? 'oro' : wins >= 3 ? 'argento' : null,
+    };
+  }
+  const tourFree = (p, now) => p.tourDay !== romeDay(now);
+  // Entra nel torneo: gratis una volta al giorno, poi costa gemme
+  function tourStart(p, now) {
+    if (p.tour && !p.tour.done) return true;
+    if (tourFree(p, now)) p.tourDay = romeDay(now);
+    else if ((p.gems || 0) >= TOUR_RETRY_GEMS) p.gems -= TOUR_RETRY_GEMS;
+    else return false;
+    p.tour = { wins: 0, losses: 0, done: false };
+    return true;
+  }
+  function tourResult(p, winner) {
+    const t = p.tour;
+    if (!t || t.done) return null;
+    if (winner === 0) t.wins++; else if (winner === 1) t.losses++;
+    if (t.wins >= TOUR_MAX_WINS || t.losses >= TOUR_MAX_LOSSES) t.done = true;
+    return t;
+  }
+  // Ritira i premi e chiude il torneo (si può anche ritirare prima della fine)
+  function tourClaim(p, arenaIdx, rnd) {
+    const t = p.tour;
+    if (!t) return null;
+    const prize = tourPrize(t.wins);
+    p.tour = null;
+    p.gold += prize.gold;
+    p.gems = (p.gems || 0) + prize.gems;
+    const out = { wins: t.wins, gold: prize.gold, gems: prize.gems, chest: null };
+    if (prize.chest) out.chest = openContents(p, prize.chest, arenaIdx, rnd);
+    return out;
+  }
+  const tourDifficulty = (wins) => (wins < 3 ? 'facile' : wins < 7 ? 'medio' : 'difficile');
+
+  // ---- Amici e clan (i dati: la parte "online" è in social.js) ----
+  function addFriend(p, info) {
+    if (!info || !info.id || info.id === p.id) return null;
+    let f = p.friends.find((x) => x.id === info.id);
+    if (!f) { f = { id: info.id, name: info.name || info.id, trophies: 0, wins: 0, losses: 0 }; p.friends.push(f); }
+    if (info.name) f.name = info.name;
+    if (info.trophies != null) f.trophies = info.trophies;
+    if (info.clan !== undefined) f.clan = info.clan;
+    f.seen = info.seen || f.seen;
+    return f;
+  }
+  // Chiavi segrete delle amicizie: alla prima connessione ognuno manda all'altro una chiave
+  // tutta sua per quell'amicizia. Dalle volte dopo, chi si presenta con il codice di un amico
+  // ma senza la chiave giusta è un impostore e viene respinto.
+  function myFriendKey(p, id, make) {
+    const f = addFriend(p, { id });
+    if (!f) return '';
+    if (!f.myKey) f.myKey = make();
+    return f.myKey;
+  }
+  function checkFriendKey(p, id, key) {
+    const f = p.friends.find((x) => x.id === id);
+    key = typeof key === 'string' ? key.slice(0, 40) : '';
+    if (!f) return false;
+    if (!f.theirKey) { if (key) f.theirKey = key; return true; }   // prima volta: ci fidiamo e la ricordiamo
+    return key === f.theirKey;
+  }
+  function removeFriend(p, id) {
+    p.friends = p.friends.filter((f) => f.id !== id);
+    delete p.chats[id];
+  }
+  function addChat(p, withId, msg) {
+    const list = p.chats[withId] || (p.chats[withId] = []);
+    if (list.some((m) => m.id === msg.id)) return false;
+    list.push(msg);
+    list.sort((a, b) => a.at - b.at);
+    if (list.length > 100) list.splice(0, list.length - 100);
+    return true;
+  }
+
+  function createClan(p, name, badge) {
+    p.clan = {
+      id: randomId(8), name: name.trim().slice(0, 24) || 'Clan', badge: badge || '🏛️',
+      leader: p.id, members: [{ id: p.id, name: p.name, trophies: p.trophies, role: 'capo' }],
+      chat: [], updated: Date.now(),
+    };
+    return p.clan;
+  }
+  // Il clan che arriva da un altro giocatore può essere stato manomesso: si tengono solo
+  // dati del tipo giusto e di lunghezza limitata (niente codice nascosto nei testi, niente liste enormi)
+  const isCard = (k) => typeof k === 'string' && Object.prototype.hasOwnProperty.call(D.BY_KEY, k);
+  const BADGES = ['🏛️', '⚡', '🔱', '🦉', '🐺', '🐉', '🛡️', '🦅', '🌿', '☀️', '🌊', '🔥'];
+  const str = (v, n) => String(v == null ? '' : v).slice(0, n);
+  const num = (v, max) => Math.max(0, Math.min(max, Math.floor(Number(v)) || 0));
+  function cleanClan(c) {
+    if (!c || typeof c !== 'object' || typeof c.id !== 'string') return null;
+    const members = (Array.isArray(c.members) ? c.members : []).slice(0, 50)
+      .filter((m) => m && typeof m.id === 'string')
+      .map((m) => ({ id: str(m.id, 24), name: str(m.name, 20), trophies: num(m.trophies, 1e6), role: m.role === 'capo' ? 'capo' : 'membro', at: num(m.at, 1e14), left: !!m.left }));
+    const chat = (Array.isArray(c.chat) ? c.chat : []).slice(-150)
+      .filter((m) => m && typeof m.id === 'string' && (m.type !== 'request' || isCard(m.card)))
+      .map((m) => {
+        // l'id di una richiesta di carte è un uuid del server (36 caratteri)
+        const out = { id: str(m.id, 40), from: str(m.from, 24), name: str(m.name, 20), text: str(m.text, 200), at: num(m.at, 1e14) };
+        if (m.type === 'info') out.type = 'info';
+        if (m.type === 'request') {
+          out.type = 'request'; out.card = m.card; out.max = Math.min(num(m.max, 10), requestMax(m.card));
+          out.donations = (Array.isArray(m.donations) ? m.donations : []).slice(0, out.max)
+            .filter((d) => d && typeof d.id === 'string').map((d) => ({ id: str(d.id, 24), from: str(d.from, 24) }));
+        }
+        return out;
+      });
+    return {
+      id: str(c.id, 24), name: str(c.name, 24) || 'Clan', badge: BADGES.includes(c.badge) ? c.badge : '🏛️',
+      leader: str(c.leader, 24), members, chat, updated: num(c.updated, 1e14),
+    };
+  }
+
+  // Unisce due versioni dello stesso clan (quella di un altro membro e la nostra)
+  function mergeClan(p, other) {
+    other = cleanClan(other);
+    if (!other || !p.clan || other.id !== p.clan.id) return false;
+    const c = p.clan;
+    let changed = false;
+    for (const m of other.members || []) {
+      const mine = c.members.find((x) => x.id === m.id);
+      if (!mine) { c.members.push(Object.assign({}, m)); changed = true; }
+      else if ((m.at || 0) > (mine.at || 0)) { Object.assign(mine, m); changed = true; }
+    }
+    // Chi esce resta in elenco con left = true (così lo sanno anche gli altri): vince l'informazione più recente
+    for (const msg of other.chat || []) {
+      const mine = c.chat.find((x) => x.id === msg.id);
+      if (!mine) { c.chat.push(JSON.parse(JSON.stringify(msg))); changed = true; }
+      else if (msg.donations && msg.donations.length > (mine.donations || []).length) {
+        const ids = new Set((mine.donations || []).map((d) => d.id));
+        mine.donations = (mine.donations || []).concat(msg.donations.filter((d) => !ids.has(d.id))).slice(0, mine.max || 10);
+        changed = true;
+      }
+    }
+    if ((other.updated || 0) > (c.updated || 0)) { c.name = other.name; c.badge = other.badge; c.leader = other.leader; c.updated = other.updated; }
+    c.chat.sort((a, b) => a.at - b.at);
+    if (c.chat.length > 150) c.chat.splice(0, c.chat.length - 150);
+    return changed;
+  }
+
+  // Richiesta di carte nel clan: una ogni ora
+  const REQUEST_EVERY = 3600 * 1000;
+  function canRequest(p, now) { return !!p.clan && now - p.lastRequest >= REQUEST_EVERY; }
+  function requestMax(key) { return ({ comune: 10, rara: 3, epica: 1, leggendaria: 0 })[D.BY_KEY[key].rarity]; }
+
+  // Le donazioni ricevute si aggiungono una volta sola
+  function creditDonations(p) {
+    if (!p.clan) return 0;
+    let got = 0;
+    for (const m of p.clan.chat) {
+      if (m.type !== 'request' || m.from !== p.id || !isCard(m.card)) continue;
+      for (const d of m.donations || []) {
+        if (p.credited.includes(d.id)) continue;
+        p.credited.push(d.id);
+        addCards(p, { [m.card]: 1 });
+        got++;
+      }
+    }
+    if (p.credited.length > 500) p.credited.splice(0, p.credited.length - 500);
+    return got;
+  }
+
+  // ---- Missioni del giorno e baule della corona ----
+  // Ogni giorno (ora di Roma) 3 missioni scelte tra queste, uguali per tutti.
+  // Contano solo le battaglie di scalata e torneo, e le registra il server.
+  const MISSIONI = [
+    { id: 'vinci', testo: 'Vinci 3 battaglie', n: 3, gold: 60, gems: 0 },
+    { id: 'gioca', testo: 'Gioca 5 battaglie', n: 5, gold: 40, gems: 0 },
+    { id: 'corone', testo: 'Fai 6 corone', n: 6, gold: 50, gems: 2 },
+    { id: 'carte', testo: 'Gioca 40 carte', n: 40, gold: 40, gems: 0 },
+    { id: 'tre', testo: 'Vinci con 3 corone', n: 1, gold: 30, gems: 5 },
+  ];
+  const CORONE_BAULE = 10;
+
+  // Sfida della settimana: ogni settimana il torneo ha una regola speciale (cambia il lunedì)
+  const REGOLE_SETTIMANA = [
+    { id: 'ambrosia', nome: 'Ambrosia doppia', desc: "L'ambrosia si ricarica sempre al doppio.", ambMult: 2 },
+    { id: 'lampo', nome: 'Battaglia lampo', desc: 'Si gioca 2 minuti invece di 3.', duration: 120 },
+    { id: 'furia', nome: 'Furia degli dèi', desc: 'Ambrosia doppia e battaglie di 2 minuti.', ambMult: 2, duration: 120 },
+  ];
+  // il 1/1/1970 era giovedì: +3 giorni fa cominciare le settimane di lunedì
+  const regolaSettimana = (now) => REGOLE_SETTIMANA[Math.floor((now + 3 * 86400000) / (7 * 86400000)) % REGOLE_SETTIMANA.length];   // corone di oggi che servono per il baule della corona
+  function missioniOggi(p, now) {
+    const day = romeDay(now);
+    if (!p.missioni || p.missioni.day !== day) {
+      const r = seeded(seedOf('missioni ' + day)), ids = MISSIONI.map((m) => m.id);
+      for (let i = ids.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [ids[i], ids[j]] = [ids[j], ids[i]]; }
+      p.missioni = { day, lista: ids.slice(0, 3), fatte: {}, ritirate: [], corone: 0, baule: false };
+    }
+    return p.missioni;
+  }
+  // Dopo una battaglia vera: vinta (sì/no), corone fatte, carte giocate
+  function segnaMissioni(p, now, vinta, corone, carte) {
+    const m = missioniOggi(p, now);
+    const piu = (id, v) => { if (v > 0) m.fatte[id] = (m.fatte[id] || 0) + v; };
+    piu('gioca', 1);
+    piu('vinci', vinta ? 1 : 0);
+    piu('corone', corone);
+    piu('carte', carte);
+    piu('tre', vinta && corone >= 3 ? 1 : 0);
+    m.corone += corone;
+  }
+  function missioneFatta(p, now, id) {
+    const m = missioniOggi(p, now), def = MISSIONI.find((x) => x.id === id);
+    return !!def && m.lista.includes(id) && !m.ritirate.includes(id) && (m.fatte[id] || 0) >= def.n;
+  }
+  function ritiraMissione(p, now, id) {
+    if (!missioneFatta(p, now, id)) return null;
+    const def = MISSIONI.find((x) => x.id === id);
+    p.missioni.ritirate.push(id);
+    p.gold += def.gold;
+    p.gems = (p.gems || 0) + def.gems;
+    return { id, gold: def.gold, gems: def.gems };
+  }
+  const bauleCoronaPronto = (p, now) => { const m = missioniOggi(p, now); return !m.baule && m.corone >= CORONE_BAULE; };
+  function apriBauleCorona(p, now, rnd) {
+    if (!bauleCoronaPronto(p, now)) return null;
+    p.missioni.baule = true;
+    return openContents(p, 'oro', arena(p), rnd);
+  }
+
+  // ---- Classifica: "Mondo" (la prepara il server) e "Amici" (la fa il telefono) ----
+  // Di ogni giocatore escono SOLO nome, coppe, arena e nome/stemma del clan. Mai id, email,
+  // codice amico o altro: la riga si costruisce nuova, campo per campo.
+  const CLASSIFICA_MAX = 50;
+  const pulito = (v, n) => str(v, 60).replace(/[\u0000-\u001f\u007f-\u009f]/g, '').trim().slice(0, n);
+  // La riga pubblica di un giocatore, oppure null se non va in classifica (niente nome, oppure 0 coppe
+  // quando conZero è falso). `g` ha name, trophies, best e clan { name, badge }.
+  function rigaClassifica(g, conZero) {
+    if (!g || typeof g !== 'object') return null;
+    const name = pulito(g.name, 16);
+    const trophies = num(g.trophies, 1e6);
+    if (!name || (trophies <= 0 && !conZero)) return null;
+    const c = g.clan && typeof g.clan === 'object' ? g.clan : null;
+    const nomeClan = c ? pulito(c.name, 24) : '';
+    return {
+      name, trophies,
+      // l'arena si calcola dal record di coppe, come nel profilo (non si scende mai di arena)
+      arena: D.arenaFor(Math.max(trophies, num(g.best, 1e6))),
+      clan: nomeClan ? { name: nomeClan, badge: BADGES.includes(c.badge) ? c.badge : '🏛️' } : null,
+    };
+  }
+  // Dalle righe del database (già ordinate, con user_id) alla risposta per il telefono.
+  // `utente` = chi chiede; `mio` = il suo salvataggio; `posizione` = la sua posizione contata dal database
+  // (null se non si sa). Restituisce { top: [{ pos, name, trophies, arena, clan, tu }], io }.
+  function classificaMondo(righe, utente, mio, posizione) {
+    const top = [];
+    let mia = null;
+    for (const g of Array.isArray(righe) ? righe : []) {
+      if (top.length >= CLASSIFICA_MAX) break;
+      const r = rigaClassifica(g);
+      if (!r) continue;
+      r.pos = top.length + 1;
+      r.tu = !!utente && g.user_id === utente;
+      if (r.tu) mia = r.pos;
+      top.push(r);
+    }
+    const io = rigaClassifica(mio);
+    if (io) io.pos = mia || (Number.isInteger(posizione) && posizione > 0 ? posizione : null);
+    return { top, io };
+  }
+  // La classifica degli amici (con te dentro): funziona anche senza internet
+  function classificaAmici(p) {
+    const tutti = (Array.isArray(p.friends) ? p.friends : []).map((f) => rigaClassifica(f, true)).filter(Boolean);
+    const io = rigaClassifica(p, true);
+    if (io) { io.tu = true; tutti.push(io); }
+    // a parità di coppe tu vieni prima
+    tutti.sort((a, b) => b.trophies - a.trophies || (b.tu ? 1 : 0) - (a.tu ? 1 : 0));
+    tutti.forEach((r, i) => { r.pos = i + 1; r.tu = !!r.tu; });
+    return tutti;
+  }
+
+  const api = {
+    KEY, fresh, load, save, arena, avgLevel, deckLevels, upgradeInfo, canUpgrade, upgrade, setDeckCard,
+    applyResult, chestState, startUnlock, openChest, rollCards, addCards, giftReady, openGift, unlockArenaCards,
+    romeDay, msToRomeMidnight, shopOffers, buyOffer, buyGemItem, skipCost, skipChest,
+    road, roadReady, roadPending, claimRoad,
+    tourPrize, tourFree, tourStart, tourResult, tourClaim, tourDifficulty, TOUR_MAX_WINS, TOUR_MAX_LOSSES, TOUR_RETRY_GEMS, TOUR_LEVEL,
+    restore, addFriend, removeFriend, myFriendKey, checkFriendKey, addChat, createClan, mergeClan, cleanClan, canRequest, requestMax, creditDonations, randomId,
+    WIN_TROPHIES, LOSS_TROPHIES, REQUEST_EVERY,
+    MISSIONI, CORONE_BAULE, REGOLE_SETTIMANA, regolaSettimana, missioniOggi, segnaMissioni, missioneFatta, ritiraMissione, bauleCoronaPronto, apriBauleCorona,
+    CLASSIFICA_MAX, rigaClassifica, classificaMondo, classificaAmici,
+  };
+  if (isNode) module.exports = api;
+  else root.Profile = api;
+})(typeof self !== 'undefined' ? self : this);

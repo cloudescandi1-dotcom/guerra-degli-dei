@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>Guerra degli Dèi</title>
+  <meta name="description" content="Battaglie di carte in tempo reale con eroi e mostri della mitologia greca e romana.">
+  <meta name="theme-color" content="#173375">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Guerra Dèi">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://vnegcvnpribnojkxmegg.supabase.co wss://vnegcvnpribnojkxmegg.supabase.co; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="edge-top" aria-hidden="true"></div>
+  <!-- Telefono in orizzontale: il gioco si usa in verticale (come Clash Royale) -->
+  <div class="rotate-hint"><div><span>📱</span><b>Gira il telefono in verticale</b></div></div>
+  <!-- Menu principale -->
+  <section id="home" class="screen">
+    <header class="top">
+      <button id="btn-profile" class="profile" type="button">
+        <span class="lvl-shield"><b id="top-level">1</b></span>
+        <span class="pname"><b id="top-name">Eroe</b><span class="tro">🏆 <span id="top-trophies">0</span></span></span>
+      </button>
+      <div class="top-right">
+        <button class="res" type="button" data-go="negozio"><span class="ico">🪙</span><b id="top-gold">0</b><i>+</i></button>
+        <button class="res gems" type="button" data-go="negozio"><span class="ico">💎</span><b id="top-gems">0</b><i>+</i></button>
+        <button id="btn-settings" class="icon-btn" type="button" title="Impostazioni">☰<span id="net-dot" class="net-dot" title="Collegamento amici"></span></button>
+      </div>
+    </header>
+
+    <main class="tabs">
+      <div id="tab-negozio" class="tab"></div>
+      <div id="tab-carte" class="tab"></div>
+      <div id="tab-battaglia" class="tab active"></div>
+      <div id="tab-clan" class="tab"></div>
+      <div id="tab-eventi" class="tab"></div>
+    </main>
+
+    <nav class="tabbar">
+      <button data-tab="negozio" type="button"><span class="ti"><svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="tb-st" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#9aa6b5"/></linearGradient><linearGradient id="tb-gd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe680"/><stop offset="1" stop-color="#e5a21c"/></linearGradient></defs><path d="M6 18 L24 8 L42 18 Z" fill="url(#tb-gd)" stroke="#0f1b3a" stroke-width="2.4" stroke-linejoin="round"/><rect x="9" y="18" width="30" height="20" rx="2" fill="#c0392b" stroke="#0f1b3a" stroke-width="2.4"/><path d="M9 18 h30" stroke="#ffe680" stroke-width="3"/><rect x="19" y="26" width="10" height="12" fill="#5a3418" stroke="#0f1b3a" stroke-width="2"/><circle cx="24" cy="14" r="2.6" fill="#fff"/></svg></span><em>Negozio</em></button>
+      <button data-tab="carte" type="button"><span class="ti"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="8" y="10" width="20" height="28" rx="3" fill="#8b5cf6" stroke="#0f1b3a" stroke-width="2.4" transform="rotate(-12 18 24)"/><rect x="18" y="8" width="22" height="30" rx="3" fill="#3f8ff0" stroke="#0f1b3a" stroke-width="2.4" transform="rotate(8 29 23)"/><circle cx="29" cy="20" r="5" fill="url(#tb-gd)" stroke="#0f1b3a" stroke-width="1.8" transform="rotate(8 29 23)"/></svg></span><em>Carte</em></button>
+      <button data-tab="battaglia" type="button" class="active"><span class="ti"><b class="ti-emoji" aria-hidden="true">⚔️</b></span><em>Battaglia</em></button>
+      <button data-tab="clan" type="button"><span class="ti"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 5 L40 11 V24 Q40 37 24 44 Q8 37 8 24 V11 Z" fill="url(#tb-gd)" stroke="#0f1b3a" stroke-width="2.4" stroke-linejoin="round"/><path d="M24 10 L35 14 V24 Q35 33 24 39 Q13 33 13 24 V14 Z" fill="#c0392b"/><path d="M24 14 L27 22 H35 L28.5 27 L31 35 L24 30 L17 35 L19.5 27 L13 22 H21 Z" fill="#fff" stroke="#0f1b3a" stroke-width="1.2"/></svg></span><em>Clan</em><i id="clan-badge" class="badge" hidden></i></button>
+      <button data-tab="eventi" type="button"><span class="ti"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M14 6 H34 V16 Q34 28 24 30 Q14 28 14 16 Z" fill="url(#tb-gd)" stroke="#0f1b3a" stroke-width="2.4" stroke-linejoin="round"/><path d="M14 10 H7 Q7 20 15 21 M34 10 H41 Q41 20 33 21" fill="none" stroke="#0f1b3a" stroke-width="2.4"/><rect x="21" y="30" width="6" height="6" fill="url(#tb-gd)" stroke="#0f1b3a" stroke-width="2"/><rect x="14" y="36" width="20" height="6" rx="2" fill="#c0392b" stroke="#0f1b3a" stroke-width="2.4"/><path d="M24 11 l2 4 4 .5 -3 3 .8 4 -3.8 -2 -3.8 2 .8 -4 -3 -3 4 -.5 Z" fill="#fff"/></svg></span><em>Eventi</em></button>
+    </nav>
+  </section>
+
+  <!-- Battaglia -->
+  <section id="battle" class="screen" hidden>
+    <div id="guida" class="guida" hidden></div>
+    <div class="hud-top">
+      <div class="foe"><span class="lvl-shield red"><b id="foe-level">1</b></span><span class="foe-txt"><b id="foe-name">Avversario</b><small id="foe-sub"></small></span></div>
+      <div class="clock-col">
+        <div id="clock-box" class="clock-box"><small id="clock-label">Termina tra:</small><b id="clock">3:00</b></div>
+      </div>
+    </div>
+    <div class="field" id="field">
+      <div id="field-lampo" class="field-lampo"></div>
+      <canvas id="canvas"></canvas>
+      <!-- Corone sul bordo destro: compaiono alla prima corona, come in Clash -->
+      <div id="crown-side" class="crown-side" hidden>
+        <div class="cs red"><b id="foe-crowns">0</b><span class="cr">👑</span></div>
+        <div class="cs blue"><span class="cr">👑</span><b id="my-crowns">0</b></div>
+      </div>
+      <div id="crown-banner" class="crown-banner" hidden></div>
+      <div id="countdown" class="countdown" hidden></div>
+      <div id="banner" class="banner" hidden></div>
+      <div id="end-vs" class="end-vs" hidden></div>
+      <div id="emote-foe" class="emote-bubble foe-bubble" hidden></div>
+      <div id="emote-me" class="emote-bubble me-bubble" hidden></div>
+      <!-- 2 contro 2 online: la faccina del compagno -->
+      <div id="emote-compagno" class="emote-bubble compagno-bubble" hidden></div>
+      <!-- 2 contro 2: piccolo avviso quando il compagno gioca una carta -->
+      <div id="avviso-compagno" class="avviso-compagno" hidden></div>
+    </div>
+    <div class="hud-bottom">
+      <div class="hand">
+        <div class="next"><button id="btn-emote" class="emote-btn" type="button" title="Emoticon">💬</button><small>Succ.:</small><div id="next-card" class="mini-card"></div></div>
+        <div id="hand" class="hand-cards"></div>
+      </div>
+      <div id="emote-bar" class="emote-panel" hidden></div>
+      <div class="amb">
+        <span class="drop" id="amb-num">5</span><small class="amb-max">Massimo: 10</small>
+        <div class="amb-bar"><div id="amb-fill"></div><div class="ticks"></div><span id="x2" class="x2" hidden>x2</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Cammino degli Eroi (ricompense delle coppe e arene) -->
+  <section id="road" class="screen road-screen" hidden>
+    <div id="road-list" class="road-list"></div>
+    <div class="road-foot">
+      <button id="road-me" class="road-me" type="button" aria-label="Vai alle tue coppe"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9l7 7 7-7"/></svg></button>
+      <button id="road-close" class="btn road-ok" type="button">OK</button>
+    </div>
+  </section>
+
+  <!-- Classifica: Mondo (dal server) e Amici (dal telefono) -->
+  <section id="classifica" class="screen cl-screen" hidden>
+    <header class="cl-head">
+      <h3>🏅 Classifica</h3>
+      <div class="cl-tabs" role="tablist">
+        <button data-cl="mondo" class="on" type="button" role="tab">🌍 Mondo</button>
+        <button data-cl="amici" type="button" role="tab">🤝 Amici</button>
+      </div>
+    </header>
+    <div id="cl-list" class="cl-list"></div>
+    <div id="cl-io" class="cl-io" hidden></div>
+    <div class="road-foot">
+      <button id="cl-close" class="btn road-ok" type="button">OK</button>
+    </div>
+  </section>
+
+  <!-- Finestra generica (contenuto creato dal codice) -->
+  <div id="modal" class="modal" hidden>
+    <div class="sheet" role="dialog" aria-modal="true">
+      <button class="close" type="button" aria-label="Chiudi">✕</button>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+  <div id="toast" class="toast" hidden></div>
+
+  <!-- Scelta sulla memoria del dispositivo -->
+  <div class="consenso" id="consenso" role="dialog" aria-label="Scelta sulla memoria del dispositivo" hidden>
+    <p><strong>Niente pubblicità, niente tracciamento.</strong> Il gioco salva sempre sul tuo dispositivo i progressi (serve per giocare). Se accetti, ricorda anche le statistiche del profilo, le battaglie da rivedere e la scelta della musica. Se rifiuti, si gioca lo stesso ma queste cose si dimenticano quando chiudi la pagina. <a href="privacy.html" target="_blank" rel="noopener">Dettagli</a></p>
+    <div class="consenso-btn"><button id="c-rifiuta" type="button" class="btn grey">Rifiuta</button><button id="c-accetta" type="button" class="btn grey">Accetta</button></div>
+  </div>
+
+  <script src="js/anti-frame.js"></script>
+  <script src="js/consenso.js"></script>
+  <script src="js/cards.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/bot.js"></script>
+  <script src="js/profile.js"></script>
+  <script src="js/setup-battaglia.js"></script>
+  <script src="js/rigioco.js"></script>
+  <script src="js/sprites-chibi.js"></script>
+  <script src="js/arene-art.js"></script>
+  <script src="js/sprites.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/sound.js"></script>
+  <script src="js/social.js"></script>
+  <script src="js/captcha.js"></script>
+  <script src="js/supabase.js"></script>
+  <script src="js/cloud.js"></script>
+  <script src="js/server.js"></script>
+  <script src="js/push.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
