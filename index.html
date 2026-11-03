@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Guerra Dèi">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://vnegcvnpribnojkxmegg.supabase.co wss://vnegcvnpribnojkxmegg.supabase.co; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com https://static.cloudflareinsights.com; frame-src https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' https://vnegcvnpribnojkxmegg.supabase.co wss://vnegcvnpribnojkxmegg.supabase.co https://cloudflareinsights.com; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
   <link rel="stylesheet" href="fonts/fonts.css">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -128,7 +128,7 @@
 
   <!-- Scelta sulla memoria del dispositivo -->
   <div class="consenso" id="consenso" role="dialog" aria-label="Scelta sulla memoria del dispositivo" hidden>
-    <p><strong>Niente pubblicità, niente tracciamento.</strong> Il gioco salva sempre sul tuo dispositivo i progressi (serve per giocare). Se accetti, ricorda anche le statistiche del profilo, le battaglie da rivedere e la scelta della musica. Se rifiuti, si gioca lo stesso ma queste cose si dimenticano quando chiudi la pagina. <a href="privacy.html" target="_blank" rel="noopener">Dettagli</a></p>
+    <p><strong>Niente pubblicità, niente profilazione.</strong> Il gioco salva sempre sul tuo dispositivo i progressi (serve per giocare). Se accetti, ricorda anche le statistiche del profilo, le battaglie da rivedere e la scelta della musica. Se rifiuti, si gioca lo stesso ma queste cose si dimenticano quando chiudi la pagina. <a href="privacy.html" target="_blank" rel="noopener">Dettagli</a></p>
     <div class="consenso-btn"><button id="c-rifiuta" type="button" class="btn grey">Rifiuta</button><button id="c-accetta" type="button" class="btn grey">Accetta</button></div>
   </div>
 
@@ -152,5 +152,6 @@
   <script src="js/server.js"></script>
   <script src="js/push.js"></script>
   <script src="js/app.js"></script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "c743315dcfb04a3bb38771e533d98f17"}'></script>
 </body>
 </html>
