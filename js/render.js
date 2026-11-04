@@ -690,7 +690,9 @@
     }
 
     // Cerchio "a terra" in prospettiva (un'ellisse)
-    function groundCircle(p, r) { ctx.beginPath(); ctx.ellipse(p.x, p.y, r * S * p.k, r * S * p.k * C * 0.85, 0, 0, Math.PI * 2); }
+    // raggio mai negativo: ellipse() con raggio < 0 lancia un errore e blocca la partita
+    // (succedeva negli effetti con k < 0, prima che l'effetto cominci)
+    function groundCircle(p, r) { r = Math.max(0, r); ctx.beginPath(); ctx.ellipse(p.x, p.y, r * S * p.k, r * S * p.k * C * 0.85, 0, 0, Math.PI * 2); }
 
     function effect(f, t) {
       const k = Math.min(1, (t - f.t0) / f.dur);
